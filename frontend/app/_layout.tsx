@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAppStore } from '../lib/store';
@@ -14,20 +14,32 @@ export default function RootLayout() {
   const acceptTerms = useAppStore((s) => s.acceptTerms);
   const theme = useAppStore((s) => s.theme);
   const colors = THEMES[theme];
+  const router = useRouter();
+  const segments = useSegments();
   const [showTerms, setShowTerms] = useState(false);
 
   useEffect(() => {
     initializeApp();
   }, []);
 
+  // Handle routing based on user state
   useEffect(() => {
-    // Show terms modal only if user exists and hasn't accepted terms
-    if (user && !user.terms_accepted) {
-      setShowTerms(true);
-    } else {
-      setShowTerms(false);
+    if (isLoading) return;
+
+    const inAuthGroup = segments[0] === 'welcome' || segments[0] === 'auth';
+
+    if (!user) {
+      // No user - redirect to welcome
+      if (!inAuthGroup) {
+        router.replace('/welcome');
+      }
+    } else if (!user.terms_accepted) {
+      // User exists but hasn't accepted terms
+      if (!inAuthGroup) {
+        setShowTerms(true);
+      }
     }
-  }, [user]);
+  }, [user, segments, isLoading]);
 
   const handleAcceptTerms = async () => {
     await acceptTerms();
@@ -49,13 +61,8 @@ export default function RootLayout() {
           headerShown: false,
         }}
       >
-        {/* Show welcome screen if no user */}
-        <Stack.Screen 
-          name="welcome" 
-          options={{ 
-            headerShown: false,
-          }} 
-        />
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="welcome" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="auth" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen name="book/[id]" options={{ headerShown: true, title: 'Reading' }} />
