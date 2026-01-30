@@ -103,38 +103,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (savedUser) {
         const user = JSON.parse(savedUser);
         set({ user });
-      } else {
-        // Create guest user
-        const guestUuid = Crypto.randomUUID();
-        const guestUser: User = {
-          id: guestUuid,
-          auth_provider: 'guest',
-          is_admin: false,
-          terms_accepted: false,
-        };
-        
-        // Try to save to server but don't block on failure
-        api.post('/users', guestUser).catch(() => {
-          console.log('Could not save guest to server - database may not be set up');
-        });
-        
-        await AsyncStorage.setItem('user', JSON.stringify(guestUser));
-        set({ user: guestUser });
       }
+      // Don't create guest user here - let welcome screen handle it
 
       // Load settings
       await get().fetchSettings();
     } catch (error) {
       console.error('Error initializing app:', error);
-      // Create a default guest user even if there's an error
-      const guestUser: User = {
-        id: Crypto.randomUUID(),
-        auth_provider: 'guest',
-        is_admin: false,
-        terms_accepted: false,
-      };
-      await AsyncStorage.setItem('user', JSON.stringify(guestUser));
-      set({ user: guestUser });
     } finally {
       set({ isLoading: false });
     }
