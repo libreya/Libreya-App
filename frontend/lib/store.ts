@@ -113,11 +113,10 @@ export const useAppStore = create<AppState>((set, get) => ({
           terms_accepted: false,
         };
         
-        try {
-          await api.post('/users', guestUser);
-        } catch (e) {
-          console.log('Could not save guest to server');
-        }
+        // Try to save to server but don't block on failure
+        api.post('/users', guestUser).catch(() => {
+          console.log('Could not save guest to server - database may not be set up');
+        });
         
         await AsyncStorage.setItem('user', JSON.stringify(guestUser));
         set({ user: guestUser });
@@ -127,6 +126,15 @@ export const useAppStore = create<AppState>((set, get) => ({
       await get().fetchSettings();
     } catch (error) {
       console.error('Error initializing app:', error);
+      // Create a default guest user even if there's an error
+      const guestUser: User = {
+        id: Crypto.randomUUID(),
+        auth_provider: 'guest',
+        is_admin: false,
+        terms_accepted: false,
+      };
+      await AsyncStorage.setItem('user', JSON.stringify(guestUser));
+      set({ user: guestUser });
     } finally {
       set({ isLoading: false });
     }
