@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { COLORS, THEMES } from '../constants/theme';
 import { useAppStore } from '../lib/store';
 import { supabase } from '../lib/supabase';
@@ -40,6 +41,22 @@ export default function WelcomeScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
+  const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
+
+  // Check if Apple Authentication is available (iOS 13+ or web)
+  useEffect(() => {
+    const checkAppleAuth = async () => {
+      if (Platform.OS === 'ios') {
+        const isAvailable = await AppleAuthentication.isAvailableAsync();
+        setAppleAuthAvailable(isAvailable);
+      } else if (Platform.OS === 'web') {
+        // Apple Sign-In is available on web via Supabase OAuth
+        setAppleAuthAvailable(true);
+      }
+    };
+    checkAppleAuth();
+  }, []);
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -56,7 +73,6 @@ export default function WelcomeScreen() {
         terms_accepted: false,
       };
 
-      // Try to save to server
       try {
         await api.post('/users', guestUser);
       } catch (e) {
@@ -179,11 +195,9 @@ export default function WelcomeScreen() {
 
       if (error) throw error;
 
-      // For web, Supabase handles the redirect
       if (Platform.OS === 'web' && data?.url) {
         window.location.href = data.url;
       } else {
-        // For native, show info about configuration needed
         Alert.alert(
           'Google Sign-In',
           'Google authentication will redirect you to sign in. For native apps, ensure OAuth is configured in your Supabase dashboard.',
@@ -197,11 +211,89 @@ export default function WelcomeScreen() {
     }
   };
 
-  const handleAppleSignIn = () => {
-    Alert.alert(
-      'Coming Soon',
-      'Apple Sign-In will be available once Apple Developer credentials are configured. Please use Email or Google authentication for now.'
-    );
+  const handleAppleSignIn = async () => {
+    setAppleLoading(true);
+    
+    try {
+      if (Platform.OS === 'ios') {
+        // Native iOS Apple Sign-In
+        const credential = await AppleAuthentication.signInAsync({
+          requestedScopes: [
+            AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+            AppleAuthentication.AppleAuthenticationScope.EMAIL,
+          ],
+        });
+
+        // Sign in with Supabase using the Apple ID token
+        if (credential.identityToken) {
+          const { data, error } = await supabase.auth.signInWithIdToken({
+            provider: 'apple',
+            token: credential.identityToken,
+          });
+
+          if (error) throw error;
+
+          if (data.user) {
+            const displayName = credential.fullName
+              ? `${credential.fullName.givenName || ''} ${credential.fullName.familyName || ''}`.trim()
+              : data.user.email?.split('@')[0] || 'User';
+
+            const newUser = {
+              id: data.user.id,
+              email: data.user.email,
+              display_name: displayName,
+              auth_provider: 'apple' as const,
+              is_admin: data.user.email === 'hello@libreya.app',
+              terms_accepted: false,
+            };
+
+            try {
+              await api.post('/users', newUser);
+            } catch {
+              // User might already exist
+              try {
+                await api.patch(`/users/${data.user.id}`, { 
+                  display_name: displayName,
+                  auth_provider: 'apple' 
+                });
+              } catch {}
+            }
+
+            await AsyncStorage.setItem('user', JSON.stringify(newUser));
+            setUser(newUser);
+            router.replace('/(tabs)');
+          }
+        }
+      } else if (Platform.OS === 'web') {
+        // Web Apple Sign-In via Supabase OAuth
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'apple',
+          options: {
+            redirectTo: window.location.origin,
+          },
+        });
+
+        if (error) throw error;
+
+        if (data?.url) {
+          window.location.href = data.url;
+        }
+      } else {
+        Alert.alert(
+          'Not Available',
+          'Apple Sign-In is only available on iOS devices and web browsers.'
+        );
+      }
+    } catch (error: any) {
+      if (error.code === 'ERR_REQUEST_CANCELED') {
+        // User cancelled, do nothing
+        console.log('Apple Sign-In cancelled by user');
+      } else {
+        Alert.alert('Error', error.message || 'Apple sign-in failed');
+      }
+    } finally {
+      setAppleLoading(false);
+    }
   };
 
   // Welcome Screen
@@ -256,13 +348,31 @@ export default function WelcomeScreen() {
                 )}
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.appleButton}
-                onPress={handleAppleSignIn}
-              >
-                <Ionicons name="logo-apple" size={20} color={COLORS.white} />
-                <Text style={styles.appleButtonText}>Continue with Apple</Text>
-              </TouchableOpacity>
+              {/* Apple Sign-In Button */}
+              {Platform.OS === 'ios' && appleAuthAvailable ? (
+                <AppleAuthentication.AppleAuthenticationButton
+                  buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                  buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+                  cornerRadius={12}
+                  style={styles.appleAuthButton}
+                  onPress={handleAppleSignIn}
+                />
+              ) : (
+                <TouchableOpacity
+                  style={styles.appleButton}
+                  onPress={handleAppleSignIn}
+                  disabled={appleLoading}
+                >
+                  {appleLoading ? (
+                    <ActivityIndicator color={COLORS.white} />
+                  ) : (
+                    <>
+                      <Ionicons name="logo-apple" size={20} color={COLORS.white} />
+                      <Text style={styles.appleButtonText}>Continue with Apple</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 style={styles.guestButton}
@@ -391,9 +501,16 @@ export default function WelcomeScreen() {
           <TouchableOpacity
             style={[styles.socialButton, { backgroundColor: colors.surface }]}
             onPress={handleAppleSignIn}
+            disabled={appleLoading}
           >
-            <Ionicons name="logo-apple" size={24} color={colors.text} />
-            <Text style={[styles.socialText, { color: colors.text }]}>Apple</Text>
+            {appleLoading ? (
+              <ActivityIndicator color={colors.text} />
+            ) : (
+              <>
+                <Ionicons name="logo-apple" size={24} color={colors.text} />
+                <Text style={[styles.socialText, { color: colors.text }]}>Apple</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -497,6 +614,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: COLORS.white,
+  },
+  appleAuthButton: {
+    width: '100%',
+    height: 50,
   },
   guestButton: {
     paddingVertical: 14,
