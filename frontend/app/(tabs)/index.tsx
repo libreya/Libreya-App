@@ -121,6 +121,11 @@ export default function LibraryScreen() {
         {recommendedBooks.length > 0 && renderSection('Recommended For You', recommendedBooks)}
         
         {books.length > 0 && renderSection('All Books', books, false)}
+        
+        {/* Bottom Ad Banner */}
+        <View style={styles.bottomAdContainer}>
+          <AdBanner />
+        </View>
       </ScrollView>
     </View>
   );
