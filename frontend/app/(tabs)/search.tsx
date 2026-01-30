@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, THEMES } from '../../constants/theme';
 import { useAppStore, Book } from '../../lib/store';
 import { BookCard } from '../../components/BookCard';
+import { AdBanner } from '../../components/AdBanner';
 import { api } from '../../lib/api';
 
 const CATEGORIES = [
