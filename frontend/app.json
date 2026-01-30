@@ -1,22 +1,43 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "Libreya",
+    "slug": "libreya",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "frontend",
+    "scheme": "libreya",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "app.libreya",
+      "config": {
+        "googleMobileAdsAppId": "ca-app-pub-4299148862195882~9783377200"
+      },
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Allow Libreya to access photos for your profile picture",
+        "NSCameraUsageDescription": "Allow Libreya to take photos for your profile picture",
+        "SKAdNetworkItems": [
+          {
+            "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"
+          }
+        ]
+      }
     },
     "android": {
+      "package": "app.libreya",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#000"
+        "backgroundColor": "#5A1F2B"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "config": {
+        "googleMobileAdsAppId": "ca-app-pub-4299148862195882~6726996697"
+      },
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -31,12 +52,17 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#000"
+          "backgroundColor": "#5A1F2B"
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "libreya"
+      }
     }
   }
 }
