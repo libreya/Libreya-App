@@ -14,6 +14,7 @@
       "config": {
         "googleMobileAdsAppId": "ca-app-pub-4299148862195882~9783377200"
       },
+      "usesAppleSignIn": true,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow Libreya to access photos for your profile picture",
         "NSCameraUsageDescription": "Allow Libreya to take photos for your profile picture",
