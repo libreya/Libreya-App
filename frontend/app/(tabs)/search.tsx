@@ -186,6 +186,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  searchAdContainer: {
+    marginBottom: 16,
+  },
   resultsList: {
     padding: 16,
   },
