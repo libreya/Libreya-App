@@ -57,11 +57,14 @@ interface AppState {
   favorites: Book[];
   settings: AppSettings | null;
   chaptersReadSinceAd: number;
+  isOffline: boolean;
+  error: string | null;
 
-  // Actions
   initializeApp: () => Promise<void>;
   setUser: (user: User | null) => void;
   setTheme: (theme: Theme) => void;
+  setError: (error: string | null) => void;
+  setOffline: (offline: boolean) => void;
   fetchBooks: (params?: { category?: string; search?: string }) => Promise<void>;
   fetchFeaturedBooks: () => Promise<void>;
   fetchRecommendedBooks: () => Promise<void>;
@@ -89,27 +92,25 @@ export const useAppStore = create<AppState>((set, get) => ({
   favorites: [],
   settings: null,
   chaptersReadSinceAd: 0,
+  isOffline: false,
+  error: null,
 
   initializeApp: async () => {
     try {
-      // Load saved theme
       const savedTheme = await AsyncStorage.getItem('theme');
       if (savedTheme) {
         set({ theme: savedTheme as Theme });
       }
 
-      // Check for existing user
       const savedUser = await AsyncStorage.getItem('user');
       if (savedUser) {
         const user = JSON.parse(savedUser);
         set({ user });
       }
-      // Don't create guest user here - let welcome screen handle it
 
-      // Load settings
       await get().fetchSettings();
     } catch (error) {
-      console.error('Error initializing app:', error);
+      set({ error: 'Failed to initialize app' });
     } finally {
       set({ isLoading: false });
     }
@@ -129,15 +130,19 @@ export const useAppStore = create<AppState>((set, get) => ({
     await AsyncStorage.setItem('theme', theme);
   },
 
+  setError: (error) => set({ error }),
+  setOffline: (offline) => set({ isOffline: offline }),
+
   fetchBooks: async (params) => {
     try {
+      set({ isOffline: false });
       let endpoint = '/books?limit=100';
       if (params?.category) endpoint += `&category=${params.category}`;
       if (params?.search) endpoint += `&search=${params.search}`;
       const books = await api.get(endpoint);
-      set({ books });
+      set({ books, error: null });
     } catch (error) {
-      console.error('Error fetching books:', error);
+      set({ isOffline: true, error: 'Unable to load books. Please check your connection.' });
     }
   },
 
@@ -146,7 +151,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       const featuredBooks = await api.get('/books/featured?limit=10');
       set({ featuredBooks });
     } catch (error) {
-      console.error('Error fetching featured books:', error);
+      // Silent fail for featured books
     }
   },
 
@@ -157,16 +162,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       const recommendedBooks = await api.get(`/books/recommended/${user.id}?limit=10`);
       set({ recommendedBooks });
     } catch (error) {
-      console.error('Error fetching recommended books:', error);
+      // Silent fail for recommendations
     }
   },
 
   fetchBook: async (bookId) => {
     try {
+      set({ isOffline: false, error: null });
       const book = await api.get(`/books/${bookId}`);
       set({ currentBook: book });
 
-      // Load activity
       const { user } = get();
       if (user) {
         try {
@@ -179,7 +184,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
       return book;
     } catch (error) {
-      console.error('Error fetching book:', error);
+      set({ isOffline: true, error: 'Unable to load book. Please check your connection.' });
       return null;
     }
   },
@@ -191,51 +196,15 @@ export const useAppStore = create<AppState>((set, get) => ({
       const favorites = await api.get(`/favorites/${user.id}`);
       set({ favorites });
     } catch (error) {
-      console.error('Error fetching favorites:', error);
+      // Silent fail
     }
   },
 
   fetchSettings: async () => {
-    // Default settings fallback
     const defaultSettings: AppSettings = {
-      terms_and_conditions: `
-<h2>Terms and Conditions</h2>
-<p><strong>Last Updated: February 2026</strong></p>
-<h3>1. License</h3>
-<p>Libreya grants you a personal, non-exclusive license to use this software for reading public-domain literature.</p>
-<h3>2. Content</h3>
-<p>Books are sourced from Project Gutenberg and Standard Ebooks. While the texts are public domain, the Libreya app design, code, and brand are the intellectual property of Libreya.</p>
-<h3>3. Prohibited Use</h3>
-<p>You may not scrape, reverse-engineer, or attempt to bypass the authentication systems of Libreya.</p>
-<h3>4. Ad-Supported Service</h3>
-<p>You acknowledge that Libreya is supported by advertisements. Tampering with ad delivery is a violation of these terms.</p>
-<h3>5. Limitation of Liability</h3>
-<p>Libreya is provided "as-is." We are not liable for any data loss or inaccuracies in the literary texts provided.</p>
-`,
-      privacy_notice: `
-<h2>Privacy Notice for Libreya</h2>
-<p><strong>Last Updated: February 2026</strong></p>
-<h3>1. Identity and Contact Details</h3>
-<p>Libreya is the "Data Controller" for your information.</p>
-<p>Company Name: libreya.app</p>
-<p>Contact/DPO Email: hello@libreya.app</p>
-<h3>2. Information We Collect</h3>
-<p>We collect information only to provide and improve your reading experience:</p>
-<ul>
-<li><strong>Account Data:</strong> Email address, display name, and profile image (for registered users).</li>
-<li><strong>Activity Data:</strong> Reading progress, favorite books, and highlights.</li>
-<li><strong>Device Data:</strong> IP address and device identifiers (used for security and ad delivery).</li>
-</ul>
-<h3>3. Your Rights</h3>
-<p>You can delete your account and all associated data immediately via the "Delete Account" button in Settings.</p>
-`,
-      legal_notice: `
-<h2>Legal Notice</h2>
-<h3>Royalty-Free Content Notice</h3>
-<p>Works sourced via Standard Ebooks and Project Gutenberg. No copyright claimed on original texts.</p>
-<h3>Contact</h3>
-<p>For any legal inquiries, please contact: hello@libreya.app</p>
-`,
+      terms_and_conditions: `<h2>Terms and Conditions</h2><p><strong>Last Updated: February 2026</strong></p><h3>1. License</h3><p>Libreya grants you a personal, non-exclusive license to use this software for reading public-domain literature.</p><h3>2. Content</h3><p>Books are sourced from Project Gutenberg and Standard Ebooks. While the texts are public domain, the Libreya app design, code, and brand are the intellectual property of Libreya.</p><h3>3. Prohibited Use</h3><p>You may not scrape, reverse-engineer, or attempt to bypass the authentication systems of Libreya.</p><h3>4. Ad-Supported Service</h3><p>You acknowledge that Libreya is supported by advertisements. Tampering with ad delivery is a violation of these terms.</p><h3>5. Limitation of Liability</h3><p>Libreya is provided "as-is." We are not liable for any data loss or inaccuracies in the literary texts provided.</p>`,
+      privacy_notice: `<h2>Privacy Notice for Libreya</h2><p><strong>Last Updated: February 2026</strong></p><h3>1. Identity and Contact Details</h3><p>Libreya is the "Data Controller" for your information.</p><p>Company Name: libreya.app</p><p>Contact/DPO Email: hello@libreya.app</p><h3>2. Information We Collect</h3><p>We collect information only to provide and improve your reading experience.</p><h3>3. Your Rights</h3><p>You can delete your account and all associated data immediately via the "Delete Account" button in Settings.</p>`,
+      legal_notice: `<h2>Legal Notice</h2><h3>Royalty-Free Content Notice</h3><p>Works sourced via Standard Ebooks and Project Gutenberg. No copyright claimed on original texts.</p><h3>Contact</h3><p>For any legal inquiries, please contact: hello@libreya.app</p>`,
     };
 
     try {
@@ -250,7 +219,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       set({ settings });
     } catch (error) {
-      console.log('Using default settings');
       set({ settings: defaultSettings });
     }
   },
@@ -272,7 +240,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       await api.post('/activity', activity);
       set({ currentActivity: activity });
     } catch (error) {
-      console.error('Error updating activity:', error);
+      // Save locally on failure
+      set({ currentActivity: activity });
     }
   },
 
@@ -296,15 +265,11 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { user } = get();
     if (!user) return;
 
-    // Update locally first
     const updatedUser = { ...user, terms_accepted: true, terms_accepted_at: new Date().toISOString() };
     set({ user: updatedUser });
     await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
 
-    // Try to sync with server (don't block on failure)
-    api.post('/users/accept-terms', { user_id: user.id, accepted: true }).catch(() => {
-      console.log('Could not sync terms acceptance with server');
-    });
+    api.post('/users/accept-terms', { user_id: user.id, accepted: true }).catch(() => {});
   },
 
   deleteAccount: async () => {
@@ -316,7 +281,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       await AsyncStorage.removeItem('user');
       set({ user: null, favorites: [], currentActivity: null });
     } catch (error) {
-      console.error('Error deleting account:', error);
       throw error;
     }
   },

@@ -34,6 +34,7 @@ export default function WelcomeScreen() {
   const theme = useAppStore((s) => s.theme);
   const colors = THEMES[theme];
   const setUser = useAppStore((s) => s.setUser);
+  const user = useAppStore((s) => s.user);
 
   const [mode, setMode] = useState<'welcome' | 'signin' | 'signup'>('welcome');
   const [email, setEmail] = useState('');
@@ -44,14 +45,12 @@ export default function WelcomeScreen() {
   const [appleLoading, setAppleLoading] = useState(false);
   const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
 
-  // Check if Apple Authentication is available (iOS 13+ or web)
   useEffect(() => {
     const checkAppleAuth = async () => {
       if (Platform.OS === 'ios') {
         const isAvailable = await AppleAuthentication.isAvailableAsync();
         setAppleAuthAvailable(isAvailable);
       } else if (Platform.OS === 'web') {
-        // Apple Sign-In is available on web via Supabase OAuth
         setAppleAuthAvailable(true);
       }
     };
@@ -60,6 +59,17 @@ export default function WelcomeScreen() {
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const migrateGuestData = async (guestId: string, newUserId: string) => {
+    try {
+      await api.post('/users/migrate-guest', {
+        guest_uuid: guestId,
+        new_user_id: newUserId,
+      });
+    } catch (e) {
+      // Silent fail - guest data migration is best effort
+    }
   };
 
   const handleContinueAsGuest = async () => {
@@ -76,14 +86,14 @@ export default function WelcomeScreen() {
       try {
         await api.post('/users', guestUser);
       } catch (e) {
-        console.log('Could not save guest to server');
+        // Continue even if server save fails
       }
 
       await AsyncStorage.setItem('user', JSON.stringify(guestUser));
       setUser(guestUser);
       router.replace('/(tabs)');
     } catch (error) {
-      Alert.alert('Error', 'Failed to continue as guest');
+      Alert.alert('Error', 'Failed to continue as guest. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -112,14 +122,14 @@ export default function WelcomeScreen() {
 
     setLoading(true);
     try {
+      const previousGuestId = user?.auth_provider === 'guest' ? user.id : null;
+
       if (mode === 'signup') {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            data: {
-              display_name: email.split('@')[0],
-            },
+            data: { display_name: email.split('@')[0] },
           },
         });
 
@@ -136,6 +146,11 @@ export default function WelcomeScreen() {
           };
 
           await api.post('/users', newUser);
+          
+          if (previousGuestId) {
+            await migrateGuestData(previousGuestId, data.user.id);
+          }
+
           await AsyncStorage.setItem('user', JSON.stringify(newUser));
           setUser(newUser);
           Alert.alert('Success', 'Account created successfully!');
@@ -163,6 +178,10 @@ export default function WelcomeScreen() {
               terms_accepted: false,
             };
             await api.post('/users', userData);
+          }
+
+          if (previousGuestId) {
+            await migrateGuestData(previousGuestId, data.user.id);
           }
 
           await AsyncStorage.setItem('user', JSON.stringify(userData));
@@ -197,12 +216,6 @@ export default function WelcomeScreen() {
 
       if (Platform.OS === 'web' && data?.url) {
         window.location.href = data.url;
-      } else {
-        Alert.alert(
-          'Google Sign-In',
-          'Google authentication will redirect you to sign in. For native apps, ensure OAuth is configured in your Supabase dashboard.',
-          [{ text: 'OK' }]
-        );
       }
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Google sign-in failed');
@@ -213,10 +226,10 @@ export default function WelcomeScreen() {
 
   const handleAppleSignIn = async () => {
     setAppleLoading(true);
+    const previousGuestId = user?.auth_provider === 'guest' ? user.id : null;
     
     try {
       if (Platform.OS === 'ios') {
-        // Native iOS Apple Sign-In
         const credential = await AppleAuthentication.signInAsync({
           requestedScopes: [
             AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
@@ -224,7 +237,6 @@ export default function WelcomeScreen() {
           ],
         });
 
-        // Sign in with Supabase using the Apple ID token
         if (credential.identityToken) {
           const { data, error } = await supabase.auth.signInWithIdToken({
             provider: 'apple',
@@ -250,7 +262,6 @@ export default function WelcomeScreen() {
             try {
               await api.post('/users', newUser);
             } catch {
-              // User might already exist
               try {
                 await api.patch(`/users/${data.user.id}`, { 
                   display_name: displayName,
@@ -259,13 +270,16 @@ export default function WelcomeScreen() {
               } catch {}
             }
 
+            if (previousGuestId) {
+              await migrateGuestData(previousGuestId, data.user.id);
+            }
+
             await AsyncStorage.setItem('user', JSON.stringify(newUser));
             setUser(newUser);
             router.replace('/(tabs)');
           }
         }
       } else if (Platform.OS === 'web') {
-        // Web Apple Sign-In via Supabase OAuth
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'apple',
           options: {
@@ -279,16 +293,10 @@ export default function WelcomeScreen() {
           window.location.href = data.url;
         }
       } else {
-        Alert.alert(
-          'Not Available',
-          'Apple Sign-In is only available on iOS devices and web browsers.'
-        );
+        Alert.alert('Not Available', 'Apple Sign-In is only available on iOS and web.');
       }
     } catch (error: any) {
-      if (error.code === 'ERR_REQUEST_CANCELED') {
-        // User cancelled, do nothing
-        console.log('Apple Sign-In cancelled by user');
-      } else {
+      if (error.code !== 'ERR_REQUEST_CANCELED') {
         Alert.alert('Error', error.message || 'Apple sign-in failed');
       }
     } finally {
@@ -296,7 +304,6 @@ export default function WelcomeScreen() {
     }
   };
 
-  // Welcome Screen
   if (mode === 'welcome') {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -348,7 +355,6 @@ export default function WelcomeScreen() {
                 )}
               </TouchableOpacity>
 
-              {/* Apple Sign-In Button */}
               {Platform.OS === 'ios' && appleAuthAvailable ? (
                 <AppleAuthentication.AppleAuthenticationButton
                   buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
@@ -398,7 +404,6 @@ export default function WelcomeScreen() {
     );
   }
 
-  // Sign In / Sign Up Form
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: colors.background }]}

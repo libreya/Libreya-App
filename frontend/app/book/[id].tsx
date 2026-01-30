@@ -9,6 +9,7 @@ import {
   Alert,
   Share,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +18,7 @@ import * as Clipboard from 'expo-clipboard';
 import { COLORS, THEMES } from '../../constants/theme';
 import { useAppStore } from '../../lib/store';
 import { AdBanner } from '../../components/AdBanner';
+import { ErrorMessage } from '../../components/ErrorMessage';
 import { api } from '../../lib/api';
 
 const { width, height } = Dimensions.get('window');
@@ -35,6 +37,8 @@ export default function BookReaderScreen() {
   const theme = useAppStore((s) => s.theme);
   const colors = THEMES[theme];
   const user = useAppStore((s) => s.user);
+  const isOffline = useAppStore((s) => s.isOffline);
+  const error = useAppStore((s) => s.error);
   
   const currentBook = useAppStore((s) => s.currentBook);
   const currentActivity = useAppStore((s) => s.currentActivity);
@@ -51,28 +55,36 @@ export default function BookReaderScreen() {
   const [showControls, setShowControls] = useState(true);
   const [fontSize, setFontSize] = useState(18);
   const [showInterstitial, setShowInterstitial] = useState(false);
-  const [selectedText, setSelectedText] = useState('');
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     loadBook();
   }, [id]);
 
   useEffect(() => {
-    // Update local favorite state when activity changes
     setIsFavorite(currentActivity?.is_favorite || false);
   }, [currentActivity]);
 
   const loadBook = async () => {
     if (!id) return;
     setLoading(true);
-    const book = await fetchBook(parseInt(id));
-    if (book?.content_body) {
-      parseChapters(book.content_body);
+    setLoadError(null);
+    
+    try {
+      const book = await fetchBook(parseInt(id));
+      if (book?.content_body) {
+        parseChapters(book.content_body);
+      } else {
+        setLoadError('Book content not available');
+      }
+    } catch (e) {
+      setLoadError('Failed to load book. Please check your connection.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const parseChapters = (content: string) => {
@@ -96,10 +108,10 @@ export default function BookReaderScreen() {
       
       for (let i = 1; i < matches.length; i += 2) {
         const title = matches[i]?.trim() || `Chapter ${Math.ceil(i / 2)}`;
-        const content = matches[i + 1] || '';
+        const chapterContent = matches[i + 1] || '';
         parsedChapters.push({
           title,
-          content: stripHtml(content),
+          content: stripHtml(chapterContent),
         });
       }
     }
@@ -155,10 +167,8 @@ export default function BookReaderScreen() {
     const newFavoriteStatus = !isFavorite;
     
     try {
-      // Optimistically update UI
       setIsFavorite(newFavoriteStatus);
       
-      // Save to database
       const activity = {
         user_id: user.id,
         book_id: currentBook.id,
@@ -169,21 +179,15 @@ export default function BookReaderScreen() {
       };
       
       await api.post('/activity', activity);
-      
-      // Refresh favorites list
       await fetchFavorites();
       
-      // Show confirmation
-      if (newFavoriteStatus) {
-        Alert.alert('Added to Favorites', `"${currentBook.title}" has been added to your favorites.`);
-      } else {
-        Alert.alert('Removed from Favorites', `"${currentBook.title}" has been removed from your favorites.`);
-      }
-    } catch (error) {
-      // Revert on error
+      Alert.alert(
+        newFavoriteStatus ? 'Added to Favorites' : 'Removed from Favorites',
+        `"${currentBook.title}" has been ${newFavoriteStatus ? 'added to' : 'removed from'} your favorites.`
+      );
+    } catch (e) {
       setIsFavorite(!newFavoriteStatus);
       Alert.alert('Error', 'Failed to update favorites. Please try again.');
-      console.error('Error toggling favorite:', error);
     } finally {
       setFavoriteLoading(false);
     }
@@ -194,33 +198,21 @@ export default function BookReaderScreen() {
     
     const shareData = {
       title: currentBook.title,
-      text: `I'm reading "${currentBook.title}" by ${currentBook.author} on Libreya! Check out this free classic literature app.`,
+      text: `I'm reading "${currentBook.title}" by ${currentBook.author} on Libreya!`,
       url: Platform.OS === 'web' ? window.location.href : `https://libreya.app/book/${currentBook.id}`,
     };
 
     try {
-      // Check if Web Share API is available (modern browsers and mobile)
       if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.share) {
         await navigator.share(shareData);
       } else {
-        // Fallback to React Native Share
         const result = await Share.share({
-          message: shareData.text,
-          url: shareData.url,
+          message: shareData.text + ' ' + shareData.url,
           title: shareData.title,
         });
-        
-        if (result.action === Share.sharedAction) {
-          if (result.activityType) {
-            console.log('Shared via:', result.activityType);
-          }
-        }
       }
-    } catch (error: any) {
-      // User cancelled or error
-      if (error.name !== 'AbortError') {
-        console.error('Share error:', error);
-        // Fallback: copy to clipboard
+    } catch (e: any) {
+      if (e.name !== 'AbortError') {
         if (Platform.OS === 'web') {
           try {
             await navigator.clipboard.writeText(shareData.text + ' ' + shareData.url);
@@ -233,35 +225,26 @@ export default function BookReaderScreen() {
     }
   };
 
-  const handleCopyText = async () => {
-    if (selectedText) {
-      await Clipboard.setStringAsync(selectedText);
-      Alert.alert('Copied', 'Text copied to clipboard');
-    }
-  };
-
-  const handleHighlight = () => {
-    if (selectedText) {
-      addHighlight(selectedText, currentChapter / chapters.length, currentChapter);
-      Alert.alert('Highlighted', 'Text has been saved to your highlights');
-      setSelectedText('');
-    }
-  };
-
   const progress = chapters.length > 0 ? ((currentChapter + 1) / chapters.length) * 100 : 0;
 
   if (loading) {
     return (
       <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
-        <Text style={{ color: colors.text }}>Loading...</Text>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading book...</Text>
       </View>
     );
   }
 
-  if (!currentBook || chapters.length === 0) {
+  if (loadError || !currentBook || chapters.length === 0) {
     return (
-      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
-        <Text style={{ color: colors.text }}>Book not found</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Stack.Screen options={{ headerShown: true, title: 'Error', headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.text }} />
+        <ErrorMessage 
+          message={loadError || 'Book not found'} 
+          onRetry={loadBook}
+          type={isOffline ? 'offline' : 'error'}
+        />
       </View>
     );
   }
@@ -295,12 +278,10 @@ export default function BookReaderScreen() {
         }}
       />
       
-      {/* Progress Bar */}
       <View style={[styles.progressContainer, { backgroundColor: colors.border }]}>
         <View style={[styles.progressBar, { width: `${progress}%`, backgroundColor: COLORS.primary }]} />
       </View>
       
-      {/* Chapter Info */}
       <View style={[styles.chapterHeader, { backgroundColor: colors.surface }]}>
         <Text style={[styles.chapterTitle, { color: colors.text }]} numberOfLines={1}>
           {chapters[currentChapter]?.title}
@@ -310,13 +291,11 @@ export default function BookReaderScreen() {
         </Text>
       </View>
       
-      {/* Content */}
       <ScrollView
         ref={scrollRef}
         style={styles.content}
-        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
-        onTouchStart={() => setShowControls(!showControls)}
       >
         <Text
           style={[styles.bookText, { color: colors.text, fontSize }]}
@@ -325,12 +304,10 @@ export default function BookReaderScreen() {
           {chapters[currentChapter]?.content}
         </Text>
         
-        {/* Ad Banner at end of chapter */}
         <View style={styles.chapterEndAd}>
           <AdBanner />
         </View>
         
-        {/* Next/Previous buttons at end of chapter content */}
         <View style={styles.chapterNavButtons}>
           <TouchableOpacity
             onPress={() => goToChapter(currentChapter - 1)}
@@ -362,7 +339,6 @@ export default function BookReaderScreen() {
         </View>
       </ScrollView>
       
-      {/* Bottom Controls */}
       {showControls && (
         <View style={[styles.controls, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 10 }]}>
           <View style={styles.fontControls}>
@@ -385,7 +361,6 @@ export default function BookReaderScreen() {
         </View>
       )}
       
-      {/* Interstitial Ad Placeholder */}
       {showInterstitial && (
         <View style={styles.interstitialOverlay}>
           <View style={styles.interstitialContent}>
@@ -395,7 +370,7 @@ export default function BookReaderScreen() {
               style={styles.closeAdBtn}
               onPress={() => setShowInterstitial(false)}
             >
-              <Text style={styles.closeAdText}>Close in 2s</Text>
+              <Text style={styles.closeAdText}>Close</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -411,6 +386,10 @@ const styles = StyleSheet.create({
   centered: {
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
   },
   headerButtons: {
     flexDirection: 'row',
@@ -477,7 +456,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 16,
-    marginBottom: 16,
   },
   controlBtn: {
     flexDirection: 'row',
@@ -487,18 +465,6 @@ const styles = StyleSheet.create({
   },
   fontSizeText: {
     fontSize: 14,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 32,
-  },
-  actionBtn: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  actionText: {
-    fontSize: 12,
   },
   interstitialOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -524,10 +490,13 @@ const styles = StyleSheet.create({
   },
   closeAdBtn: {
     marginTop: 16,
-    padding: 8,
+    padding: 12,
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
   },
   closeAdText: {
-    color: COLORS.accent,
+    color: COLORS.white,
     fontSize: 14,
+    fontWeight: '600',
   },
 });

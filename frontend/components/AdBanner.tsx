@@ -1,32 +1,22 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet, Platform, useWindowDimensions } from 'react-native';
 import { COLORS } from '../constants/theme';
-
-// AdMob is not available in web, so we show a placeholder
-// For native builds, you would use react-native-google-mobile-ads
 
 interface AdBannerProps {
   position?: 'top' | 'bottom';
 }
 
 export function AdBanner({ position = 'bottom' }: AdBannerProps) {
-  // On web, show the Google AdSense script placeholder
-  if (Platform.OS === 'web') {
-    return (
-      <View style={[styles.container, position === 'top' ? styles.top : styles.bottom]}>
-        <View style={styles.adPlaceholder}>
-          <Text style={styles.adText}>Advertisement</Text>
-        </View>
-      </View>
-    );
-  }
+  const { width } = useWindowDimensions();
+  
+  // Responsive ad width - max 320px, min padding on small screens
+  const adWidth = Math.min(width - 32, 320);
+  const adHeight = 50;
 
-  // For native, this would use react-native-google-mobile-ads
-  // Currently showing placeholder as AdMob requires native configuration
   return (
     <View style={[styles.container, position === 'top' ? styles.top : styles.bottom]}>
-      <View style={styles.adPlaceholder}>
-        <Text style={styles.adText}>Ad Space</Text>
+      <View style={[styles.adPlaceholder, { width: adWidth, height: adHeight }]}>
+        <Text style={styles.adText}>Advertisement</Text>
       </View>
     </View>
   );
@@ -36,25 +26,27 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     alignItems: 'center',
-    paddingVertical: 4,
-    backgroundColor: '#f0f0f0',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: 'transparent',
   },
   top: {
-    // top positioning handled by parent
+    marginBottom: 8,
   },
   bottom: {
-    // bottom positioning handled by parent
+    marginTop: 8,
   },
   adPlaceholder: {
-    width: 320,
-    height: 50,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 4,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
   adText: {
     color: COLORS.gray,
-    fontSize: 12,
+    fontSize: 11,
+    fontWeight: '500',
   },
 });
