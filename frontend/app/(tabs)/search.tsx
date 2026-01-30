@@ -132,6 +132,13 @@ export default function SearchScreen() {
           </View>
         )}
         contentContainerStyle={styles.resultsList}
+        ListHeaderComponent={
+          results.length > 0 ? (
+            <View style={styles.searchAdContainer}>
+              <AdBanner />
+            </View>
+          ) : null
+        }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="book-outline" size={64} color={colors.textSecondary} />
