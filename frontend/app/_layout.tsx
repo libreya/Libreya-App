@@ -18,6 +18,7 @@ export default function RootLayout() {
   const segments = useSegments();
   const navigationState = useRootNavigationState();
   const [showTerms, setShowTerms] = useState(false);
+  const [hasNavigated, setHasNavigated] = useState(false);
 
   useEffect(() => {
     initializeApp();
@@ -26,22 +27,30 @@ export default function RootLayout() {
   // Handle routing based on user state
   useEffect(() => {
     if (isLoading) return;
-    if (!navigationState?.key) return; // Wait for navigation to be ready
+    if (!navigationState?.key) return;
+    if (hasNavigated) return;
 
     const inWelcome = segments[0] === 'welcome';
-    const inTabs = segments[0] === '(tabs)';
+    const inIndex = segments.length === 0 || segments[0] === 'index' || segments[0] === '';
 
-    if (!user && !inWelcome) {
-      // No user and not on welcome - redirect to welcome
+    // Only redirect once on initial load
+    if (!user && (inIndex || (!inWelcome))) {
       router.replace('/welcome');
-    } else if (user && !user.terms_accepted && inTabs) {
-      // User exists, in tabs, but hasn't accepted terms - show modal
+      setHasNavigated(true);
+    } else if (user && user.terms_accepted && (inIndex || inWelcome)) {
+      router.replace('/(tabs)');
+      setHasNavigated(true);
+    }
+  }, [user, segments, isLoading, navigationState?.key, hasNavigated]);
+
+  // Show terms modal only when navigating to tabs without accepted terms
+  useEffect(() => {
+    if (user && !user.terms_accepted && segments[0] === '(tabs)') {
       setShowTerms(true);
-    } else if (user && user.terms_accepted) {
-      // User with accepted terms - hide modal
+    } else {
       setShowTerms(false);
     }
-  }, [user, segments, isLoading, navigationState?.key]);
+  }, [user, segments]);
 
   const handleAcceptTerms = async () => {
     await acceptTerms();
