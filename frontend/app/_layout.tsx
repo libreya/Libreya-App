@@ -32,9 +32,17 @@ export default function RootLayout() {
 
     const inWelcome = segments[0] === 'welcome';
     const inIndex = segments.length === 0 || segments[0] === 'index' || segments[0] === '';
+    const inTabs = segments[0] === '(tabs)';
+    const inBook = segments[0] === 'book';
+    const inLegal = segments[0] === 'legal';
+    const inAdmin = segments[0] === 'admin';
 
-    // Only redirect once on initial load
-    if (!user && (inIndex || (!inWelcome))) {
+    // Allow public pages without login: welcome, book reader, legal
+    // Only redirect to welcome from index or protected tabs
+    if (!user && inIndex) {
+      router.replace('/welcome');
+      setHasNavigated(true);
+    } else if (!user && inTabs) {
       router.replace('/welcome');
       setHasNavigated(true);
     } else if (user && user.terms_accepted && (inIndex || inWelcome)) {
