@@ -213,21 +213,62 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   fetchSettings: async () => {
+    // Default settings fallback
+    const defaultSettings: AppSettings = {
+      terms_and_conditions: `
+<h2>Terms and Conditions</h2>
+<p><strong>Last Updated: February 2026</strong></p>
+<h3>1. License</h3>
+<p>Libreya grants you a personal, non-exclusive license to use this software for reading public-domain literature.</p>
+<h3>2. Content</h3>
+<p>Books are sourced from Project Gutenberg and Standard Ebooks. While the texts are public domain, the Libreya app design, code, and brand are the intellectual property of Libreya.</p>
+<h3>3. Prohibited Use</h3>
+<p>You may not scrape, reverse-engineer, or attempt to bypass the authentication systems of Libreya.</p>
+<h3>4. Ad-Supported Service</h3>
+<p>You acknowledge that Libreya is supported by advertisements. Tampering with ad delivery is a violation of these terms.</p>
+<h3>5. Limitation of Liability</h3>
+<p>Libreya is provided "as-is." We are not liable for any data loss or inaccuracies in the literary texts provided.</p>
+`,
+      privacy_notice: `
+<h2>Privacy Notice for Libreya</h2>
+<p><strong>Last Updated: February 2026</strong></p>
+<h3>1. Identity and Contact Details</h3>
+<p>Libreya is the "Data Controller" for your information.</p>
+<p>Company Name: libreya.app</p>
+<p>Contact/DPO Email: hello@libreya.app</p>
+<h3>2. Information We Collect</h3>
+<p>We collect information only to provide and improve your reading experience:</p>
+<ul>
+<li><strong>Account Data:</strong> Email address, display name, and profile image (for registered users).</li>
+<li><strong>Activity Data:</strong> Reading progress, favorite books, and highlights.</li>
+<li><strong>Device Data:</strong> IP address and device identifiers (used for security and ad delivery).</li>
+</ul>
+<h3>3. Your Rights</h3>
+<p>You can delete your account and all associated data immediately via the "Delete Account" button in Settings.</p>
+`,
+      legal_notice: `
+<h2>Legal Notice</h2>
+<h3>Royalty-Free Content Notice</h3>
+<p>Works sourced via Standard Ebooks and Project Gutenberg. No copyright claimed on original texts.</p>
+<h3>Contact</h3>
+<p>For any legal inquiries, please contact: hello@libreya.app</p>
+`,
+    };
+
     try {
       const settingsArray = await api.get('/settings');
-      const settings: AppSettings = {
-        terms_and_conditions: '',
-        privacy_notice: '',
-        legal_notice: '',
-      };
-      settingsArray.forEach((s: { key: string; value: string }) => {
-        if (s.key in settings) {
-          (settings as any)[s.key] = s.value;
-        }
-      });
+      const settings: AppSettings = { ...defaultSettings };
+      if (Array.isArray(settingsArray)) {
+        settingsArray.forEach((s: { key: string; value: string }) => {
+          if (s.key in settings) {
+            (settings as any)[s.key] = s.value;
+          }
+        });
+      }
       set({ settings });
     } catch (error) {
-      console.error('Error fetching settings:', error);
+      console.log('Using default settings');
+      set({ settings: defaultSettings });
     }
   },
 
