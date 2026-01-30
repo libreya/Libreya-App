@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useAppStore } from '../lib/store';
@@ -16,6 +16,7 @@ export default function RootLayout() {
   const colors = THEMES[theme];
   const router = useRouter();
   const segments = useSegments();
+  const navigationState = useRootNavigationState();
   const [showTerms, setShowTerms] = useState(false);
 
   useEffect(() => {
@@ -25,21 +26,22 @@ export default function RootLayout() {
   // Handle routing based on user state
   useEffect(() => {
     if (isLoading) return;
+    if (!navigationState?.key) return; // Wait for navigation to be ready
 
-    const inAuthGroup = segments[0] === 'welcome' || segments[0] === 'auth';
+    const inWelcome = segments[0] === 'welcome';
+    const inTabs = segments[0] === '(tabs)';
 
-    if (!user) {
-      // No user - redirect to welcome
-      if (!inAuthGroup) {
-        router.replace('/welcome');
-      }
-    } else if (!user.terms_accepted) {
-      // User exists but hasn't accepted terms
-      if (!inAuthGroup) {
-        setShowTerms(true);
-      }
+    if (!user && !inWelcome) {
+      // No user and not on welcome - redirect to welcome
+      router.replace('/welcome');
+    } else if (user && !user.terms_accepted && inTabs) {
+      // User exists, in tabs, but hasn't accepted terms - show modal
+      setShowTerms(true);
+    } else if (user && user.terms_accepted) {
+      // User with accepted terms - hide modal
+      setShowTerms(false);
     }
-  }, [user, segments, isLoading]);
+  }, [user, segments, isLoading, navigationState?.key]);
 
   const handleAcceptTerms = async () => {
     await acceptTerms();
