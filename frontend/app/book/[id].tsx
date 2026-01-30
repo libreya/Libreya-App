@@ -382,28 +382,6 @@ export default function BookReaderScreen() {
               <Text style={{ color: colors.text }}>+</Text>
             </TouchableOpacity>
           </View>
-          
-          <View style={styles.actionButtons}>
-            <TouchableOpacity 
-              onPress={handleToggleFavorite} 
-              style={styles.actionBtn}
-              disabled={favoriteLoading}
-            >
-              <Ionicons 
-                name={isFavorite ? 'heart' : 'heart-outline'} 
-                size={24} 
-                color={isFavorite ? COLORS.error : colors.text} 
-              />
-              <Text style={[styles.actionText, { color: colors.text }]}>
-                {isFavorite ? 'Favorited' : 'Favorite'}
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity onPress={handleShare} style={styles.actionBtn}>
-              <Ionicons name="share-social-outline" size={24} color={colors.text} />
-              <Text style={[styles.actionText, { color: colors.text }]}>Share</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       )}
       
