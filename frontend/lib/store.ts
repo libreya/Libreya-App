@@ -321,14 +321,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { user } = get();
     if (!user) return;
 
-    try {
-      await api.post('/users/accept-terms', { user_id: user.id, accepted: true });
-      const updatedUser = { ...user, terms_accepted: true, terms_accepted_at: new Date().toISOString() };
-      set({ user: updatedUser });
-      await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
-    } catch (error) {
-      console.error('Error accepting terms:', error);
-    }
+    // Update locally first
+    const updatedUser = { ...user, terms_accepted: true, terms_accepted_at: new Date().toISOString() };
+    set({ user: updatedUser });
+    await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+
+    // Try to sync with server (don't block on failure)
+    api.post('/users/accept-terms', { user_id: user.id, accepted: true }).catch(() => {
+      console.log('Could not sync terms acceptance with server');
+    });
   },
 
   deleteAccount: async () => {
