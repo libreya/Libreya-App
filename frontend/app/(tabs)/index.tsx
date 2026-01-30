@@ -185,4 +185,8 @@ const styles = StyleSheet.create({
   gridList: {
     paddingHorizontal: 16,
   },
+  bottomAdContainer: {
+    marginTop: 16,
+    marginBottom: 24,
+  },
 });
