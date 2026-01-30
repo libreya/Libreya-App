@@ -21,8 +21,11 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
+    // Show terms modal only if user exists and hasn't accepted terms
     if (user && !user.terms_accepted) {
       setShowTerms(true);
+    } else {
+      setShowTerms(false);
     }
   }, [user]);
 
@@ -46,6 +49,13 @@ export default function RootLayout() {
           headerShown: false,
         }}
       >
+        {/* Show welcome screen if no user */}
+        <Stack.Screen 
+          name="welcome" 
+          options={{ 
+            headerShown: false,
+          }} 
+        />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="auth" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen name="book/[id]" options={{ headerShown: true, title: 'Reading' }} />
