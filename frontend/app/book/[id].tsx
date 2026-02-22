@@ -64,6 +64,7 @@ export default function BookReaderScreen() {
   const [selectedText, setSelectedText] = useState('');
   const [showHighlightButton, setShowHighlightButton] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [showHint, setShowHint] = useState(false);
 
   useEffect(() => {
     loadBook();
@@ -72,6 +73,18 @@ export default function BookReaderScreen() {
   useEffect(() => {
     setIsFavorite(currentActivity?.is_favorite || false);
   }, [currentActivity]);
+
+  useEffect(() => {
+    if (Platform.OS === "web") {
+      setShowHint(true);
+
+      const timer = setTimeout(() => {
+        setShowHint(false);
+      }, 5000); // 5 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const loadBook = async () => {
     if (!id) return;
@@ -106,7 +119,7 @@ export default function BookReaderScreen() {
     } else {
       if (matches[0].trim()) {
         parsedChapters.push({
-          title: 'Preface',
+          title: 'Table of Contents',
           content: stripHtml(matches[0]),
         });
       }
@@ -306,10 +319,10 @@ export default function BookReaderScreen() {
         ref={scrollRef}
         style={styles.content}
         contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
       >
         <Text
-          style={[styles.bookText, { color: colors.text, fontSize }]}
+          style={[styles.bookText, { color: colors.text, fontSize, alignSelf: "center" }]}
           selectable
         >
           {chapters[currentChapter]?.content}
@@ -441,10 +454,10 @@ export default function BookReaderScreen() {
       </Modal>
 
       {/* Highlight button for web */}
-      {Platform.OS === 'web' && (
+      {Platform.OS === 'web' && showHint && (
         <View style={styles.highlightInstructions}>
           <Text style={[styles.highlightHint, { color: colors.textSecondary }]}>
-            💡 Select text and right-click to copy. Highlights are saved automatically.
+            💡 Select text and right-click to copy.
           </Text>
         </View>
       )}
