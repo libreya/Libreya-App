@@ -418,11 +418,6 @@ export default function WelcomeScreen() {
           style={styles.gradient}
         >
           <View style={[styles.content, { paddingBottom: insets.bottom + 20 }]}>
-            <Image
-              source={{ uri: 'https://customer-assets.emergentagent.com/job_bc7b9e4f-7678-4b25-b887-2287e22fd313/artifacts/vl9x3m91_Logo1.jpg' }}
-              style={styles.logo}
-              resizeMode="contain"
-            />
             
             <Text style={styles.title}>Libreya</Text>
             <Text style={styles.subtitle}>Your Gateway to Classic Literature</Text>

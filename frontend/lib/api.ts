@@ -110,7 +110,7 @@ export const api = {
         .select('*')
         .eq('user_id', userId)
         .eq('book_id', bookId)
-        .single();
+        .maybeSingle();
       if (error && error.code !== 'PGRST116') throw new Error(error.message);
       return data;
     }

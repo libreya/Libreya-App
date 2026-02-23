@@ -48,7 +48,7 @@ export function TermsModal({ visible, onAccept }: TermsModalProps) {
         <View style={[styles.modal, { backgroundColor: colors.background, maxHeight: height * 0.85 }]}>
           <Text style={[styles.title, { color: colors.text }]}>Terms and Conditions</Text>
           
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.content} showsVerticalScrollIndicator={true}>
             <Text style={[styles.text, { color: colors.text }]}>
               {htmlToText(settings?.terms_and_conditions || '')}
             </Text>
