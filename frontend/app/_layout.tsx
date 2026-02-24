@@ -6,6 +6,8 @@ import { useAppStore } from '../lib/store';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { TermsModal } from '../components/TermsModal';
 import { COLORS, THEMES } from '../constants/theme';
+import { Platform } from 'react-native';
+import WebAdBanner from '@/components/WebAdBanner';
 
 export default function RootLayout() {
   const initializeApp = useAppStore((s) => s.initializeApp);
@@ -20,9 +22,28 @@ export default function RootLayout() {
   const [showTerms, setShowTerms] = useState(false);
   const [hasNavigated, setHasNavigated] = useState(false);
 
+  // Initialize app
   useEffect(() => {
     initializeApp();
   }, []);
+
+  // Inject AdSense script (WEB ONLY)
+    useEffect(() => {
+      if (Platform.OS === 'web') {
+        const existingScript = document.querySelector(
+          'script[src*="adsbygoogle.js"]'
+        );
+  
+        if (!existingScript) {
+          const script = document.createElement('script');
+          script.src =
+            'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4299148862195882';
+          script.async = true;
+          script.crossOrigin = 'anonymous';
+          document.head.appendChild(script);
+        }
+      }
+    }, []);
 
   // Handle routing based on user state
   useEffect(() => {
@@ -88,6 +109,7 @@ export default function RootLayout() {
         <Stack.Screen name="admin" options={{ headerShown: true, title: 'Admin Dashboard' }} />
         <Stack.Screen name="legal/[type]" options={{ headerShown: true }} />
       </Stack>
+      <WebAdBanner/>
       <TermsModal visible={showTerms} onAccept={handleAcceptTerms} />
     </SafeAreaProvider>
   );
