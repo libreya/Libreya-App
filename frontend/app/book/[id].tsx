@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   Modal,
   FlatList,
+  useWindowDimensions
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +23,7 @@ import { useAppStore } from '../../lib/store';
 import { AdBanner } from '../../components/AdBanner';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { api } from '../../lib/api';
+import { MenuItem } from '@/components/MenuItem';
 
 const { width, height } = Dimensions.get('window');
 
@@ -35,13 +37,13 @@ export default function BookReaderScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
-  
+
   const theme = useAppStore((s) => s.theme);
   const colors = THEMES[theme];
   const user = useAppStore((s) => s.user);
   const isOffline = useAppStore((s) => s.isOffline);
   const error = useAppStore((s) => s.error);
-  
+
   const currentBook = useAppStore((s) => s.currentBook);
   const currentActivity = useAppStore((s) => s.currentActivity);
   const fetchBook = useAppStore((s) => s.fetchBook);
@@ -51,7 +53,7 @@ export default function BookReaderScreen() {
   const incrementChapterRead = useAppStore((s) => s.incrementChapterRead);
   const resetChapterCount = useAppStore((s) => s.resetChapterCount);
   const fetchFavorites = useAppStore((s) => s.fetchFavorites);
-  
+
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [currentChapter, setCurrentChapter] = useState(0);
   const [showControls, setShowControls] = useState(true);
@@ -65,6 +67,9 @@ export default function BookReaderScreen() {
   const [showHighlightButton, setShowHighlightButton] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
+  const { width } = useWindowDimensions();
+  const isSmallDevice = width < 768; 
+  const [menuVisible, setMenuVisible] = useState(false);
 
   useEffect(() => {
     loadBook();
@@ -90,7 +95,7 @@ export default function BookReaderScreen() {
     if (!id) return;
     setLoading(true);
     setLoadError(null);
-    
+
     try {
       const book = await fetchBook(parseInt(id));
       if (book?.content_body) {
@@ -108,9 +113,9 @@ export default function BookReaderScreen() {
   const parseChapters = (content: string) => {
     const chapterRegex = /<h2>([^<]+)<\/h2>/gi;
     const matches = content.split(chapterRegex);
-    
+
     const parsedChapters: Chapter[] = [];
-    
+
     if (matches.length <= 1) {
       parsedChapters.push({
         title: currentBook?.title || 'Book',
@@ -123,7 +128,7 @@ export default function BookReaderScreen() {
           content: stripHtml(matches[0]),
         });
       }
-      
+
       for (let i = 1; i < matches.length; i += 2) {
         const title = matches[i]?.trim() || `Chapter ${Math.ceil(i / 2)}`;
         const chapterContent = matches[i + 1] || '';
@@ -133,9 +138,9 @@ export default function BookReaderScreen() {
         });
       }
     }
-    
+
     setChapters(parsedChapters);
-    
+
     if (currentActivity?.last_position) {
       const chapterIndex = Math.floor(currentActivity.last_position * parsedChapters.length);
       setCurrentChapter(Math.min(chapterIndex, parsedChapters.length - 1));
@@ -158,7 +163,7 @@ export default function BookReaderScreen() {
 
   const goToChapter = (index: number) => {
     if (index < 0 || index >= chapters.length) return;
-    
+
     if (index > currentChapter) {
       incrementChapterRead();
       if ((chaptersReadSinceAd + 1) >= 3) {
@@ -167,26 +172,26 @@ export default function BookReaderScreen() {
         setTimeout(() => setShowInterstitial(false), 2000);
       }
     }
-    
+
     setCurrentChapter(index);
     scrollRef.current?.scrollTo({ y: 0, animated: false });
-    
+
     const progress = index / chapters.length;
-    updateActivity({ 
+    updateActivity({
       last_position: progress,
-      chapter_read_count: (currentActivity?.chapter_read_count || 0) + 1 
+      chapter_read_count: (currentActivity?.chapter_read_count || 0) + 1
     });
   };
 
   const handleToggleFavorite = async () => {
     if (!user || !currentBook) return;
-    
+
     setFavoriteLoading(true);
     const newFavoriteStatus = !isFavorite;
-    
+
     try {
       setIsFavorite(newFavoriteStatus);
-      
+
       const activity = {
         user_id: user.id,
         book_id: currentBook.id,
@@ -195,10 +200,10 @@ export default function BookReaderScreen() {
         highlights: currentActivity?.highlights || [],
         chapter_read_count: currentActivity?.chapter_read_count || 0,
       };
-      
+
       await api.post('/activity', activity);
       await fetchFavorites();
-      
+
       Alert.alert(
         newFavoriteStatus ? 'Added to Favorites' : 'Removed from Favorites',
         `"${currentBook.title}" has been ${newFavoriteStatus ? 'added to' : 'removed from'} your favorites.`
@@ -213,7 +218,7 @@ export default function BookReaderScreen() {
 
   const handleShare = async () => {
     if (!currentBook) return;
-    
+
     const shareData = {
       title: currentBook.title,
       text: `I'm reading "${currentBook.title}" by ${currentBook.author} on Libreya!`,
@@ -258,8 +263,8 @@ export default function BookReaderScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Stack.Screen options={{ headerShown: true, title: 'Error', headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.text }} />
-        <ErrorMessage 
-          message={loadError || 'Book not found'} 
+        <ErrorMessage
+          message={loadError || 'Book not found'}
           onRetry={loadBook}
           type={isOffline ? 'offline' : 'error'}
         />
@@ -276,36 +281,113 @@ export default function BookReaderScreen() {
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
           headerRight: () => (
-            <View style={styles.headerButtons}>
-              <TouchableOpacity 
-                onPress={() => setShowTOC(true)} 
-                style={styles.headerBtn}
+            isSmallDevice ? (
+              // 🍔 Burger Menu (Small Devices)
+              <TouchableOpacity
+                onPress={() => setMenuVisible(true)}
+                style={{ marginRight: 10 }}
               >
-                <Ionicons name="list-outline" size={24} color={colors.text} />
+                <Ionicons name="menu-outline" size={26} color={colors.text} />
               </TouchableOpacity>
-              <TouchableOpacity 
-                onPress={handleToggleFavorite} 
-                style={styles.headerBtn}
-                disabled={favoriteLoading}
+            ) : (
+              <View
+                style={[
+                  styles.headerButtons,
+                  { flexDirection: isSmallDevice ? 'column' : 'row' },
+                ]}
               >
-                <Ionicons
-                  name={isFavorite ? 'heart' : 'heart-outline'}
-                  size={24}
-                  color={isFavorite ? COLORS.error : colors.text}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleShare} style={styles.headerBtn}>
-                <Ionicons name="share-outline" size={24} color={colors.text} />
-              </TouchableOpacity>
-            </View>
+                {/* Home Button */}
+                <TouchableOpacity
+                  onPress={() => router.push('/')}
+                  style={styles.headerBtn}
+                >
+                  <Ionicons name="home-outline" size={24} color={colors.text} />
+                </TouchableOpacity>
+
+                {/* TOC */}
+                <TouchableOpacity
+                  onPress={() => setShowTOC(true)}
+                  style={styles.headerBtn}
+                >
+                  <Ionicons name="list-outline" size={24} color={colors.text} />
+                </TouchableOpacity>
+
+                {/* Favorite */}
+                <TouchableOpacity
+                  onPress={handleToggleFavorite}
+                  style={styles.headerBtn}
+                  disabled={favoriteLoading}
+                >
+                  <Ionicons
+                    name={isFavorite ? 'heart' : 'heart-outline'}
+                    size={24}
+                    color={isFavorite ? COLORS.error : colors.text}
+                  />
+                </TouchableOpacity>
+
+                {/* Share */}
+                <TouchableOpacity onPress={handleShare} style={styles.headerBtn}>
+                  <Ionicons name="share-outline" size={24} color={colors.text} />
+                </TouchableOpacity>
+
+                {/* Profile Button */}
+                <TouchableOpacity
+                  onPress={() => router.push('/profile')}
+                  style={styles.headerBtn}
+                >
+                  <Ionicons name="person-outline" size={24} color={colors.text} />
+                </TouchableOpacity>
+              </View>)
           ),
         }}
       />
-      
+
+      <Modal
+        visible={menuVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.overlay}
+          activeOpacity={1}
+          onPressOut={() => setMenuVisible(false)}
+        >
+          <View style={[styles.menuContainer, { backgroundColor: colors.border }]}>
+            {/* Home Button */}
+            <MenuItem label="Home" onPress={() => {
+              setMenuVisible(false);
+              router.push('/');
+            }} />
+            {/* TOC */}
+            <MenuItem label="Table of Contents" onPress={() => {
+              setMenuVisible(false);
+              setShowTOC(true);
+            }} />
+            {/* Favorites */}
+            <MenuItem label={isFavorite ? "Remove Favorite" : "Add to Favorite"} onPress={() => {
+              setMenuVisible(false);
+              handleToggleFavorite();
+            }} />
+            {/* Share */}
+            <MenuItem label="Share" onPress={() => {
+              setMenuVisible(false);
+              handleShare();
+            }} />
+            {/* Profil button */}
+            <MenuItem label="Profile" onPress={() => {
+              setMenuVisible(false);
+              router.push('/profile');
+            }} />
+
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       <View style={[styles.progressContainer, { backgroundColor: colors.border }]}>
         <View style={[styles.progressBar, { width: `${progress}%`, backgroundColor: COLORS.primary }]} />
       </View>
-      
+
       <View style={[styles.chapterHeader, { backgroundColor: colors.surface }]}>
         <Text style={[styles.chapterTitle, { color: colors.text }]} numberOfLines={1}>
           {chapters[currentChapter]?.title}
@@ -314,7 +396,7 @@ export default function BookReaderScreen() {
           {currentChapter + 1} of {chapters.length} ({Math.round(progress)}%)
         </Text>
       </View>
-      
+
       <ScrollView
         ref={scrollRef}
         style={styles.content}
@@ -327,11 +409,11 @@ export default function BookReaderScreen() {
         >
           {chapters[currentChapter]?.content}
         </Text>
-        
+
         <View style={styles.chapterEndAd}>
           <AdBanner />
         </View>
-        
+
         <View style={styles.chapterNavButtons}>
           <TouchableOpacity
             onPress={() => goToChapter(currentChapter - 1)}
@@ -346,7 +428,7 @@ export default function BookReaderScreen() {
               Previous
             </Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             onPress={() => goToChapter(currentChapter + 1)}
             disabled={currentChapter === chapters.length - 1}
@@ -362,7 +444,7 @@ export default function BookReaderScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-      
+
       {showControls && (
         <View style={[styles.controls, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 10 }]}>
           <View style={styles.fontControls}>
@@ -384,13 +466,13 @@ export default function BookReaderScreen() {
           </View>
         </View>
       )}
-      
+
       {showInterstitial && (
         <View style={styles.interstitialOverlay}>
           <View style={styles.interstitialContent}>
             <Text style={styles.interstitialText}>Advertisement</Text>
             <Text style={styles.interstitialSubtext}>Interstitial ad (every 3 chapters)</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.closeAdBtn}
               onPress={() => setShowInterstitial(false)}
             >
@@ -432,12 +514,12 @@ export default function BookReaderScreen() {
                   <Text style={[styles.tocChapterNum, { color: COLORS.primary }]}>
                     {index + 1}
                   </Text>
-                  <Text 
+                  <Text
                     style={[
-                      styles.tocChapterTitle, 
+                      styles.tocChapterTitle,
                       { color: colors.text },
                       index === currentChapter && { fontWeight: '600' },
-                    ]} 
+                    ]}
                     numberOfLines={2}
                   >
                     {item.title}
@@ -642,5 +724,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     opacity: 0.7,
+  },
+  overlay: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    paddingTop: 80,
+    paddingRight: 10,
+  },
+  menuContainer: {
+    width: 220,
+    borderRadius: 12,
+    paddingVertical: 8,
+    elevation: 6,
   },
 });
