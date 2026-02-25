@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
   Dimensions,
   ActivityIndicator,
   TextInput,
+  LayoutChangeEvent,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,8 +27,11 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import * as Crypto from 'expo-crypto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import WelcomePageHeader from '@/components/WelcomePageHeader';
+import WelcomPageContent from '@/components/WelcomPageContent';
 
 const { width, height } = Dimensions.get('window');
+export type SectionKey = "meetTheFounder" | "philosophy";
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -45,16 +49,34 @@ export default function WelcomeScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
-  
+
   // Password visibility states
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   // Error message state
   const [errorMessage, setErrorMessage] = useState('');
-  
+
   // Forgot password states
   const [resetEmailSent, setResetEmailSent] = useState(false);
+
+  const scrollRef = useRef<ScrollView | null>(null);
+
+  const [sectionPositions, setSectionPositions] = useState<
+    Record<SectionKey, number>
+  >({
+    meetTheFounder: 0,
+    philosophy: 0
+  });
+
+  const scrollToSection = (key: SectionKey) => {
+    const y = sectionPositions[key];
+    scrollRef.current?.scrollTo({ y, animated: true });
+  };
+
+  const registerSection = (key: SectionKey, y: number) => {
+    setSectionPositions((prev) => ({ ...prev, [key]: y }));
+  };
 
   useEffect(() => {
     const checkAppleAuth = async () => {
@@ -118,7 +140,7 @@ export default function WelcomeScreen() {
 
   const handleEmailAuth = async () => {
     setErrorMessage('');
-    
+
     if (!email || !password) {
       setErrorMessage('Please enter email and password');
       return;
@@ -180,7 +202,7 @@ export default function WelcomeScreen() {
               console.error('Error creating user profile:', e);
             }
           }
-          
+
           if (previousGuestId) {
             await migrateGuestData(previousGuestId, data.user.id);
           }
@@ -254,7 +276,7 @@ export default function WelcomeScreen() {
   // Forgot password handler
   const handleForgotPassword = async () => {
     setErrorMessage('');
-    
+
     if (!email) {
       setErrorMessage('Please enter your email address');
       return;
@@ -267,10 +289,10 @@ export default function WelcomeScreen() {
 
     setLoading(true);
     try {
-      const redirectUrl = Platform.OS === 'web' 
+      const redirectUrl = Platform.OS === 'web'
         ? `${window.location.origin}/reset-password`
         : 'libreya://reset-password';
-      
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,
       });
@@ -296,7 +318,7 @@ export default function WelcomeScreen() {
     setGoogleLoading(true);
     try {
       const redirectUrl = getRedirectUrl();
-      
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -323,7 +345,7 @@ export default function WelcomeScreen() {
   const handleAppleSignIn = async () => {
     setAppleLoading(true);
     const previousGuestId = user?.auth_provider === 'guest' ? user.id : null;
-    
+
     try {
       if (Platform.OS === 'ios') {
         const credential = await AppleAuthentication.signInAsync({
@@ -359,11 +381,11 @@ export default function WelcomeScreen() {
               await api.post('/users', newUser);
             } catch {
               try {
-                await api.patch(`/users/${data.user.id}`, { 
+                await api.patch(`/users/${data.user.id}`, {
                   display_name: displayName,
-                  auth_provider: 'apple' 
+                  auth_provider: 'apple'
                 });
-              } catch {}
+              } catch { }
             }
 
             if (previousGuestId) {
@@ -377,7 +399,7 @@ export default function WelcomeScreen() {
         }
       } else if (Platform.OS === 'web') {
         const redirectUrl = getRedirectUrl();
-        
+
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'apple',
           options: {
@@ -406,29 +428,46 @@ export default function WelcomeScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Stack.Screen options={{ headerShown: false }} />
-        
+
         <Image
           source={{ uri: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800' }}
           style={styles.backgroundImage}
           resizeMode="cover"
         />
-        
+
         <LinearGradient
           colors={['transparent', 'rgba(90,31,43,0.8)', COLORS.primary]}
           style={styles.gradient}
         >
-          <View style={[styles.content, { paddingBottom: insets.bottom + 20 }]}>
-            
-            <Text style={styles.title}>Libreya</Text>
-            <Text style={styles.subtitle}>Your Gateway to Classic Literature</Text>
-            <Text style={styles.description}>
-              Discover over 300 timeless classics from the world's greatest authors.
-              Free, forever.
-            </Text>
+          <ScrollView ref={scrollRef}>
+            <WelcomePageHeader onNavigate={scrollToSection} />
+            <View style={[styles.content, { paddingBottom: insets.bottom + 20 }]}>
+              <Text style={styles.title}>Libreya</Text>
+              <Text style={styles.subtitle}>Curated classics. Timeless reading.</Text>
+              <Text style={styles.description}>
+                Discover timeless classics from the world's greatest authors.<br></br>
+                Free, forever.
+              </Text>
+              <View style={styles.browseButtonContainer}>
+                <TouchableOpacity
+                  style={styles.guestButton}
+                  onPress={handleContinueAsGuest}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color={COLORS.white} />
+                  ) : (
+                    <Text style={styles.browseButtonText}>Click here to browse our free ebooks</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
 
+            </View>
+
+            <WelcomPageContent registerSection={registerSection} />
             <View style={styles.buttonContainer}>
               <Button
-                title="Sign Up with Email"
+                title="Sign Up with Email to save your favorites"
                 onPress={() => setMode('signup')}
                 style={styles.primaryButton}
               />
@@ -491,7 +530,7 @@ export default function WelcomeScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
-          </View>
+          </ScrollView>
         </LinearGradient>
       </View>
     );
@@ -792,7 +831,7 @@ const styles = StyleSheet.create({
   },
   gradient: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
   },
   content: {
     padding: 24,
@@ -804,19 +843,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    fontSize: 42,
+    fontSize: 100,
     fontWeight: 'bold',
     color: COLORS.white,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 18,
+    fontSize: 48,
+    fontStyle: 'italic',
     color: COLORS.secondary,
     textAlign: 'center',
     marginTop: 4,
   },
   description: {
-    fontSize: 14,
+    fontSize: 18,
     color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
     marginTop: 12,
@@ -826,6 +866,14 @@ const styles = StyleSheet.create({
   buttonContainer: {
     width: '100%',
     gap: 12,
+    marginTop: 50,
+    marginBottom: 50
+  },
+  browseButtonContainer: {
+    width: '50%',
+    gap: 12,
+    marginTop: 100,
+    marginBottom: 100
   },
   primaryButton: {
     width: '100%',
@@ -874,6 +922,11 @@ const styles = StyleSheet.create({
   },
   guestButtonText: {
     fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.white,
+  },
+  browseButtonText: {
+    fontSize: 20,
     fontWeight: '600',
     color: COLORS.white,
   },
