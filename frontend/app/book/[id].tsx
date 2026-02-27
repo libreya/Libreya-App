@@ -24,6 +24,7 @@ import { AdBanner } from '../../components/AdBanner';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { api } from '../../lib/api';
 import { MenuItem } from '@/components/MenuItem';
+import { AnimatedButton } from '@/components/AnimatedButton';
 
 const { width, height } = Dimensions.get('window');
 
@@ -68,8 +69,58 @@ export default function BookReaderScreen() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
   const { width } = useWindowDimensions();
-  const isSmallDevice = width < 768; 
+  const isSmallDevice = width < 768;
   const [menuVisible, setMenuVisible] = useState(false);
+
+  const menuItems = [
+    {
+      label: "Home",
+      icon: <Ionicons name="home-outline" size={26} color={colors.text} />,
+      onPress: () => {
+        setMenuVisible(false);
+        router.push("/");
+      },
+    },
+    {
+      label: "Table of Contents",
+      icon: <Ionicons name="list-outline" size={26} color={colors.text} />,
+      onPress: () => {
+        setMenuVisible(false);
+        setShowTOC(true);
+      }
+    },
+    {
+      label: isFavorite ? "Remove Favorite" : "Add to Favorite",
+      icon: <Ionicons
+        name={isFavorite ? 'heart' : 'heart-outline'}
+        size={24}
+        color={isFavorite ? COLORS.error : colors.text}
+      />,
+      loading: favoriteLoading,
+      onPress: () => {
+        setMenuVisible(false);
+        handleToggleFavorite();
+      }
+    },
+    {
+      label: "Share",
+      icon: <Ionicons name="share-outline" size={26} color={colors.text} />,
+      onPress: () => {
+        setMenuVisible(false);
+        handleShare();
+      }
+    },
+    {
+      label: "Profile",
+      icon: <Ionicons name="person-outline" size={26} color={colors.text} />,
+      onPress: () => {
+        setMenuVisible(false);
+        router.push('/profile');
+      }
+    }
+
+  ];
+
 
   useEffect(() => {
     loadBook();
@@ -296,52 +347,23 @@ export default function BookReaderScreen() {
                   { flexDirection: isSmallDevice ? 'column' : 'row' },
                 ]}
               >
-                {/* Home Button */}
-                <TouchableOpacity
-                  onPress={() => router.push('/')}
-                  style={styles.headerBtn}
-                >
-                  <Ionicons name="home-outline" size={24} color={colors.text} />
-                </TouchableOpacity>
-
-                {/* TOC */}
-                <TouchableOpacity
-                  onPress={() => setShowTOC(true)}
-                  style={styles.headerBtn}
-                >
-                  <Ionicons name="list-outline" size={24} color={colors.text} />
-                </TouchableOpacity>
-
-                {/* Favorite */}
-                <TouchableOpacity
-                  onPress={handleToggleFavorite}
-                  style={styles.headerBtn}
-                  disabled={favoriteLoading}
-                >
-                  <Ionicons
-                    name={isFavorite ? 'heart' : 'heart-outline'}
-                    size={24}
-                    color={isFavorite ? COLORS.error : colors.text}
+                {menuItems.map((item, index) => (
+                  <AnimatedButton
+                    key={index}
+                    onPress={item.onPress}
+                    label=""
+                    color="inherit"
+                    buttonStyle={ {paddingLeft: 0, paddingRight: 0}}
+                    icon={item.icon}
+                    loading={item.loading}
                   />
-                </TouchableOpacity>
-
-                {/* Share */}
-                <TouchableOpacity onPress={handleShare} style={styles.headerBtn}>
-                  <Ionicons name="share-outline" size={24} color={colors.text} />
-                </TouchableOpacity>
-
-                {/* Profile Button */}
-                <TouchableOpacity
-                  onPress={() => router.push('/profile')}
-                  style={styles.headerBtn}
-                >
-                  <Ionicons name="person-outline" size={24} color={colors.text} />
-                </TouchableOpacity>
+                ))}
               </View>)
           ),
         }}
       />
 
+      {/* Menu items on small devices */}
       <Modal
         visible={menuVisible}
         transparent
@@ -352,34 +374,17 @@ export default function BookReaderScreen() {
           style={styles.overlay}
           activeOpacity={1}
           onPressOut={() => setMenuVisible(false)}
+          onPress={() => setMenuVisible(false)}
         >
-          <View style={[styles.menuContainer, { backgroundColor: colors.border }]}>
-            {/* Home Button */}
-            <MenuItem label="Home" onPress={() => {
-              setMenuVisible(false);
-              router.push('/');
-            }} />
-            {/* TOC */}
-            <MenuItem label="Table of Contents" onPress={() => {
-              setMenuVisible(false);
-              setShowTOC(true);
-            }} />
-            {/* Favorites */}
-            <MenuItem label={isFavorite ? "Remove Favorite" : "Add to Favorite"} onPress={() => {
-              setMenuVisible(false);
-              handleToggleFavorite();
-            }} />
-            {/* Share */}
-            <MenuItem label="Share" onPress={() => {
-              setMenuVisible(false);
-              handleShare();
-            }} />
-            {/* Profil button */}
-            <MenuItem label="Profile" onPress={() => {
-              setMenuVisible(false);
-              router.push('/profile');
-            }} />
-
+          <View style={[styles.menuContainer, { backgroundColor: "#fff" }]}>
+            <FlatList
+              data={menuItems}
+              keyExtractor={(_, index) => `item-${index}`}
+              renderItem={({ item, index }) => (
+                <MenuItem label={item.label} onPress={(item.onPress)} />
+              )}
+              contentContainerStyle={styles.tocList}
+            />
           </View>
         </TouchableOpacity>
       </Modal>
@@ -562,9 +567,6 @@ const styles = StyleSheet.create({
   headerButtons: {
     flexDirection: 'row',
     gap: 8,
-  },
-  headerBtn: {
-    padding: 8,
   },
   progressContainer: {
     height: 3,
