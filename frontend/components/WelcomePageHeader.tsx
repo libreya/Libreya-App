@@ -9,7 +9,7 @@ type Props = {
 
 export default function WelcomePageHeader({ onNavigate }: Props) {
   const { width } = useWindowDimensions();
-  const isSmallScreen = width < 768;
+  const isSmallScreen = width < 480;
 
   return (
     <View style={[styles.header, isSmallScreen && styles.headerSmall]}>
@@ -19,7 +19,6 @@ export default function WelcomePageHeader({ onNavigate }: Props) {
           source={require("../assets/images/libreya-logo.png")}
           style={styles.icon}
         />
-        <Text style={styles.appName}>Libreya</Text>
       </View>
 
       {/* Navigation Items */}
@@ -42,7 +41,6 @@ const styles = StyleSheet.create({
   headerSmall: {
     flexDirection: "column",
     alignItems: "center",
-    height: 140,
     paddingVertical: 12,
   },
   leftContainer: {

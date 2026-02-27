@@ -29,6 +29,7 @@ import * as Crypto from 'expo-crypto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import WelcomePageHeader from '@/components/WelcomePageHeader';
 import WelcomPageContent from '@/components/WelcomPageContent';
+import { AnimatedButton } from '@/components/AnimatedButton';
 
 const { width, height } = Dimensions.get('window');
 export type SectionKey = "meetTheFounder" | "philosophy";
@@ -449,43 +450,39 @@ export default function WelcomeScreen() {
                 Free, forever.
               </Text>
               <View style={styles.browseButtonContainer}>
-                <TouchableOpacity
-                  style={styles.guestButton}
+                <AnimatedButton
                   onPress={handleContinueAsGuest}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color={COLORS.white} />
-                  ) : (
-                    <Text style={styles.browseButtonText}>Click here to browse our free ebooks</Text>
-                  )}
-                </TouchableOpacity>
+                  loading={loading}
+                  label="Click here to browse our free ebooks"
+                  color="inherit"
+                  textColor="#fff"
+                  textStyle={styles.browseButtonText}
+                  buttonStyle={styles.guestButton}
+                />
               </View>
 
             </View>
 
             <WelcomPageContent registerSection={registerSection} />
             <View style={styles.buttonContainer}>
-              <Button
-                title="Sign Up with Email to save your favorites"
+
+              <AnimatedButton
                 onPress={() => setMode('signup')}
-                style={styles.primaryButton}
+                label="Sign Up with Email to save your favorites"
+                color="rgba(90,31,43,1.00)"
+                textStyle={styles.guestButtonText}
+                buttonStyle={styles.primaryButton}
               />
 
-              <TouchableOpacity
-                style={styles.googleButton}
+              <AnimatedButton
                 onPress={handleGoogleSignIn}
-                disabled={googleLoading}
-              >
-                {googleLoading ? (
-                  <ActivityIndicator color="#DB4437" />
-                ) : (
-                  <>
-                    <Ionicons name="logo-google" size={20} color="#DB4437" />
-                    <Text style={styles.googleButtonText}>Continue with Google</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+                loading={googleLoading}
+                label="Continue with Google"
+                color="#fff"
+                textColor="#202124"
+                buttonStyle={styles.googleButton}
+                icon={<Ionicons name="logo-google" size={20} color="#DB4437" />}
+              />
 
               {Platform.OS === 'ios' && appleAuthAvailable ? (
                 <AppleAuthentication.AppleAuthenticationButton
@@ -496,33 +493,26 @@ export default function WelcomeScreen() {
                   onPress={handleAppleSignIn}
                 />
               ) : (
-                <TouchableOpacity
-                  style={styles.appleButton}
+                <AnimatedButton
                   onPress={handleAppleSignIn}
-                  disabled={appleLoading}
-                >
-                  {appleLoading ? (
-                    <ActivityIndicator color={COLORS.white} />
-                  ) : (
-                    <>
-                      <Ionicons name="logo-apple" size={20} color={COLORS.white} />
-                      <Text style={styles.appleButtonText}>Continue with Apple</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
+                  loading={appleLoading}
+                  label="Continue with Apple"
+                  color="#fff"
+                  textColor="#fff"
+                  buttonStyle={styles.appleButton}
+                  icon={<Ionicons name="logo-apple" size={20} color={COLORS.white} />}
+                />
               )}
 
-              <TouchableOpacity
-                style={styles.guestButton}
+              <AnimatedButton
                 onPress={handleContinueAsGuest}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color={COLORS.white} />
-                ) : (
-                  <Text style={styles.guestButtonText}>Continue as Guest</Text>
-                )}
-              </TouchableOpacity>
+                loading={loading}
+                label="Continue as Guest"
+                color="inherit"
+                textColor="#fff"
+                textStyle={styles.guestButtonText}
+                buttonStyle={styles.guestButton}
+              />
 
               <TouchableOpacity onPress={() => setMode('signin')}>
                 <Text style={styles.signinLink}>
@@ -752,11 +742,12 @@ export default function WelcomeScreen() {
             </TouchableOpacity>
           )}
 
-          <Button
-            title={mode === 'signin' ? 'Sign In' : 'Create Account'}
+          <AnimatedButton
             onPress={handleEmailAuth}
             loading={loading}
-            style={{ marginTop: 8 }}
+            label={mode === 'signin' ? 'Sign In' : 'Create Account'}
+            color="rgba(90,31,43,1.00)"
+            buttonStyle={{ marginTop: 8 }}
           />
         </View>
 

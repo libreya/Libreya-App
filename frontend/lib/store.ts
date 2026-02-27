@@ -85,7 +85,7 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set, get) => ({
   user: null,
-  isLoading: true,
+  isLoading: false,
   theme: 'light',
   books: [],
   featuredBooks: [],
