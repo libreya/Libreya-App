@@ -1,43 +1,35 @@
 import { SectionKey } from "@/app/welcome";
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image } from "react-native";
-
+import { View, Text, TouchableOpacity, StyleSheet, Image, useWindowDimensions } from "react-native";
+import { NavItem } from "./NavItem";
 
 type Props = {
   onNavigate: (key: SectionKey) => void;
 };
 
 export default function WelcomePageHeader({ onNavigate }: Props) {
+  const { width } = useWindowDimensions();
+  const isSmallScreen = width < 768;
+
   return (
-    <View style={styles.header}>
-      {/* Left: Icon + App Name */}
-      <View style={styles.leftContainer}>
+    <View style={[styles.header, isSmallScreen && styles.headerSmall]}>
+      {/* Logo + App Name */}
+      <View style={[styles.leftContainer, isSmallScreen && styles.centerAlign]}>
         <Image
-          source={require("../assets/images/libreya-logo.png" )}
+          source={require("../assets/images/libreya-logo.png")}
           style={styles.icon}
         />
         <Text style={styles.appName}>Libreya</Text>
       </View>
 
-      {/* Right: Navigation Items */}
-      <View style={styles.rightContainer}>
+      {/* Navigation Items */}
+      <View style={[styles.rightContainer, isSmallScreen && styles.navWrap]}>
         <NavItem label="Meet the Founder" onPress={() => onNavigate("meetTheFounder")} />
         <NavItem label="Philosophy" onPress={() => onNavigate("philosophy")} />
       </View>
     </View>
   );
 }
-
-type NavItemProps = {
-  label: string;
-  onPress: () => void;
-};
-
-const NavItem = ({ label, onPress }: NavItemProps) => (
-  <TouchableOpacity onPress={onPress} style={styles.navItem}>
-    <Text style={styles.navText}>{label}</Text>
-  </TouchableOpacity>
-);
 
 const styles = StyleSheet.create({
   header: {
@@ -47,9 +39,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
   },
+  headerSmall: {
+    flexDirection: "column",
+    alignItems: "center",
+    height: 140,
+    paddingVertical: 12,
+  },
   leftContainer: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  centerAlign: {
+    justifyContent: "center",
+    marginBottom: 12,
+    width: "100%",
   },
   icon: {
     width: 32,
@@ -66,14 +69,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  navItem: {
-    marginLeft: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  navText: {
-    color: "white",
-    fontWeight: "600",
-    fontSize: 16,
-  },
+  navWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap", // ✅ allow items to go to next line
+    justifyContent: "center", // center items when wrapping
+    width: "100%",
+  }
 });
