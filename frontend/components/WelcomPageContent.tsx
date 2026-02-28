@@ -1,4 +1,5 @@
-import { SectionKey } from "@/app/welcome";
+
+import { SectionKey } from "@/app";
 import React from "react";
 import { View, Text, StyleSheet, LayoutChangeEvent, ScrollView } from "react-native";
 

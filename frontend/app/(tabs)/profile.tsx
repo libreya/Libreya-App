@@ -84,12 +84,12 @@ export default function ProfileScreen() {
             Alert.alert(
               'Account Deleted', 
               'Your account and all data have been successfully erased.',
-              [{ text: 'OK', onPress: () => router.replace('/welcome') }]
+              [{ text: 'OK', onPress: () => router.replace('/') }]
             );
             return; // Don't redirect immediately on native - wait for alert dismiss
           }
           
-          router.replace('/welcome');
+          router.replace('/');
         } catch (error: any) {
           const errorMessage = error?.message || 'Failed to delete account. Please try again.';
           if (Platform.OS === 'web') {
@@ -111,7 +111,7 @@ export default function ProfileScreen() {
       async () => {
         try {
           await signOut();
-          router.replace('/welcome');
+          router.replace('/');
         } catch (error) {
           if (Platform.OS === 'web') {
             window.alert('Error: Failed to sign out. Please try again.');

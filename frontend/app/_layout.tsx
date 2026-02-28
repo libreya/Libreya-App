@@ -52,22 +52,6 @@ export default function RootLayout() {
     }
   }, []);
 
-  // Handle routing based on user state, safely after layout mounts
-  useEffect(() => {
-    if (!mounted || isLoading || !navigationState?.key) return;
-
-    const inWelcome = segments[0] === 'welcome';
-    const inIndex = segments.length === 0 || segments[0] === 'index' || segments[0] === '';
-    const inTabs = segments[0] === '(tabs)';
-
-    // Redirect rules
-    if (!user && (inIndex || inTabs)) {
-      router.replace('/welcome');
-    } else if (user && user.terms_accepted && (inIndex || inWelcome)) {
-      router.replace('/(tabs)');
-    }
-  }, [mounted, isLoading, user, segments, navigationState?.key]);
-
   // Show terms modal if user navigates to tabs without accepting terms
   useEffect(() => {
     if (user && !user.terms_accepted && segments[0] === '(tabs)') {
@@ -96,8 +80,6 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="index" />
-        <Stack.Screen name="welcome" />
-        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="auth" options={{ presentation: 'modal' }} />
         <Stack.Screen name="book/[id]" options={{ headerShown: true, title: 'Reading' }} />
         <Stack.Screen name="admin" options={{ headerShown: true, title: 'Admin Dashboard' }} />
@@ -106,9 +88,6 @@ export default function RootLayout() {
 
       {/* Mobile-only loading overlay */}
       {isLoading && Platform.OS !== 'web' && <LoadingScreen />}
-
-      {/* Web AdSense banner */}
-      {Platform.OS === 'web' && <WebAdBanner />}
 
       {/* Terms Modal */}
       <TermsModal visible={showTerms} onAccept={handleAcceptTerms} />

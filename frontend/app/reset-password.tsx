@@ -106,7 +106,7 @@ export default function ResetPasswordScreen() {
           </Text>
           <Button
             title="Go to Sign In"
-            onPress={() => router.replace('/welcome')}
+            onPress={() => router.replace('/')}
             style={{ marginTop: 32, width: '100%' }}
           />
         </View>
@@ -214,7 +214,7 @@ export default function ResetPasswordScreen() {
 
         <TouchableOpacity
           style={styles.backLink}
-          onPress={() => router.replace('/welcome')}
+          onPress={() => router.replace('/')}
         >
           <Text style={[styles.backLinkText, { color: colors.textSecondary }]}>
             Back to <Text style={{ color: COLORS.primary, fontWeight: '600' }}>Sign In</Text>

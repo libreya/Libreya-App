@@ -1,7 +1,7 @@
-import { SectionKey } from "@/app/welcome";
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image, useWindowDimensions } from "react-native";
 import { NavItem } from "./NavItem";
+import { SectionKey } from "@/app";
 
 type Props = {
   onNavigate: (key: SectionKey) => void;
