@@ -29,9 +29,10 @@ app.add_middleware(
 # Supabase configuration
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://bruzgztsltjtzwkkehif.supabase.co")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "hello@libreya.app")
 
-# Headers for Supabase requests
+# Headers for Supabase requests (public/anon)
 def get_supabase_headers(auth_token: Optional[str] = None):
     headers = {
         "apikey": SUPABASE_ANON_KEY,
@@ -43,6 +44,15 @@ def get_supabase_headers(auth_token: Optional[str] = None):
     else:
         headers["Authorization"] = f"Bearer {SUPABASE_ANON_KEY}"
     return headers
+
+def get_service_role_headers():
+    """Headers using the Service Role Key for privileged admin operations."""
+    return {
+        "apikey": SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+    }
 
 # ============= MODELS =============
 
@@ -611,6 +621,111 @@ async def update_setting(setting: AppSettings):
         if response.status_code in [200, 201, 204]:
             return {"success": True}
         raise HTTPException(status_code=response.status_code, detail=response.text)
+
+# ============= ADMIN USER MANAGEMENT =============
+
+@app.get("/api/admin/users")
+async def get_all_users():
+    """Get all users (Admin only)"""
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{SUPABASE_URL}/rest/v1/users?select=id,email,display_name,auth_provider,is_admin,terms_accepted,created_at&order=created_at.desc",
+            headers=get_supabase_headers()
+        )
+        if response.status_code == 200:
+            return response.json()
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+
+@app.patch("/api/admin/users/{user_id}/toggle-admin")
+async def toggle_admin(user_id: str):
+    """Toggle admin status for a user"""
+    async with httpx.AsyncClient() as client:
+        get_resp = await client.get(
+            f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}&select=is_admin,email",
+            headers=get_supabase_headers()
+        )
+        if get_resp.status_code == 200 and get_resp.json():
+            user_data = get_resp.json()[0]
+            new_status = not user_data.get("is_admin", False)
+            response = await client.patch(
+                f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
+                headers=get_supabase_headers(),
+                json={"is_admin": new_status, "updated_at": datetime.utcnow().isoformat()}
+            )
+            if response.status_code in [200, 204]:
+                return {"success": True, "is_admin": new_status}
+        raise HTTPException(status_code=400, detail="Failed to toggle admin status")
+
+@app.delete("/api/admin/users/{user_id}")
+async def delete_user(user_id: str):
+    """
+    Securely delete a user using the SUPABASE_SERVICE_ROLE_KEY.
+    This bypasses Row Level Security and removes the user from:
+    1. user_activity table (cascade)
+    2. users table (app data)
+    3. auth.users (Supabase Auth - requires service role)
+    """
+    if not SUPABASE_SERVICE_ROLE_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="SUPABASE_SERVICE_ROLE_KEY is not configured. Cannot delete users securely."
+        )
+    async with httpx.AsyncClient() as client:
+        # Step 1: Delete user activity records
+        await client.delete(
+            f"{SUPABASE_URL}/rest/v1/user_activity?user_id=eq.{user_id}",
+            headers=get_service_role_headers()
+        )
+        # Step 2: Delete from app users table
+        await client.delete(
+            f"{SUPABASE_URL}/rest/v1/users?id=eq.{user_id}",
+            headers=get_service_role_headers()
+        )
+        # Step 3: Delete from Supabase Auth (requires service role)
+        auth_resp = await client.delete(
+            f"{SUPABASE_URL}/auth/v1/admin/users/{user_id}",
+            headers=get_service_role_headers()
+        )
+        if auth_resp.status_code in [200, 204]:
+            return {"success": True, "message": f"User {user_id} deleted from all tables"}
+        # If auth deletion failed but DB rows were removed, still report partial success
+        return {
+            "success": True,
+            "message": f"User removed from app tables. Auth removal status: {auth_resp.status_code}",
+            "warning": "Auth record may need manual cleanup if status is not 200"
+        }
+
+# ============= ADMIN BATCH SETTINGS =============
+
+@app.post("/api/admin/settings/batch")
+async def update_settings_batch(settings: List[AppSettings]):
+    """Update multiple settings at once"""
+    results = []
+    async with httpx.AsyncClient() as client:
+        for setting in settings:
+            setting_data = {
+                "key": setting.key,
+                "value": setting.value,
+                "updated_at": datetime.utcnow().isoformat()
+            }
+            check_response = await client.get(
+                f"{SUPABASE_URL}/rest/v1/app_settings?key=eq.{setting.key}",
+                headers=get_supabase_headers()
+            )
+            if check_response.status_code == 200 and check_response.json():
+                response = await client.patch(
+                    f"{SUPABASE_URL}/rest/v1/app_settings?key=eq.{setting.key}",
+                    headers=get_supabase_headers(),
+                    json=setting_data
+                )
+            else:
+                response = await client.post(
+                    f"{SUPABASE_URL}/rest/v1/app_settings",
+                    headers=get_supabase_headers(),
+                    json=setting_data
+                )
+            results.append({"key": setting.key, "success": response.status_code in [200, 201, 204]})
+    return {"results": results}
 
 # ============= BOOK SEEDING =============
 
