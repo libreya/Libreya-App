@@ -8,6 +8,8 @@ import {
   Image,
   Alert,
   TextInput,
+  Platform,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +19,21 @@ import { useAppStore } from '../../lib/store';
 import { Button } from '../../components/Button';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { api } from '../../lib/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Custom confirm dialog that works on web
+const showConfirm = (title: string, message: string, onConfirm: () => void, confirmText = 'OK', destructive = false) => {
+  if (Platform.OS === 'web') {
+    if (window.confirm(`${title}\n\n${message}`)) {
+      onConfirm();
+    }
+  } else {
+    Alert.alert(title, message, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: confirmText, style: destructive ? 'destructive' : 'default', onPress: onConfirm },
+    ]);
+  }
+};
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -26,6 +43,7 @@ export default function ProfileScreen() {
   const user = useAppStore((s) => s.user);
   const setUser = useAppStore((s) => s.setUser);
   const deleteAccount = useAppStore((s) => s.deleteAccount);
+  const signOut = useAppStore((s) => s.signOut);
 
   const [editing, setEditing] = useState(false);
   const [displayName, setDisplayName] = useState(user?.display_name || '');
@@ -50,24 +68,59 @@ export default function ProfileScreen() {
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
+    showConfirm(
       'Delete Account',
       'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteAccount();
-              Alert.alert('Account Deleted', 'Your account has been permanently deleted.');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete account');
-            }
-          },
-        },
-      ]
+      async () => {
+        try {
+          await deleteAccount();
+          
+          // Show clear success message before redirect
+          const successMessage = '✓ Your account and all data have been successfully erased.\n\nYou will now be redirected to the Welcome screen.';
+          
+          if (Platform.OS === 'web') {
+            window.alert(successMessage);
+          } else {
+            Alert.alert(
+              'Account Deleted', 
+              'Your account and all data have been successfully erased.',
+              [{ text: 'OK', onPress: () => router.replace('/') }]
+            );
+            return; // Don't redirect immediately on native - wait for alert dismiss
+          }
+          
+          router.replace('/');
+        } catch (error: any) {
+          const errorMessage = error?.message || 'Failed to delete account. Please try again.';
+          if (Platform.OS === 'web') {
+            window.alert(`Error: ${errorMessage}`);
+          } else {
+            Alert.alert('Error', errorMessage);
+          }
+        }
+      },
+      'Delete',
+      true
+    );
+  };
+
+  const handleSignOut = () => {
+    showConfirm(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      async () => {
+        try {
+          await signOut();
+          router.replace('/');
+        } catch (error) {
+          if (Platform.OS === 'web') {
+            window.alert('Error: Failed to sign out. Please try again.');
+          } else {
+            Alert.alert('Error', 'Failed to sign out. Please try again.');
+          }
+        }
+      },
+      'Sign Out'
     );
   };
 
@@ -195,18 +248,7 @@ export default function ProfileScreen() {
           <MenuItem
             icon="log-out-outline"
             title="Sign Out"
-            onPress={() => {
-              Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Sign Out',
-                  onPress: () => {
-                    // Clear user and create new guest
-                    setUser(null);
-                  },
-                },
-              ]);
-            }}
+            onPress={handleSignOut}
           />
         )}
         <MenuItem
