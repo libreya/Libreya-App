@@ -30,6 +30,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import WelcomePageHeader from '@/components/WelcomePageHeader';
 import WelcomPageContent from '@/components/WelcomPageContent';
 import { AnimatedButton } from '@/components/AnimatedButton';
+import WebAppBanner from '@/components/WebAdBanner';
 
 const { width, height } = Dimensions.get('window');
 export type SectionKey = "meetTheFounder" | "philosophy";
@@ -462,6 +463,8 @@ export default function Index() {
               </View>
 
             </View>
+
+            {Platform.OS === "web" && <WebAppBanner/>}
 
             <WelcomPageContent registerSection={registerSection} />
             <View style={styles.buttonContainer}>

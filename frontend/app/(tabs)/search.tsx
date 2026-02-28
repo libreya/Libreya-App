@@ -7,6 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +17,7 @@ import { useAppStore, Book } from '../../lib/store';
 import { BookCard } from '../../components/BookCard';
 import { AdBanner } from '../../components/AdBanner';
 import { api } from '../../lib/api';
+import WebAppBanner from '@/components/WebAdBanner';
 
 const CATEGORIES = [
   'All',
@@ -165,7 +167,7 @@ export default function SearchScreen() {
             )}
             {results.length > 0 && (
               <View style={styles.searchAdContainer}>
-                <AdBanner />
+                {Platform.OS === "web" && <WebAppBanner/>}
               </View>
             )}
             {loading && (
@@ -213,6 +215,8 @@ const styles = StyleSheet.create({
   },
   categoryList: {
     maxHeight: 50,
+    minHeight: 35,
+    marginBottom: 16
   },
   categoryContent: {
     paddingHorizontal: 16,
@@ -229,7 +233,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   searchAdContainer: {
-    marginBottom: 16,
+    marginBottom: 0,
   },
   featuredSection: {
     marginBottom: 16,

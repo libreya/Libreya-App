@@ -10,6 +10,7 @@ import {
   Dimensions,
   TouchableOpacity,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +20,7 @@ import { COLORS, THEMES } from '../../constants/theme';
 import { useAppStore, Book } from '../../lib/store';
 import { BookCard } from '../../components/BookCard';
 import { AdBanner } from '../../components/AdBanner';
+import WebAppBanner from '@/components/WebAdBanner';
 
 const { width } = Dimensions.get('window');
 
@@ -162,7 +164,7 @@ export default function LibraryScreen() {
         
         {featuredBooks.length > 0 && renderSection('Featured Books', featuredBooks)}
         
-        <AdBanner />
+        {Platform.OS === "web" && <WebAppBanner/>}
         
         {recommendedBooks.length > 0 && renderSection('Recommended For You', recommendedBooks)}
         
@@ -170,7 +172,7 @@ export default function LibraryScreen() {
         
         {/* Bottom Ad Banner */}
         <View style={styles.bottomAdContainer}>
-          <AdBanner />
+          {Platform.OS === "web" && <WebAppBanner/>}
         </View>
       </ScrollView>
     </View>

@@ -25,6 +25,7 @@ import { ErrorMessage } from '../../components/ErrorMessage';
 import { api } from '../../lib/api';
 import { MenuItem } from '@/components/MenuItem';
 import { AnimatedButton } from '@/components/AnimatedButton';
+import WebAppBanner from '@/components/WebAdBanner';
 
 const { width, height } = Dimensions.get('window');
 
@@ -416,7 +417,7 @@ export default function BookReaderScreen() {
         </Text>
 
         <View style={styles.chapterEndAd}>
-          <AdBanner />
+          {Platform.OS === "web" && <WebAppBanner/>}
         </View>
 
         <View style={styles.chapterNavButtons}>
