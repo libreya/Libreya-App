@@ -150,7 +150,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={true}>
         {/* ===== HERO ===== */}
         <View style={styles.hero}>
           <Image source={{ uri: LOGO_URL }} style={styles.heroLogo} resizeMode="contain" />

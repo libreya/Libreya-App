@@ -346,7 +346,7 @@ export default function AdminScreen() {
         </View>
       ) : null}
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={true}>
         {/* Header */}
         <View style={styles.adminHeader}>
           <Text style={[styles.adminTitle, { fontFamily: headingFont }]}>Admin Dashboard</Text>

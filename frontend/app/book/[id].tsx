@@ -295,7 +295,7 @@ export default function BookReaderScreen() {
         ref={scrollRef}
         style={styles.content}
         contentContainerStyle={{ padding: 20, paddingBottom: 160 }}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
       >
         <Text
           style={[styles.bookText, { color: colors.text, fontSize }]}

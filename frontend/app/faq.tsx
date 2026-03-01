@@ -32,7 +32,7 @@ export default function FAQScreen() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={true}>
         {/* Hero */}
         <View style={styles.heroSection}>
           <Text style={[styles.heroTitle, { fontFamily: headingFont }]}>Frequently Asked Questions</Text>

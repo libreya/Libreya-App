@@ -14,7 +14,7 @@ export default function DonateScreen() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={true}>
         {/* Hero */}
         <View style={styles.heroSection}>
           <Ionicons name="heart" size={48} color={COLORS.accent} />

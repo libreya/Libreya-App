@@ -71,7 +71,7 @@ export default function LegalScreen() {
       
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 20 }]}
-        showsVerticalScrollIndicator={false}
+        showsVerticalScrollIndicator={true}
       >
         <Text style={[styles.text, { color: colors.text }]}>
           {htmlToText(getContent())}

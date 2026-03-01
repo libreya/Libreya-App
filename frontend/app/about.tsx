@@ -24,7 +24,7 @@ export default function AboutScreen() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={true}>
         {/* Hero */}
         <View style={styles.heroSection}>
           <Text style={[styles.heroLabel, { fontFamily: bodyFont }]}>OUR MISSION</Text>

@@ -14,7 +14,7 @@ export default function FounderScreen() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={true}>
         {/* Hero */}
         <View style={styles.heroSection}>
           <Image source={{ uri: LOGO_URL }} style={styles.heroLogo} resizeMode="contain" />
