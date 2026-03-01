@@ -15,7 +15,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, THEMES } from '../../constants/theme';
 import { useAppStore, Book } from '../../lib/store';
 import { BookCard } from '../../components/BookCard';
-import { AdBanner } from '../../components/AdBanner';
+import { AdBanner, AdSpacer, AdStatusIndicator } from '../../components/AdBanner';
+import { FONTS, LOGO_URL } from '../../constants/theme';
 
 const { width } = Dimensions.get('window');
 
