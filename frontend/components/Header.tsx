@@ -30,10 +30,10 @@ export function Header() {
   const loggedInLinks = [
     { label: 'Home', path: '/' },
     { label: 'Browse', path: '/browse' },
-    { label: 'Favorites', path: '/favorites' },
-    { label: 'Search', path: '/search' },
+    { label: 'Favorites', path: '/(tabs)/favorites' },
+    { label: 'Search', path: '/(tabs)/search' },
     { label: 'About', path: '/about' },
-    { label: 'Profile', path: '/profile' },
+    { label: 'Profile', path: '/(tabs)/profile' },
   ];
 
   const links = isLoggedIn ? loggedInLinks : loggedOutLinks;
