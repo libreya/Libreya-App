@@ -16,15 +16,15 @@ export default function Root({ children }: { children: React.ReactNode }) {
 
         {/* SEO Meta Tags */}
         <meta name="description" content="Libreya - Discover over 300 timeless classics from the world's greatest authors. Beautifully formatted, completely free, forever." />
-        <meta name="keywords" content="classic literature, free books, public domain, reading app, ebooks" />
+        <meta name="keywords" content="classic literature, free books, public domain, reading app, ebooks, Libreya" />
         <meta property="og:title" content="Libreya - Classic Literature, Reimagined" />
         <meta property="og:description" content="Discover over 300 timeless masterpieces. Free forever." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://libreya.app" />
+        <meta name="theme-color" content="#5A1F2B" />
 
         {/*
           Google AdSense Auto Ads Script
-          This script enables Google's automatic ad placement.
           Client ID: ca-pub-4299148862195882
         */}
         <script
@@ -34,39 +34,81 @@ export default function Root({ children }: { children: React.ReactNode }) {
         />
 
         {/*
-          Using a modified ScrollViewStyleReset that does NOT set overflow:hidden on body.
-          This is critical for Google AdSense auto-ads to inject ad units into the page.
-          We manually set only the styles we need.
+          Combined styles:
+          - Body overflow: auto (NOT hidden) for AdSense auto-ads
+          - Remove default input borders/outlines for clean UI
+          - Micro-animations for hover states
         */}
         <style dangerouslySetInnerHTML={{ __html: `
-          /* Reset default browser styles for RN Web compatibility */
           html, body {
             height: 100%;
             margin: 0;
             padding: 0;
           }
           body {
-            /* IMPORTANT: Do NOT use overflow:hidden here - it blocks AdSense auto-ads */
             overflow-y: auto;
             overscroll-behavior-y: none;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
           }
           #root {
             display: flex;
             flex-direction: column;
             min-height: 100%;
           }
-          /* Ensure ad containers are not clipped */
+          /* ===== Remove all default input borders ===== */
+          input, textarea {
+            outline: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+          }
+          input:focus, textarea:focus {
+            outline: none !important;
+            border: none !important;
+            box-shadow: none !important;
+          }
+          /* ===== Micro-Animations ===== */
+          /* Smooth transitions for all interactive elements */
+          a, button, [role="button"] {
+            transition: transform 0.15s ease, opacity 0.15s ease, background-color 0.2s ease;
+          }
+          a:hover, button:hover, [role="button"]:hover {
+            opacity: 0.9;
+          }
+          /* Navigation link hover effects */
+          [data-testid="nav-link"]:hover {
+            background-color: rgba(90, 31, 43, 0.06);
+          }
+          /* Card hover lift effect */
+          [data-testid="card"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+          }
+          /* Smooth scrollbar */
+          ::-webkit-scrollbar {
+            width: 6px;
+          }
+          ::-webkit-scrollbar-track {
+            background: transparent;
+          }
+          ::-webkit-scrollbar-thumb {
+            background: rgba(90, 31, 43, 0.2);
+            border-radius: 3px;
+          }
+          ::-webkit-scrollbar-thumb:hover {
+            background: rgba(90, 31, 43, 0.4);
+          }
+          /* AdSense container */
           .adsbygoogle {
             display: block;
             overflow: visible !important;
           }
         `}} />
 
-        {/*
-          Ad-Blocker Detection Script
-          Logs to console whether AdSense loaded successfully.
-          Useful for admin debugging.
-        */}
+        {/* Ad-Blocker Detection */}
         <script dangerouslySetInnerHTML={{ __html: `
           window.__ADSENSE_STATUS = 'checking';
           window.addEventListener('load', function() {
@@ -78,7 +120,6 @@ export default function Root({ children }: { children: React.ReactNode }) {
                 window.__ADSENSE_STATUS = 'blocked';
                 console.warn('[Libreya Ads] AdSense may be blocked by an ad-blocker or failed to load.');
               }
-              // Dispatch custom event for React components to listen to
               window.dispatchEvent(new CustomEvent('adsense-status', { detail: window.__ADSENSE_STATUS }));
             }, 3000);
           });
