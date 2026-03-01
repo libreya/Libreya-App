@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet, Image, Text } from 'react-native';
-import { COLORS } from '../constants/theme';
+import { COLORS, LOGO_URL } from '../constants/theme';
 
 export function LoadingScreen() {
   return (
     <View style={styles.container}>
       <Image
-        source={{ uri: 'https://customer-assets.emergentagent.com/job_bc7b9e4f-7678-4b25-b887-2287e22fd313/artifacts/vl9x3m91_Logo1.jpg' }}
+        source={{ uri: LOGO_URL }}
         style={styles.logo}
         resizeMode="contain"
       />
