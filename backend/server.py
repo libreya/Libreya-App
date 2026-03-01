@@ -619,6 +619,20 @@ async def seed_books(count: int = 50):
     # This is a simplified version - actual seeding should be done via a separate script
     return {"message": "Use the seed_books.py script to seed books from Standard Ebooks"}
 
+# ============= ADS VERIFICATION =============
+
+ADS_TXT_CONTENT = "google.com, pub-4299148862195882, DIRECT, f08c47fec0942fa0"
+
+@app.get("/api/ads.txt", response_class=PlainTextResponse)
+async def get_ads_txt():
+    """Serve ads.txt for Google AdSense verification"""
+    return ADS_TXT_CONTENT
+
+@app.get("/api/app-ads.txt", response_class=PlainTextResponse)
+async def get_app_ads_txt():
+    """Serve app-ads.txt for Google AdMob verification"""
+    return ADS_TXT_CONTENT
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8001)
