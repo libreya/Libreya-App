@@ -135,7 +135,15 @@ export default function SearchScreen() {
         ListHeaderComponent={
           results.length > 0 ? (
             <View style={styles.searchAdContainer}>
-              <AdBanner />
+              <AdBanner position="inline" />
+            </View>
+          ) : null
+        }
+        ListFooterComponent={
+          results.length > 0 ? (
+            <View>
+              <AdBanner position="bottom" />
+              <AdSpacer height={80} />
             </View>
           ) : null
         }
