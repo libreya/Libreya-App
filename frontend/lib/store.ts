@@ -48,6 +48,7 @@ type Theme = 'light' | 'sepia' | 'dark' | 'night';
 interface AppState {
   user: User | null;
   isLoading: boolean;
+  fontsLoaded: boolean;
   theme: Theme;
   books: Book[];
   featuredBooks: Book[];
@@ -62,6 +63,7 @@ interface AppState {
 
   initializeApp: () => Promise<void>;
   setUser: (user: User | null) => void;
+  setFontsLoaded: (loaded: boolean) => void;
   setTheme: (theme: Theme) => void;
   setError: (error: string | null) => void;
   setOffline: (offline: boolean) => void;
