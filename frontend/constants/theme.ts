@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 export const COLORS = {
   primary: '#5A1F2B',
   secondary: '#F5EFE6',
@@ -43,7 +45,13 @@ export const THEMES = {
 };
 
 export const FONTS = {
-  heading: 'System',
-  body: 'System',
-  reading: 'System', // Will be replaced with Libre Baskerville
+  heading: 'LibreBaskerville-Bold',
+  body: 'LibreBaskerville-Regular',
+  bodyItalic: 'LibreBaskerville-Italic',
+  reading: 'LibreBaskerville-Regular',
+  // Fallbacks for before fonts load
+  headingFallback: Platform.select({ ios: 'Georgia-Bold', android: 'serif', web: 'Georgia, serif' }) || 'serif',
+  bodyFallback: Platform.select({ ios: 'Georgia', android: 'serif', web: 'Georgia, serif' }) || 'serif',
 };
+
+export const LOGO_URL = 'https://customer-assets.emergentagent.com/job_b554f1a4-c35c-4e60-a285-bdc61c896871/artifacts/0ouwazt9_Libreya%20Logo.png';
