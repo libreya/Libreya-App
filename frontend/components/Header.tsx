@@ -1,10 +1,68 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Platform, useWindowDimensions } from 'react-native';
+import React, { useState, useRef, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Platform, useWindowDimensions, Animated } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, FONTS, LOGO_URL } from '../constants/theme';
 import { useAppStore } from '../lib/store';
+
+function AnimatedNavLink({ label, isActive, onPress, bodyFont }: { label: string; isActive: boolean; onPress: () => void; bodyFont: string }) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const bgAnim = useRef(new Animated.Value(isActive ? 1 : 0)).current;
+
+  const onPressIn = () => {
+    Animated.spring(scaleAnim, { toValue: 0.95, useNativeDriver: true, friction: 8 }).start();
+  };
+  const onPressOut = () => {
+    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, friction: 8 }).start();
+  };
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        style={[styles.navLink, isActive && styles.navLinkActive]}
+        activeOpacity={0.8}
+      >
+        <Text style={[
+          styles.navLinkText,
+          { fontFamily: bodyFont },
+          isActive && styles.navLinkTextActive,
+        ]}>
+          {label}
+        </Text>
+        {isActive && <View style={styles.activeIndicator} />}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+function AnimatedButton({ label, onPress, bodyFont, style }: { label: string; onPress: () => void; bodyFont: string; style?: any }) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const onPressIn = () => {
+    Animated.spring(scaleAnim, { toValue: 0.93, useNativeDriver: true, friction: 8 }).start();
+  };
+  const onPressOut = () => {
+    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, friction: 8 }).start();
+  };
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity
+        style={[styles.signInBtn, style]}
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        activeOpacity={0.85}
+      >
+        <Text style={[styles.signInBtnText, { fontFamily: bodyFont }]}>{label}</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
 
 export function Header() {
   const router = useRouter();
@@ -14,6 +72,7 @@ export function Header() {
   const fontsLoaded = useAppStore((s) => s.fontsLoaded);
   const { width } = useWindowDimensions();
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuAnim = useRef(new Animated.Value(0)).current;
   const isMobile = width < 768;
   const isLoggedIn = !!user;
 
@@ -44,21 +103,39 @@ export function Header() {
   };
 
   const navigate = (path: string) => {
-    setMenuOpen(false);
+    toggleMenu(false);
     router.push(path as any);
   };
+
+  const toggleMenu = useCallback((open: boolean) => {
+    setMenuOpen(open);
+    Animated.timing(menuAnim, {
+      toValue: open ? 1 : 0,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  }, [menuAnim]);
 
   // Don't show header on certain screens
   const hideOnPaths = ['/welcome', '/auth'];
   if (hideOnPaths.some(p => pathname.startsWith(p))) return null;
-  // Also hide on book reader for immersive experience
   if (pathname.startsWith('/book/')) return null;
+
+  const menuHeight = menuAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, links.length * 52 + (isLoggedIn ? 16 : 68)],
+  });
+
+  const menuOpacity = menuAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0, 0.5, 1],
+  });
 
   return (
     <View style={[styles.headerWrapper, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         {/* Logo */}
-        <TouchableOpacity style={styles.logoContainer} onPress={() => navigate('/')}>
+        <TouchableOpacity style={styles.logoContainer} onPress={() => navigate('/')} activeOpacity={0.8}>
           <Image source={{ uri: LOGO_URL }} style={styles.logo} resizeMode="contain" />
           <Text style={[styles.logoText, { fontFamily: headingFont }]}>Libreya</Text>
         </TouchableOpacity>
@@ -67,45 +144,35 @@ export function Header() {
         {!isMobile ? (
           <View style={styles.desktopNav}>
             {links.map((link) => (
-              <TouchableOpacity
+              <AnimatedNavLink
                 key={link.path}
+                label={link.label}
+                isActive={isActive(link.path)}
                 onPress={() => navigate(link.path)}
-                style={[styles.navLink, isActive(link.path) && styles.navLinkActive]}
-              >
-                <Text style={[
-                  styles.navLinkText,
-                  { fontFamily: bodyFont },
-                  isActive(link.path) && styles.navLinkTextActive,
-                ]}>
-                  {link.label}
-                </Text>
-              </TouchableOpacity>
+                bodyFont={bodyFont}
+              />
             ))}
             {!isLoggedIn && (
-              <TouchableOpacity
-                style={styles.signInBtn}
-                onPress={() => navigate('/welcome')}
-              >
-                <Text style={[styles.signInBtnText, { fontFamily: bodyFont }]}>Sign In</Text>
-              </TouchableOpacity>
+              <AnimatedButton label="Sign In" onPress={() => navigate('/welcome')} bodyFont={bodyFont} />
             )}
           </View>
         ) : (
           /* Mobile hamburger */
-          <TouchableOpacity onPress={() => setMenuOpen(!menuOpen)} style={styles.hamburger}>
+          <TouchableOpacity onPress={() => toggleMenu(!menuOpen)} style={styles.hamburger} activeOpacity={0.7}>
             <Ionicons name={menuOpen ? 'close' : 'menu'} size={28} color={COLORS.primary} />
           </TouchableOpacity>
         )}
       </View>
 
-      {/* Mobile menu dropdown */}
-      {isMobile && menuOpen && (
-        <View style={styles.mobileMenu}>
+      {/* Mobile menu dropdown with animation */}
+      {isMobile && (
+        <Animated.View style={[styles.mobileMenu, { maxHeight: menuHeight, opacity: menuOpacity, overflow: 'hidden' }]}>
           {links.map((link) => (
             <TouchableOpacity
               key={link.path}
               onPress={() => navigate(link.path)}
               style={[styles.mobileLink, isActive(link.path) && styles.mobileLinkActive]}
+              activeOpacity={0.7}
             >
               <Text style={[
                 styles.mobileLinkText,
@@ -114,17 +181,18 @@ export function Header() {
               ]}>
                 {link.label}
               </Text>
+              {isActive(link.path) && <View style={styles.mobileLinkDot} />}
             </TouchableOpacity>
           ))}
           {!isLoggedIn && (
-            <TouchableOpacity
-              style={[styles.signInBtn, { alignSelf: 'flex-start', marginTop: 8 }]}
+            <AnimatedButton
+              label="Sign In"
               onPress={() => navigate('/welcome')}
-            >
-              <Text style={[styles.signInBtnText, { fontFamily: bodyFont }]}>Sign In</Text>
-            </TouchableOpacity>
+              bodyFont={bodyFont}
+              style={{ alignSelf: 'flex-start', marginTop: 8, marginLeft: 0 }}
+            />
           )}
-        </View>
+        </Animated.View>
       )}
     </View>
   );
@@ -136,6 +204,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.lightGray,
     zIndex: 100,
+    ...(Platform.OS === 'web' ? { position: 'sticky' as any, top: 0 } : {}),
   },
   header: {
     flexDirection: 'row',
@@ -165,15 +234,16 @@ const styles = StyleSheet.create({
   desktopNav: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
   navLink: {
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
+    position: 'relative',
   },
   navLinkActive: {
-    backgroundColor: 'rgba(90, 31, 43, 0.08)',
+    backgroundColor: 'rgba(90, 31, 43, 0.06)',
   },
   navLinkText: {
     fontSize: 15,
@@ -182,6 +252,15 @@ const styles = StyleSheet.create({
   navLinkTextActive: {
     color: COLORS.primary,
     fontWeight: '600',
+  },
+  activeIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: '30%',
+    right: '30%',
+    height: 2,
+    backgroundColor: COLORS.accent,
+    borderRadius: 1,
   },
   signInBtn: {
     backgroundColor: COLORS.primary,
@@ -200,7 +279,6 @@ const styles = StyleSheet.create({
   },
   mobileMenu: {
     paddingHorizontal: 20,
-    paddingBottom: 16,
     borderTopWidth: 1,
     borderTopColor: COLORS.lightGray,
   },
@@ -208,6 +286,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   mobileLinkActive: {
     borderBottomColor: COLORS.primary,
@@ -219,5 +300,11 @@ const styles = StyleSheet.create({
   mobileLinkTextActive: {
     color: COLORS.primary,
     fontWeight: '600',
+  },
+  mobileLinkDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.accent,
   },
 });
