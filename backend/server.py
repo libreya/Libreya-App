@@ -292,7 +292,8 @@ async def get_books(
         if featured is not None:
             url += f"&is_featured=eq.{str(featured).lower()}"
         if search:
-            url += f"&or=(title.ilike.%{search}%,author.ilike.%{search}%)"
+            # PostgREST uses * as wildcard in URLs (translates to % in SQL)
+            url += f"&or=(title.ilike.*{search}*,author.ilike.*{search}*)"
         
         response = await client.get(url, headers=get_supabase_headers())
         
