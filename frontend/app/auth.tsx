@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +20,8 @@ import { supabase } from '../lib/supabase';
 import { api } from '../lib/api';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function AuthScreen() {
   const router = useRouter();
@@ -33,6 +36,21 @@ export default function AuthScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [appleLoading, setAppleLoading] = useState(false);
+  const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
+
+  useEffect(() => {
+    const checkAppleAuth = async () => {
+      if (Platform.OS === 'ios') {
+        const isAvailable = await AppleAuthentication.isAvailableAsync();
+        setAppleAuthAvailable(isAvailable);
+      } else if (Platform.OS === 'web') {
+        setAppleAuthAvailable(true);
+      }
+    };
+    checkAppleAuth();
+  }, []);
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -140,18 +158,123 @@ export default function AuthScreen() {
     }
   };
 
-  const handleGoogleAuth = async () => {
-    Alert.alert(
-      'Google Sign In',
-      'Google authentication requires native app configuration. This feature will work in the deployed mobile app.'
-    );
+  const migrateGuestData = async (guestId: string, newUserId: string) => {
+    try {
+      await api.post('/users/migrate-guest', {
+        guest_uuid: guestId,
+        new_user_id: newUserId,
+      });
+    } catch (e) {
+      // Silent fail - guest data migration is best effort
+    }
   };
 
-  const handleAppleAuth = () => {
-    Alert.alert(
-      'Apple Sign In',
-      'Apple authentication is coming soon! Please use email authentication for now.'
-    );
+  const handleGoogleAuth = async () => {
+    setGoogleLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: Platform.OS === 'web'
+            ? window.location.origin
+            : 'libreya://auth/callback',
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      if (Platform.OS === 'web' && data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Google sign-in failed');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleAppleAuth = async () => {
+    setAppleLoading(true);
+    const previousGuestId = user?.auth_provider === 'guest' ? user.id : null;
+
+    try {
+      if (Platform.OS === 'ios') {
+        const credential = await AppleAuthentication.signInAsync({
+          requestedScopes: [
+            AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+            AppleAuthentication.AppleAuthenticationScope.EMAIL,
+          ],
+        });
+
+        if (credential.identityToken) {
+          const { data, error } = await supabase.auth.signInWithIdToken({
+            provider: 'apple',
+            token: credential.identityToken,
+          });
+
+          if (error) throw error;
+
+          if (data.user) {
+            const displayName = credential.fullName
+              ? `${credential.fullName.givenName || ''} ${credential.fullName.familyName || ''}`.trim()
+              : data.user.email?.split('@')[0] || 'User';
+
+            const newUser = {
+              id: data.user.id,
+              email: data.user.email,
+              display_name: displayName,
+              auth_provider: 'apple' as const,
+              is_admin: data.user.email === 'hello@libreya.app',
+              terms_accepted: false,
+            };
+
+            try {
+              await api.post('/users', newUser);
+            } catch {
+              try {
+                await api.patch(`/users/${data.user.id}`, {
+                  display_name: displayName,
+                  auth_provider: 'apple'
+                });
+              } catch { }
+            }
+
+            if (previousGuestId) {
+              await migrateGuestData(previousGuestId, data.user.id);
+            }
+
+            await AsyncStorage.setItem('user', JSON.stringify(newUser));
+            setUser(newUser);
+            router.replace('/(tabs)');
+          }
+        }
+      } else if (Platform.OS === 'web') {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'apple',
+          options: {
+            redirectTo: window.location.origin,
+          },
+        });
+
+        if (error) throw error;
+
+        if (data?.url) {
+          window.location.href = data.url;
+        }
+      } else {
+        Alert.alert('Not Available', 'Apple Sign-In is only available on iOS and web.');
+      }
+    } catch (error: any) {
+      if (error.code !== 'ERR_REQUEST_CANCELED') {
+        Alert.alert('Error', error.message || 'Apple sign-in failed');
+      }
+    } finally {
+      setAppleLoading(false);
+    }
   };
 
   return (
@@ -168,7 +291,7 @@ export default function AuthScreen() {
           presentation: 'modal',
         }}
       />
-      
+
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 20 }]}
         keyboardShouldPersistTaps="handled"
@@ -178,7 +301,7 @@ export default function AuthScreen() {
           style={styles.logo}
           resizeMode="contain"
         />
-        
+
         <Text style={[styles.title, { color: colors.text }]}>
           {mode === 'signin' ? 'Welcome Back' : 'Join Libreya'}
         </Text>
@@ -236,17 +359,31 @@ export default function AuthScreen() {
           <TouchableOpacity
             style={[styles.socialButton, { backgroundColor: colors.surface }]}
             onPress={handleGoogleAuth}
+            disabled={googleLoading}
           >
-            <Ionicons name="logo-google" size={24} color="#DB4437" />
-            <Text style={[styles.socialText, { color: colors.text }]}>Google</Text>
+            {googleLoading ? (
+              <ActivityIndicator color="#DB4437" />
+            ) : (
+              <>
+                <Ionicons name="logo-google" size={24} color="#DB4437" />
+                <Text style={[styles.socialText, { color: colors.text }]}>Google</Text>
+              </>
+            )}
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.socialButton, { backgroundColor: colors.surface }]}
             onPress={handleAppleAuth}
+            disabled={appleLoading}
           >
-            <Ionicons name="logo-apple" size={24} color={colors.text} />
-            <Text style={[styles.socialText, { color: colors.text }]}>Apple</Text>
+            {appleLoading ? (
+              <ActivityIndicator color={colors.text} />
+            ) : (
+              <>
+                <Ionicons name="logo-apple" size={24} color={colors.text} />
+                <Text style={[styles.socialText, { color: colors.text }]}>Apple</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
