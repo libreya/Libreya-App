@@ -23,6 +23,10 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta property="og:url" content="https://libreya.app" />
         <meta name="theme-color" content="#5A1F2B" />
 
+        {/* Favicon - Libreya icon */}
+        <link rel="icon" type="image/png" href="/assets/images/favicon.png" />
+        <link rel="apple-touch-icon" href="/assets/images/icon.png" />
+
         {/*
           Google AdSense Auto Ads Script
           Client ID: ca-pub-4299148862195882
