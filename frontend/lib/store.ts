@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from './api';
 import * as Crypto from 'expo-crypto';
+import { supabase } from './supabase';
+import { Platform } from 'react-native';
 
 export interface User {
   id: string;
@@ -48,7 +50,6 @@ type Theme = 'light' | 'sepia' | 'dark' | 'night';
 interface AppState {
   user: User | null;
   isLoading: boolean;
-  fontsLoaded: boolean;
   theme: Theme;
   books: Book[];
   featuredBooks: Book[];
@@ -63,7 +64,6 @@ interface AppState {
 
   initializeApp: () => Promise<void>;
   setUser: (user: User | null) => void;
-  setFontsLoaded: (loaded: boolean) => void;
   setTheme: (theme: Theme) => void;
   setError: (error: string | null) => void;
   setOffline: (offline: boolean) => void;
@@ -78,14 +78,14 @@ interface AppState {
   addHighlight: (text: string, position: number, chapter?: number) => Promise<void>;
   acceptTerms: () => Promise<void>;
   deleteAccount: () => Promise<void>;
+  signOut: () => Promise<void>;
   incrementChapterRead: () => void;
   resetChapterCount: () => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
   user: null,
-  isLoading: true,
-  fontsLoaded: false,
+  isLoading: false,
   theme: 'light',
   books: [],
   featuredBooks: [],
@@ -105,6 +105,73 @@ export const useAppStore = create<AppState>((set, get) => ({
         set({ theme: savedTheme as Theme });
       }
 
+      // Check for existing Supabase session (handles OAuth redirect and password reset)
+      if (Platform.OS === 'web') {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          // User logged in via OAuth or has active session
+          const supaUser = session.user;
+          const provider = supaUser.app_metadata?.provider || 'email';
+          
+          let userData: User = {
+            id: supaUser.id,
+            email: supaUser.email,
+            display_name: supaUser.user_metadata?.full_name || supaUser.email?.split('@')[0] || 'User',
+            avatar_url: supaUser.user_metadata?.avatar_url,
+            auth_provider: provider as User['auth_provider'],
+            is_admin: supaUser.email === 'hello@libreya.app',
+            terms_accepted: false,
+          };
+
+          // Try to get existing user data from backend first
+          try {
+            const existingUser = await api.get(`/users/${supaUser.id}`);
+            // User exists - merge data (preserve existing terms_accepted, etc.)
+            userData = { ...userData, ...existingUser };
+            await AsyncStorage.setItem('user', JSON.stringify(userData));
+            set({ user: userData });
+          } catch (getUserError) {
+            // User doesn't exist in backend - check if it's a 404
+            // Only create new user if truly doesn't exist
+            try {
+              const newUser = await api.post('/users', userData);
+              userData = { ...userData, ...newUser };
+              await AsyncStorage.setItem('user', JSON.stringify(userData));
+              set({ user: userData });
+            } catch (createError: any) {
+              // If 409 conflict, user exists with different ID (same email)
+              // This can happen during password reset - just use local data
+              if (createError.message?.includes('409') || createError.message?.includes('exists')) {
+                await AsyncStorage.setItem('user', JSON.stringify(userData));
+                set({ user: userData });
+              } else {
+                console.error('Error creating user:', createError);
+              }
+            }
+          }
+
+          // Check for guest data to migrate (only if we haven't done this before)
+          const savedUser = await AsyncStorage.getItem('user');
+          if (savedUser) {
+            const previousUser = JSON.parse(savedUser);
+            if (previousUser.auth_provider === 'guest' && previousUser.id !== supaUser.id) {
+              try {
+                await api.post('/users/migrate-guest', {
+                  guest_uuid: previousUser.id,
+                  new_user_id: supaUser.id,
+                });
+              } catch {}
+            }
+          }
+
+          await get().fetchSettings();
+          set({ isLoading: false });
+          return;
+        }
+      }
+
+      // Fall back to local storage user
       const savedUser = await AsyncStorage.getItem('user');
       if (savedUser) {
         const user = JSON.parse(savedUser);
@@ -128,8 +195,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
-  setFontsLoaded: (loaded) => set({ fontsLoaded: loaded }),
-
   setTheme: async (theme) => {
     set({ theme });
     await AsyncStorage.setItem('theme', theme);
@@ -141,7 +206,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   fetchBooks: async (params) => {
     try {
       set({ isOffline: false });
-      let endpoint = '/books?limit=100';
+      let endpoint = '/books?limit=500';  // Increased to load all 300+ books
       if (params?.category) endpoint += `&category=${params.category}`;
       if (params?.search) endpoint += `&search=${params.search}`;
       const books = await api.get(endpoint);
@@ -282,10 +347,89 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!user) return;
 
     try {
-      await api.delete(`/users/${user.id}`);
+      // Sign out from Supabase Auth first
+      if (user.auth_provider !== 'guest') {
+        await supabase.auth.signOut();
+      }
+      
+      // Delete user data from backend (this also deletes from auth.users)
+      const response = await api.delete(`/users/${user.id}`);
+      console.log('Delete account response:', response);
+      
+      // Sign out from Supabase Auth (in case backend couldn't)
+      if (user.auth_provider !== 'guest') {
+        try {
+          await supabase.auth.signOut();
+        } catch (e) {
+          // Ignore sign out errors - user is already deleted
+        }
+      }
+      
+      // Clear ALL local storage related to auth
+      await AsyncStorage.removeItem('user');
+      await AsyncStorage.removeItem('supabase.auth.token');
+      
+      // Clear any other cached data
+      if (Platform.OS === 'web') {
+        try {
+          localStorage.removeItem('supabase.auth.token');
+          // Clear all supabase related items
+          Object.keys(localStorage).forEach(key => {
+            if (key.includes('supabase') || key.includes('sb-')) {
+              localStorage.removeItem(key);
+            }
+          });
+        } catch (e) {}
+      }
+      
+      // Reset all state
+      set({ 
+        user: null, 
+        favorites: [], 
+        currentActivity: null, 
+        currentBook: null,
+        books: [],
+        featuredBooks: [],
+        recommendedBooks: [],
+      });
+    } catch (error) {
+      // Still try to sign out and clear local state
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {}
       await AsyncStorage.removeItem('user');
       set({ user: null, favorites: [], currentActivity: null });
+      throw error;
+    }
+  },
+
+  signOut: async () => {
+    const { user } = get();
+    if (!user) return;
+
+    try {
+      // Sign out from Supabase Auth
+      if (user.auth_provider !== 'guest') {
+        await supabase.auth.signOut();
+      }
+      
+      // Clear local storage
+      await AsyncStorage.removeItem('user');
+      
+      // Reset state but keep some app settings
+      set({ 
+        user: null, 
+        favorites: [], 
+        currentActivity: null, 
+        currentBook: null,
+        books: [],
+        featuredBooks: [],
+        recommendedBooks: [],
+      });
     } catch (error) {
+      // Still clear local state even if Supabase fails
+      await AsyncStorage.removeItem('user');
+      set({ user: null, favorites: [], currentActivity: null });
       throw error;
     }
   },
