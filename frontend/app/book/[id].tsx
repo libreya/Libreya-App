@@ -294,7 +294,7 @@ export default function BookReaderScreen() {
       <ScrollView
         ref={scrollRef}
         style={styles.content}
-        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 160 }}
         showsVerticalScrollIndicator={false}
       >
         <Text
