@@ -1,7 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, FlatList, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  Animated,
+  Platform,
+  useWindowDimensions,
+} from 'react-native';
 import { Stack, useRouter } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONTS } from '../constants/theme';
 import { useAppStore, Book } from '../lib/store';
@@ -11,6 +21,7 @@ import { api } from '../lib/api';
 
 export default function BrowseScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const fontsLoaded = useAppStore((s) => s.fontsLoaded);
   const headingFont = fontsLoaded ? FONTS.heading : FONTS.headingFallback;
   const bodyFont = fontsLoaded ? FONTS.body : FONTS.bodyFallback;
@@ -20,39 +31,54 @@ export default function BrowseScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [searching, setSearching] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMobile = width < 768;
+  const bookWidth = isMobile ? '100%' : '50%';
 
   useEffect(() => {
-    loadData();
+    loadInitialData();
   }, []);
 
+  // Debounced search - real-time as user types
   useEffect(() => {
-    loadBooks();
-  }, [selectedCategory, searchQuery]);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      loadBooks();
+    }, 300);
+    return () => {
+      if (searchTimer.current) clearTimeout(searchTimer.current);
+    };
+  }, [searchQuery, selectedCategory]);
 
-  const loadData = async () => {
+  const loadInitialData = async () => {
     try {
       const [booksData, catsData] = await Promise.all([
         api.get('/books?limit=200'),
         api.get('/books/categories/list'),
       ]);
-      setBooks(booksData);
-      setCategories(catsData);
+      if (Array.isArray(booksData)) setBooks(booksData);
+      if (Array.isArray(catsData)) setCategories(catsData);
     } catch (e) {
-      // Handle error silently
+      // Silent
     } finally {
       setLoading(false);
     }
   };
 
   const loadBooks = async () => {
+    setSearching(true);
     try {
       let endpoint = '/books?limit=200';
-      if (selectedCategory) endpoint += `&category=${selectedCategory}`;
-      if (searchQuery) endpoint += `&search=${searchQuery}`;
+      if (selectedCategory) endpoint += `&category=${encodeURIComponent(selectedCategory)}`;
+      if (searchQuery.trim()) endpoint += `&search=${encodeURIComponent(searchQuery.trim())}`;
       const data = await api.get(endpoint);
-      setBooks(data);
+      if (Array.isArray(data)) setBooks(data);
     } catch (e) {
-      // silent
+      // Silent - keep existing results
+    } finally {
+      setSearching(false);
     }
   };
 
@@ -66,42 +92,81 @@ export default function BrowseScreen() {
           <Text style={[styles.heroDesc, { fontFamily: bodyFont }]}>
             Discover timeless classics from the world's greatest authors
           </Text>
-          {/* Search */}
-          <View style={styles.searchContainer}>
-            <Ionicons name="search" size={20} color={COLORS.gray} />
+
+          {/* Search Bar - Clean, no inner border */}
+          <View style={[
+            styles.searchContainer,
+            searchFocused && styles.searchContainerFocused,
+          ]}>
+            <Ionicons name="search" size={20} color={searchFocused ? COLORS.accent : COLORS.gray} />
             <TextInput
-              style={[styles.searchInput, { fontFamily: bodyFont }]}
+              style={[
+                styles.searchInput,
+                { fontFamily: bodyFont },
+                Platform.OS === 'web' && ({
+                  outlineStyle: 'none',
+                  outlineWidth: 0,
+                } as any),
+              ]}
               placeholder="Search by title or author..."
-              placeholderTextColor={COLORS.gray}
+              placeholderTextColor="rgba(255,255,255,0.5)"
               value={searchQuery}
               onChangeText={setSearchQuery}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
+              returnKeyType="search"
             />
             {searchQuery ? (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={20} color={COLORS.gray} />
+              <TouchableOpacity onPress={() => setSearchQuery('')} activeOpacity={0.7}>
+                <Ionicons name="close-circle" size={22} color="rgba(255,255,255,0.6)" />
               </TouchableOpacity>
             ) : null}
+            {searching && <ActivityIndicator size="small" color={COLORS.accent} />}
           </View>
         </View>
 
         {/* Categories */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesBar} contentContainerStyle={styles.categoriesContent}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoriesBar}
+          contentContainerStyle={styles.categoriesContent}
+        >
           <TouchableOpacity
             style={[styles.categoryChip, !selectedCategory && styles.categoryChipActive]}
             onPress={() => setSelectedCategory(null)}
+            activeOpacity={0.7}
           >
-            <Text style={[styles.categoryText, { fontFamily: bodyFont }, !selectedCategory && styles.categoryTextActive]}>All</Text>
+            <Text style={[
+              styles.categoryText,
+              { fontFamily: bodyFont },
+              !selectedCategory && styles.categoryTextActive,
+            ]}>All</Text>
           </TouchableOpacity>
           {categories.map((cat) => (
             <TouchableOpacity
               key={cat}
               style={[styles.categoryChip, selectedCategory === cat && styles.categoryChipActive]}
               onPress={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+              activeOpacity={0.7}
             >
-              <Text style={[styles.categoryText, { fontFamily: bodyFont }, selectedCategory === cat && styles.categoryTextActive]}>{cat}</Text>
+              <Text style={[
+                styles.categoryText,
+                { fontFamily: bodyFont },
+                selectedCategory === cat && styles.categoryTextActive,
+              ]}>{cat}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
+
+        {/* Results count */}
+        <View style={styles.resultsHeader}>
+          <Text style={[styles.resultsCount, { fontFamily: bodyFont }]}>
+            {loading ? 'Loading...' : `${books.length} book${books.length !== 1 ? 's' : ''} found`}
+            {searchQuery ? ` for "${searchQuery}"` : ''}
+            {selectedCategory ? ` in ${selectedCategory}` : ''}
+          </Text>
+        </View>
 
         {/* Books Grid */}
         <View style={styles.booksSection}>
@@ -109,13 +174,27 @@ export default function BrowseScreen() {
             <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 40 }} />
           ) : books.length === 0 ? (
             <View style={styles.emptyState}>
-              <Ionicons name="book-outline" size={48} color={COLORS.gray} />
-              <Text style={[styles.emptyText, { fontFamily: bodyFont }]}>No books found</Text>
+              <Ionicons name="search-outline" size={56} color={COLORS.gray} />
+              <Text style={[styles.emptyTitle, { fontFamily: headingFont }]}>No Books Found</Text>
+              <Text style={[styles.emptyText, { fontFamily: bodyFont }]}>
+                {searchQuery
+                  ? `We couldn't find any books matching "${searchQuery}". Try a different search term.`
+                  : 'No books available in this category yet.'}
+              </Text>
+              {(searchQuery || selectedCategory) && (
+                <TouchableOpacity
+                  style={styles.clearBtn}
+                  onPress={() => { setSearchQuery(''); setSelectedCategory(null); }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.clearBtnText, { fontFamily: bodyFont }]}>Clear Filters</Text>
+                </TouchableOpacity>
+              )}
             </View>
           ) : (
             <View style={styles.booksGrid}>
               {books.map((book) => (
-                <View key={book.id} style={styles.bookItem}>
+                <View key={book.id} style={[styles.bookItem, { maxWidth: isMobile ? '100%' : 600 }]}>
                   <BookCard
                     book={book}
                     onPress={() => router.push(`/book/${book.id}` as any)}
@@ -158,18 +237,27 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     width: '100%',
     maxWidth: 500,
-    gap: 10,
+    gap: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  searchContainerFocused: {
+    borderColor: COLORS.accent,
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: COLORS.text,
+    color: COLORS.white,
+    borderWidth: 0,
+    padding: 0,
+    margin: 0,
   },
   categoriesBar: {
     backgroundColor: COLORS.secondary,
@@ -200,9 +288,21 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontWeight: '600',
   },
+  resultsHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
+    maxWidth: 1200,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  resultsCount: {
+    fontSize: 14,
+    color: COLORS.gray,
+  },
   booksSection: {
     paddingHorizontal: 16,
-    paddingVertical: 24,
+    paddingBottom: 24,
     maxWidth: 1200,
     alignSelf: 'center',
     width: '100%',
@@ -213,15 +313,36 @@ const styles = StyleSheet.create({
   },
   bookItem: {
     width: '100%',
-    maxWidth: 600,
   },
   emptyState: {
     alignItems: 'center',
     paddingVertical: 60,
+    paddingHorizontal: 24,
+  },
+  emptyTitle: {
+    fontSize: 22,
+    color: COLORS.text,
+    marginTop: 16,
+    marginBottom: 8,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 15,
     color: COLORS.gray,
-    marginTop: 12,
+    textAlign: 'center',
+    lineHeight: 24,
+    maxWidth: 400,
+  },
+  clearBtn: {
+    marginTop: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  clearBtnText: {
+    color: COLORS.primary,
+    fontSize: 15,
+    fontWeight: '500',
   },
 });
