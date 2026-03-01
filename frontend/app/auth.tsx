@@ -174,7 +174,7 @@ export default function AuthScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <Image
-          source={{ uri: 'https://customer-assets.emergentagent.com/job_bc7b9e4f-7678-4b25-b887-2287e22fd313/artifacts/vl9x3m91_Logo1.jpg' }}
+          source={{ uri: 'https://customer-assets.emergentagent.com/job_b554f1a4-c35c-4e60-a285-bdc61c896871/artifacts/0ouwazt9_Libreya%20Logo.png' }}
           style={styles.logo}
           resizeMode="contain"
         />
