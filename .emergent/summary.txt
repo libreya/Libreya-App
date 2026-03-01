@@ -1,0 +1,182 @@
+<analysis>
+
+**original_problem_statement**: The user wants to build Libreya, a cross-platform reading app for iOS, Android, and Web using Expo and Supabase.
+
+**PRODUCT REQUIREMENTS**:
+- **Architecture**: Responsive web-first UI using Capacitor, with Supabase for Auth (Email, Google, Apple) and Database (PostgreSQL).
+- **User Flow**: Guest users are created on launch, and their activity (highlights, favorites) is migrated to a permanent account upon sign-up. All users must accept Terms and Conditions.
+- **Reading Experience**: Use Libre Baskerville font, horizontal paging, and show chapter completion percentage.
+- **Content**: Seed the library with 300+ royalty-free books from Standard Ebooks/Project Gutenberg, with editable HTML content stored in the database.
+- **Discovery**: Feature books by  and recommend books based on category.
+- **Admin Dashboard**: A protected  route for CRUD operations on books and editing legal text. The admin user should be .
+- **Design**: Minimalistic design with a specific color palette (, , , ), and support for Light/Dark themes.
+- **Monetization**: Integrate Google AdMob banners and interstitial ads (one per 3 chapters read).
+- **Legal**: Include editable pages for Terms & Conditions, Privacy Notice, and Royalty-Free Notice.
+
+**User's preferred language**: English
+
+**what currently exists?**
+A functional Expo-based web application connected to a Supabase backend. The database schema is in place and has been seeded with 262 books. The frontend features a welcome/auth screen with UI for Email, Google, Apple, and Guest sign-in. The Continue as Guest flow is functional, including T&C acceptance, and leads to a library screen that displays book covers from the database. The book reader screen can display book content and has functional Favorite and Share buttons. AdMob banner placeholders have been added to the Library, Search, and Book Reader pages. The Apple Sign-In code has been implemented but requires a final audit.
+
+**Last working item**:
+- **Last item agent was working on**: The agent was about to begin a Full System Audit requested by the user. The user was frustrated with the development environment forking into new sessions and demanded that all remaining work be completed in the current session. The audit's goal is to finalize the app for production by enabling live Apple Sign-In, verifying data migration, fixing responsive UI bugs, implementing error handling, and cleaning debug logs.
+- **Status**: NOT STARTED
+- **Agent Testing Done**: N
+- **Which testing method agent to use?**: Frontend testing agent for responsive design and end-to-end flow. Manual code editing for log cleanup and error handling.
+- **User Testing Done**: N
+
+**All Pending/In progress Issue list**:
+- **Issue 1: Potential Session Instability and Redirect Loops (P1)**
+    - **Description**: The app has shown instability where the user session is lost during navigation or scrolling, causing unexpected redirects to the welcome screen. While the agent attributed this to the testing environment, it may be a bug in the routing or state management logic.
+    - **Attempted fixes**: The routing logic in  was modified multiple times to fix specific loops. This provided partial success, but general instability remains a concern.
+    - **Next debug checklist**:
+        1. Review  to ensure the auth state checks are robust and handle all user states (guest, logged in, no session) correctly.
+        2. Inspect  to confirm the session is correctly initialized and persisted to .
+        3. Trace the session state during navigation to pinpoint exactly when and why it might be getting lost.
+    - **Why fix this issue and what will be achieved with the fix?**: A stable session is critical for user experience. This fix will prevent users from being logged out or redirected incorrectly.
+    - **Status**: IN PROGRESS
+    - **Is recurring issue?**: Y
+    - **Should Test frontend/backend/both after fix?**: frontend
+    - **Blocked on other issue**: None
+
+**In progress Task List**:
+- **Task 1: Full System Audit and Bug Fixes (P0)**
+    - **Description**: A comprehensive audit to prepare the app for production, as requested by the user.
+    - **Where to resume**: Address each of the sub-tasks below.
+    - **What will be achieved with this?**: A stable, polished, and production-ready application that meets all user requirements to date.
+    - **Status**: NOT STARTED
+    - **Should Test frontend/backend/both after fix?**: both
+    - **Blocked on something**: None
+
+    **Audit Sub-tasks**:
+    1.  **Production Auth Build (Apple Sign-In)**: Verify the implementation in  works with the live credentials the user has set up in Supabase.
+    2.  **End-to-End Flow Verification**: Test that a guest user's favorites/highlights are correctly transferred to their new account upon sign-up.
+    3.  **Responsive Design Check**: Ensure AdMob banners do not overlap with text or navigation on small mobile screens.
+    4.  **Graceful Error Handling**: Implement user-friendly messages for offline mode or if a book fails to load.
+    5.  **Log Cleanup**: Remove all  statements from the frontend codebase.
+    6.  **Security (RLS) Confirmation**: Verify that Supabase Row Level Security policies are active and correctly protecting user data.
+
+**Upcoming and Future Tasks**
+- **Upcoming Tasks**:
+    - **Google Auth Implementation (P1)**: Implement the logic for the Continue with Google button in  using the Supabase provider.
+    - **Interstitial Ads (P1)**: Implement the logic to display an interstitial ad after a user has read 3 chapters. This will require tracking chapter progress in the  table.
+- **Future Tasks**:
+    - **Admin Dashboard Functionality (P2)**: Build the UI and backend logic in  for CRUD operations on books and editing legal texts.
+    - **User Profile Editing (P2)**: Implement the UI in  to allow users to edit their profile information.
+    - **Reading Engine Enhancements (P2)**: Implement horizontal page-flip transitions, per-chapter progress indicators, and a Recommended books section.
+    - **Theme Preference (P3)**: Implement Light/Dark modes with sepia/night reading options and a theme toggle.
+
+**Completed work in this session**
+- **Core Setup**: Project initialized with Expo, TypeScript, and connected to Supabase.
+- **Database**: Schema created for , , ,  and seeded with 262 books.
+- **Authentication**: Continue as Guest flow is fully functional. UI for Email/Google/Apple sign-in is complete. Admin user created in DB.
+- **Frontend UI**: All major screens have been scaffolded (, , , , ).
+- **Features**:
+    - Library screen displays books with covers from the database.
+    - Book reader displays content, allows font size changes, and has functional Favorite/Share buttons.
+    - AdMob banner placeholders are integrated into the Library, Search, and Book Reader screens.
+- **Apple Sign-In**: Provided a complete guide for setup and implemented the necessary frontend code in  and .
+
+**Earlier issues found/mentioned but not fixed**
+- **Issue 1: Redundant Backend Code**
+    - The project contains a  (FastAPI) and  (axios client) from the initial template. The application logic has since pivoted to using the Supabase client directly. This legacy code is confusing and should be removed to avoid future conflicts.
+    - **Debug checklist**:
+        1. Search the codebase for any remaining usages of the  client from .
+        2. If none, delete , , and .
+    - **Why to solve this issue and what will be achieved with this?**: Simplifies the codebase, removes dead code, and reduces confusion for future development.
+    - **Should Test frontend/backend/both after fix**: frontend
+    - **Is recurring issue?**: N
+
+**Known issue recurrence from previous fork**
+- **Issue recurrence in previous fork**: The agent and user identified a loop where the development session would fork, causing the agent to restart its current task. The user explicitly commanded Stop forking new sessions.
+- **Recurrence count**: 3+
+- **Status**: BLOCKED (by platform behavior). The next agent must be aware of this and focus on completing the pending audit within a single session.
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+- **Frontend**: React Native with Expo, Expo Router, TypeScript
+- **UI Framework**: Tamagui
+- **State Management**: Zustand with 
+- **Backend**: Supabase (PostgreSQL, Auth, Storage, and auto-generated REST API)
+- **Monetization**: Google AdMob ()
+
+**key DB schema**
+- **users**: uid=0(root) gid=0(root) groups=0(root) (UUID PK), , , , 
+- **books**: uid=0(root) gid=0(root) groups=0(root) (BIGSERIAL PK), , ,  (TEXT), 
+- **user_activity**: uid=0(root) gid=0(root) groups=0(root) (BIGSERIAL PK),  (FK),  (FK), 
+- **app_settings**:  (TEXT UNIQUE),  (TEXT)
+
+**changes in tech stack**
+- The project successfully migrated from the template's default FastAPI/MongoDB stack to the user-requested Supabase/PostgreSQL stack.
+
+**All files of reference**
+- : Root layout, contains critical auth and routing logic that has been a source of bugs.
+- : The primary screen for all authentication flows.
+- : The book reader, with recently added Favorite/Share/Ad logic.
+- : The central Zustand store managing all client-side state.
+- : Contains essential app configuration, including Bundle ID and plugin settings for Apple Sign-In and AdMob.
+- : The source of truth for the database schema.
+
+**Areas that need refactoring**:
+- The  directory contains a now-redundant FastAPI server (). This and its related client file () should be removed to clean up the project.
+
+**key api endpoints**
+- All data interactions are handled through the Supabase JS client (), which communicates with Supabase's auto-generated REST API. There are no custom-built backend endpoints in use.
+
+**Critical Info for New Agent**
+- The user is frustrated with delays caused by session forking. Your top priority is to complete the **Full System Audit** and its sub-tasks within this session. Avoid any actions that might reset the environment.
+- The Supabase database is live and contains user data and 262 books. **DO NOT** re-run migrations or the seeding script.
+- The admin user  has  in the  table, but the user must first **Sign Up** via the app's UI with this email to create the corresponding auth entry in Supabase before they can log in to the admin panel.
+
+**documents created in this job**
+- 
+- 
+- 
+
+**Last 10 User Messages and any pending HUMAN messages**
+1.  **#291:** User is frustrated with forking loops and demands all remaining tasks (Audit, Bug Fixes) be finished in the current session. (PENDING)
+2.  **#288/#285:** User restates the request for a full system audit after a fork occurred. (PENDING)
+3.  **#280:** User confirms Apple credentials are saved and requests a full system audit. (PENDING)
+4.  **#278:** User correctly points out that Supabase needs a JWT for Apple Sign-In, not the raw key file. (RESOLVED)
+5.  **#257:** User asks for guidance on setting up Apple Sign-In and requests the app's Bundle ID. (RESOLVED)
+6.  **#245:** User asks for the admin URL, reports duplicate buttons in the reader, and questions why the welcome screen is skipped. (RESOLVED)
+7.  **#190:** User requests web preview, admin verification, fixes for Favorite/Share buttons, and more ad placements. (Partially Resolved)
+8.  **#95:** User confirms DB migration is done and requests book seeding and welcome screen UI updates. (RESOLVED)
+9.  **#91:** User asks for the SQL migration code. (RESOLVED)
+10. **#4:** User provides initial credentials and requirements. (RESOLVED)
+
+**Project Health Check:**
+- **Broken**:
+    - Session management is potentially unstable.
+    - Guest-to-user data migration is unverified.
+    - Graceful error handling is not implemented.
+    - Google Sign-In is not implemented.
+- **Mocked**:
+    - The  dashboard is a UI placeholder with no functionality.
+
+**3rd Party Integrations**
+- **Supabase (Auth & Database)** — requires User-provided key.
+- **Google AdMob (Ads)** — requires User-provided key.
+- **Apple Sign-In (Auth)** — requires User-provided key/credentials.
+
+**Testing status**
+- **Testing agent used after significant changes**: NO
+- **Troubleshoot agent used after agent stuck in loop**: NO
+- **Test files created**: []
+- **Known regressions**: Session persistence seems to have degraded as new features were added, leading to unexpected redirects.
+
+**Credentials to test flow:**
+- **Admin**: First, sign up with email  and a new password. Then, sign in.
+- **Guest**: Click the Continue as Guest button.
+- **Regular User**: Sign up with any non-admin email address.
+
+**What agent forgot to execute**
+- Implementation of **interstitial ads** to be shown every 3 chapters.
+- Implementation of the full **Google Sign-In** logic.
+- Building the functionality for the **Admin Dashboard**.
+- Building the functionality for **user profile editing**.
+- A final **log cleanup** to remove all  statements from production code.
+
+</analysis>
