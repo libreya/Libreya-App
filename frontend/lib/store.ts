@@ -128,6 +128,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     }
   },
 
+  setFontsLoaded: (loaded) => set({ fontsLoaded: loaded }),
+
   setTheme: async (theme) => {
     set({ theme });
     await AsyncStorage.setItem('theme', theme);
