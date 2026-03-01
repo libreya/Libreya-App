@@ -115,18 +115,24 @@ export default function LibraryScreen() {
       >
         {renderHeroSection()}
         
+        {/* Admin-only ad status indicator */}
+        <AdStatusIndicator />
+        
         {featuredBooks.length > 0 && renderSection('Featured Books', featuredBooks)}
         
-        <AdBanner />
+        <AdBanner position="inline" />
         
         {recommendedBooks.length > 0 && renderSection('Recommended For You', recommendedBooks)}
         
         {books.length > 0 && renderSection('All Books', books, false)}
         
-        {/* Bottom Ad Banner */}
+        {/* Bottom Ad Banner with spacer */}
         <View style={styles.bottomAdContainer}>
-          <AdBanner />
+          <AdBanner position="bottom" />
         </View>
+        
+        {/* Reserved spacer to prevent ads overlapping navigation */}
+        <AdSpacer height={80} />
       </ScrollView>
     </View>
   );
