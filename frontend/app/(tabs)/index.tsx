@@ -71,7 +71,7 @@ export default function LibraryScreen() {
         style={styles.heroGradient}
       >
         <Image
-          source={{ uri: 'https://customer-assets.emergentagent.com/job_bc7b9e4f-7678-4b25-b887-2287e22fd313/artifacts/vl9x3m91_Logo1.jpg' }}
+          source={{ uri: LOGO_URL }}
           style={styles.logo}
           resizeMode="contain"
         />
