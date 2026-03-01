@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { COLORS, THEMES } from '../../constants/theme';
 import { useAppStore } from '../../lib/store';
-import { AdBanner } from '../../components/AdBanner';
+import { AdBanner, AdSpacer } from '../../components/AdBanner';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { api } from '../../lib/api';
 
