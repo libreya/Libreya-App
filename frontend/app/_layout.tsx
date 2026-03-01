@@ -2,10 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { View } from 'react-native';
+import * as Font from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 import { useAppStore } from '../lib/store';
-import { LoadingScreen } from '../components/LoadingScreen';
 import { TermsModal } from '../components/TermsModal';
+import { Header } from '../components/Header';
 import { COLORS, THEMES } from '../constants/theme';
+
+// Keep splash screen while loading
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const initializeApp = useAppStore((s) => s.initializeApp);
@@ -13,45 +19,34 @@ export default function RootLayout() {
   const user = useAppStore((s) => s.user);
   const acceptTerms = useAppStore((s) => s.acceptTerms);
   const theme = useAppStore((s) => s.theme);
+  const setFontsLoaded = useAppStore((s) => s.setFontsLoaded);
   const colors = THEMES[theme];
-  const router = useRouter();
   const segments = useSegments();
-  const navigationState = useRootNavigationState();
   const [showTerms, setShowTerms] = useState(false);
-  const [hasNavigated, setHasNavigated] = useState(false);
+  const [appReady, setAppReady] = useState(false);
 
+  // Load fonts and initialize app
   useEffect(() => {
-    initializeApp();
+    async function prepare() {
+      try {
+        await Font.loadAsync({
+          'LibreBaskerville-Regular': require('../assets/fonts/LibreBaskerville-Regular.ttf'),
+          'LibreBaskerville-Bold': require('../assets/fonts/LibreBaskerville-Bold.ttf'),
+          'LibreBaskerville-Italic': require('../assets/fonts/LibreBaskerville-Italic.ttf'),
+        });
+        setFontsLoaded(true);
+      } catch (e) {
+        // Font loading failed, continue with fallback fonts
+      }
+
+      await initializeApp();
+      setAppReady(true);
+      await SplashScreen.hideAsync();
+    }
+    prepare();
   }, []);
 
-  // Handle routing based on user state
-  useEffect(() => {
-    if (isLoading) return;
-    if (!navigationState?.key) return;
-    if (hasNavigated) return;
-
-    const inWelcome = segments[0] === 'welcome';
-    const inIndex = segments.length === 0 || segments[0] === 'index' || segments[0] === '';
-    const inTabs = segments[0] === '(tabs)';
-    const inBook = segments[0] === 'book';
-    const inLegal = segments[0] === 'legal';
-    const inAdmin = segments[0] === 'admin';
-
-    // Allow public pages without login: welcome, book reader, legal
-    // Only redirect to welcome from index or protected tabs
-    if (!user && inIndex) {
-      router.replace('/welcome');
-      setHasNavigated(true);
-    } else if (!user && inTabs) {
-      router.replace('/welcome');
-      setHasNavigated(true);
-    } else if (user && user.terms_accepted && (inIndex || inWelcome)) {
-      router.replace('/(tabs)');
-      setHasNavigated(true);
-    }
-  }, [user, segments, isLoading, navigationState?.key, hasNavigated]);
-
-  // Show terms modal only when navigating to tabs without accepted terms
+  // Show terms modal only when navigating to protected areas without accepted terms
   useEffect(() => {
     if (user && !user.terms_accepted && segments[0] === '(tabs)') {
       setShowTerms(true);
@@ -65,29 +60,38 @@ export default function RootLayout() {
     setShowTerms(false);
   };
 
-  if (isLoading) {
-    return <LoadingScreen />;
+  if (!appReady) {
+    return null; // Splash screen is showing
   }
 
   return (
     <SafeAreaProvider>
       <StatusBar style={theme === 'dark' || theme === 'night' ? 'light' : 'dark'} />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-          contentStyle: { backgroundColor: colors.background },
-          headerShown: false,
-        }}
-      >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="welcome" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="auth" options={{ headerShown: false, presentation: 'modal' }} />
-        <Stack.Screen name="book/[id]" options={{ headerShown: true, title: 'Reading' }} />
-        <Stack.Screen name="admin" options={{ headerShown: true, title: 'Admin Dashboard' }} />
-        <Stack.Screen name="legal/[type]" options={{ headerShown: true }} />
-      </Stack>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        <Header />
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: colors.background },
+            headerTintColor: colors.text,
+            contentStyle: { backgroundColor: colors.background },
+            headerShown: false,
+          }}
+        >
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="welcome" options={{ headerShown: false }} />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="auth" options={{ headerShown: false, presentation: 'modal' }} />
+          <Stack.Screen name="book/[id]" options={{ headerShown: true, title: 'Reading' }} />
+          <Stack.Screen name="admin" options={{ headerShown: true, title: 'Admin Dashboard' }} />
+          <Stack.Screen name="legal/[type]" options={{ headerShown: true }} />
+          <Stack.Screen name="about" options={{ headerShown: false }} />
+          <Stack.Screen name="founder" options={{ headerShown: false }} />
+          <Stack.Screen name="faq" options={{ headerShown: false }} />
+          <Stack.Screen name="contact" options={{ headerShown: false }} />
+          <Stack.Screen name="donate" options={{ headerShown: false }} />
+          <Stack.Screen name="browse" options={{ headerShown: false }} />
+        </Stack>
+      </View>
       <TermsModal visible={showTerms} onAccept={handleAcceptTerms} />
     </SafeAreaProvider>
   );
