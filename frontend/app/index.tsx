@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Image,
   useWindowDimensions,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +17,59 @@ import { useAppStore, Book } from '../lib/store';
 import { api } from '../lib/api';
 import { Footer } from '../components/Footer';
 
+// ===== DEFAULT (HARDCODED) CONTENT =====
+const DEFAULTS = {
+  hero_title: 'Classic Literature,\nReimagined',
+  hero_subtitle: "Discover over 300 timeless masterpieces from the world's greatest authors. Beautifully formatted, completely free, forever.",
+  philosophy_quote: '"Libreya is not built for endless scrolling; it is built for intentional reading."',
+  philosophy_desc: 'We curate timeless literature with minimalist design, creating a calm reading space in a world of digital noise.',
+  cta_title: 'Begin Your Journey',
+  cta_desc: "Join thousands of readers discovering the world's greatest literature.",
+};
+
+function AnimatedCard({ children, delay = 0, style }: { children: React.ReactNode; delay?: number; style?: any }) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 500, delay, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 500, delay, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View style={[style, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+      {children}
+    </Animated.View>
+  );
+}
+
+function PressableCard({ children, onPress, style }: { children: React.ReactNode; onPress?: () => void; style?: any }) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const onPressIn = () => {
+    Animated.spring(scaleAnim, { toValue: 0.96, useNativeDriver: true, friction: 8 }).start();
+  };
+  const onPressOut = () => {
+    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, friction: 8 }).start();
+  };
+
+  return (
+    <Animated.View style={[style, { transform: [{ scale: scaleAnim }] }]}>
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        activeOpacity={0.9}
+        style={{ flex: 1 }}
+      >
+        {children}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -23,16 +77,40 @@ export default function HomeScreen() {
   const fontsLoaded = useAppStore((s) => s.fontsLoaded);
   const headingFont = fontsLoaded ? FONTS.heading : FONTS.headingFallback;
   const bodyFont = fontsLoaded ? FONTS.body : FONTS.bodyFallback;
-  const isMobile = width < 768;
 
   const [featuredBooks, setFeaturedBooks] = useState<Book[]>([]);
   const [totalBooks, setTotalBooks] = useState(301);
   const [totalCategories, setTotalCategories] = useState(25);
 
+  // CMS content with defaults
+  const [cmsContent, setCmsContent] = useState(DEFAULTS);
+
   useEffect(() => {
     loadFeaturedBooks();
     loadStats();
+    loadCmsContent();
   }, []);
+
+  const loadCmsContent = async () => {
+    try {
+      const settings = await api.get('/settings');
+      if (Array.isArray(settings) && settings.length > 0) {
+        const mapped: Record<string, string> = {};
+        settings.forEach((s: any) => { if (s.key && s.value) mapped[s.key] = s.value; });
+
+        setCmsContent({
+          hero_title: mapped.landing_hero_title || DEFAULTS.hero_title,
+          hero_subtitle: mapped.landing_hero_subtitle || DEFAULTS.hero_subtitle,
+          philosophy_quote: mapped.landing_philosophy_quote || DEFAULTS.philosophy_quote,
+          philosophy_desc: mapped.landing_philosophy_desc || DEFAULTS.philosophy_desc,
+          cta_title: mapped.landing_cta_title || DEFAULTS.cta_title,
+          cta_desc: mapped.landing_cta_desc || DEFAULTS.cta_desc,
+        });
+      }
+    } catch (e) {
+      // Keep defaults - user never sees a blank screen
+    }
+  };
 
   const loadFeaturedBooks = async () => {
     try {
@@ -40,22 +118,17 @@ export default function HomeScreen() {
       if (data && data.length > 0) {
         setFeaturedBooks(data);
       } else {
-        // Fallback: get top books by read count
         const fallback = await api.get('/books?limit=5');
         setFeaturedBooks(fallback || []);
       }
     } catch (e) {
-      // Silent fail - landing page still renders static content
+      // Silent
     }
   };
 
   const loadStats = async () => {
     try {
-      const [books, cats] = await Promise.all([
-        api.get('/books?limit=1'),
-        api.get('/books/categories/list'),
-      ]);
-      // We know we have 262+ books
+      const cats = await api.get('/books/categories/list');
       if (cats) setTotalCategories(cats.length || 25);
     } catch (e) {
       // Use defaults
@@ -78,44 +151,40 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* ===== HERO SECTION ===== */}
+        {/* ===== HERO ===== */}
         <View style={styles.hero}>
           <Image source={{ uri: LOGO_URL }} style={styles.heroLogo} resizeMode="contain" />
           <Text style={[styles.heroTitle, { fontFamily: headingFont }]}>
-            Classic Literature,{'\n'}Reimagined
+            {cmsContent.hero_title}
           </Text>
           <Text style={[styles.heroSubtitle, { fontFamily: bodyFont }]}>
-            Discover over 300 timeless masterpieces from the world's greatest authors. Beautifully formatted, completely free, forever.
+            {cmsContent.hero_subtitle}
           </Text>
           <View style={styles.heroCTA}>
-            <TouchableOpacity
-              style={styles.ctaPrimary}
-              onPress={() => router.push('/browse' as any)}
-            >
-              <Text style={[styles.ctaPrimaryText, { fontFamily: bodyFont }]}>Explore Library</Text>
-              <Ionicons name="arrow-forward" size={18} color={COLORS.white} />
-            </TouchableOpacity>
+            <PressableCard onPress={() => router.push('/browse' as any)} style={styles.ctaPrimary}>
+              <View style={styles.ctaInner}>
+                <Text style={[styles.ctaPrimaryText, { fontFamily: bodyFont }]}>Explore Library</Text>
+                <Ionicons name="arrow-forward" size={18} color={COLORS.white} />
+              </View>
+            </PressableCard>
             {!user && (
-              <TouchableOpacity
-                style={styles.ctaSecondary}
-                onPress={() => router.push('/welcome' as any)}
-              >
+              <PressableCard onPress={() => router.push('/welcome' as any)} style={styles.ctaSecondary}>
                 <Text style={[styles.ctaSecondaryText, { fontFamily: bodyFont }]}>Create Account</Text>
-              </TouchableOpacity>
+              </PressableCard>
             )}
           </View>
         </View>
 
-        {/* ===== STATS SECTION ===== */}
+        {/* ===== STATS ===== */}
         <View style={styles.statsSection}>
           <Text style={[styles.statsLabel, { fontFamily: bodyFont }]}>LIBRARY AT A GLANCE</Text>
           <View style={styles.statsRow}>
             {stats.map((stat, i) => (
-              <View key={i} style={styles.statCard}>
+              <AnimatedCard key={i} delay={i * 100} style={styles.statCard}>
                 <Ionicons name={stat.icon} size={28} color={COLORS.accent} />
                 <Text style={[styles.statNumber, { fontFamily: headingFont }]}>{stat.number}</Text>
                 <Text style={[styles.statLabel, { fontFamily: bodyFont }]}>{stat.label}</Text>
-              </View>
+              </AnimatedCard>
             ))}
           </View>
         </View>
@@ -125,44 +194,34 @@ export default function HomeScreen() {
           <Text style={[styles.sectionLabel, { fontFamily: bodyFont }]}>HANDPICKED FOR YOU</Text>
           <Text style={[styles.sectionTitle, { fontFamily: headingFont }]}>Featured Classics</Text>
           {featuredBooks.length > 0 ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.featuredScroll}
-            >
-              {featuredBooks.map((book) => (
-                <TouchableOpacity
-                  key={book.id}
-                  style={styles.featuredCard}
-                  onPress={() => router.push(`/book/${book.id}` as any)}
-                  activeOpacity={0.85}
-                >
-                  {book.cover_image ? (
-                    <Image source={{ uri: book.cover_image }} style={styles.featuredCover} resizeMode="cover" />
-                  ) : (
-                    <View style={[styles.featuredCover, styles.featuredCoverPlaceholder]}>
-                      <Text style={[styles.featuredCoverTitle, { fontFamily: headingFont }]} numberOfLines={3}>
-                        {book.title}
-                      </Text>
-                      <Text style={[styles.featuredCoverAuthor, { fontFamily: bodyFont }]} numberOfLines={1}>
-                        {book.author}
-                      </Text>
-                    </View>
-                  )}
-                  <View style={styles.featuredInfo}>
-                    <Text style={[styles.featuredTitle, { fontFamily: headingFont }]} numberOfLines={2}>
-                      {book.title}
-                    </Text>
-                    <Text style={[styles.featuredAuthor, { fontFamily: bodyFont }]} numberOfLines={1}>
-                      {book.author}
-                    </Text>
-                    {book.category && (
-                      <View style={styles.featuredBadge}>
-                        <Text style={[styles.featuredBadgeText, { fontFamily: bodyFont }]}>{book.category}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
+              {featuredBooks.map((book, i) => (
+                <AnimatedCard key={book.id} delay={i * 80}>
+                  <PressableCard
+                    onPress={() => router.push(`/book/${book.id}` as any)}
+                    style={styles.featuredCard}
+                  >
+                    <View>
+                      {book.cover_image ? (
+                        <Image source={{ uri: book.cover_image }} style={styles.featuredCover} resizeMode="cover" />
+                      ) : (
+                        <View style={[styles.featuredCover, styles.featuredCoverPlaceholder]}>
+                          <Text style={[styles.featuredCoverTitle, { fontFamily: headingFont }]} numberOfLines={3}>{book.title}</Text>
+                          <Text style={[styles.featuredCoverAuthor, { fontFamily: bodyFont }]} numberOfLines={1}>{book.author}</Text>
+                        </View>
+                      )}
+                      <View style={styles.featuredInfo}>
+                        <Text style={[styles.featuredTitle, { fontFamily: headingFont }]} numberOfLines={2}>{book.title}</Text>
+                        <Text style={[styles.featuredAuthor, { fontFamily: bodyFont }]} numberOfLines={1}>{book.author}</Text>
+                        {book.category && (
+                          <View style={styles.featuredBadge}>
+                            <Text style={[styles.featuredBadgeText, { fontFamily: bodyFont }]}>{book.category}</Text>
+                          </View>
+                        )}
                       </View>
-                    )}
-                  </View>
-                </TouchableOpacity>
+                    </View>
+                  </PressableCard>
+                </AnimatedCard>
               ))}
             </ScrollView>
           ) : (
@@ -170,65 +229,58 @@ export default function HomeScreen() {
           )}
         </View>
 
-        {/* ===== BENEFITS SECTION ===== */}
+        {/* ===== BENEFITS ===== */}
         <View style={styles.benefitsSection}>
           <Text style={[styles.sectionLabel, { fontFamily: bodyFont, color: COLORS.accent }]}>WHY CREATE AN ACCOUNT</Text>
-          <Text style={[styles.sectionTitle, { fontFamily: headingFont, color: COLORS.white }]}>
-            Benefits for Readers
-          </Text>
+          <Text style={[styles.sectionTitle, { fontFamily: headingFont, color: COLORS.white }]}>Benefits for Readers</Text>
           <View style={styles.benefitsGrid}>
             {benefits.map((b, i) => (
-              <View key={i} style={styles.benefitCard}>
+              <AnimatedCard key={i} delay={i * 100} style={styles.benefitCard}>
                 <View style={styles.benefitIcon}>
                   <Ionicons name={b.icon} size={24} color={COLORS.primary} />
                 </View>
                 <Text style={[styles.benefitTitle, { fontFamily: headingFont }]}>{b.title}</Text>
                 <Text style={[styles.benefitDesc, { fontFamily: bodyFont }]}>{b.desc}</Text>
-              </View>
+              </AnimatedCard>
             ))}
           </View>
           {!user && (
-            <TouchableOpacity
-              style={styles.benefitCTA}
-              onPress={() => router.push('/welcome' as any)}
-            >
-              <Text style={[styles.benefitCTAText, { fontFamily: bodyFont }]}>Get Started Free</Text>
-              <Ionicons name="arrow-forward" size={16} color={COLORS.primary} />
-            </TouchableOpacity>
+            <PressableCard onPress={() => router.push('/welcome' as any)} style={styles.benefitCTA}>
+              <View style={styles.ctaInner}>
+                <Text style={[styles.benefitCTAText, { fontFamily: bodyFont }]}>Get Started Free</Text>
+                <Ionicons name="arrow-forward" size={16} color={COLORS.primary} />
+              </View>
+            </PressableCard>
           )}
         </View>
 
-        {/* ===== PHILOSOPHY PREVIEW ===== */}
+        {/* ===== PHILOSOPHY ===== */}
         <View style={styles.philosophySection}>
           <Text style={[styles.philosophyQuote, { fontFamily: fontsLoaded ? FONTS.bodyItalic : FONTS.bodyFallback }]}>
-            "Libreya is not built for endless scrolling; it is built for intentional reading."
+            {cmsContent.philosophy_quote}
           </Text>
           <View style={styles.philosophyDivider} />
           <Text style={[styles.philosophyDesc, { fontFamily: bodyFont }]}>
-            We curate timeless literature with minimalist design, creating a calm reading space in a world of digital noise.
+            {cmsContent.philosophy_desc}
           </Text>
-          <TouchableOpacity
-            style={styles.learnMoreBtn}
-            onPress={() => router.push('/about' as any)}
-          >
-            <Text style={[styles.learnMoreText, { fontFamily: bodyFont }]}>Learn Our Story</Text>
-            <Ionicons name="arrow-forward" size={16} color={COLORS.primary} />
-          </TouchableOpacity>
+          <PressableCard onPress={() => router.push('/about' as any)} style={styles.learnMoreBtn}>
+            <View style={styles.ctaInner}>
+              <Text style={[styles.learnMoreText, { fontFamily: bodyFont }]}>Learn Our Story</Text>
+              <Ionicons name="arrow-forward" size={16} color={COLORS.primary} />
+            </View>
+          </PressableCard>
         </View>
 
-        {/* ===== CALL TO ACTION ===== */}
+        {/* ===== FINAL CTA ===== */}
         <View style={styles.finalCTA}>
-          <Text style={[styles.finalCTATitle, { fontFamily: headingFont }]}>Begin Your Journey</Text>
-          <Text style={[styles.finalCTADesc, { fontFamily: bodyFont }]}>
-            Join thousands of readers discovering the world's greatest literature.
-          </Text>
-          <TouchableOpacity
-            style={styles.ctaPrimary}
-            onPress={() => router.push('/browse' as any)}
-          >
-            <Ionicons name="library-outline" size={18} color={COLORS.white} />
-            <Text style={[styles.ctaPrimaryText, { fontFamily: bodyFont }]}>Browse Library</Text>
-          </TouchableOpacity>
+          <Text style={[styles.finalCTATitle, { fontFamily: headingFont }]}>{cmsContent.cta_title}</Text>
+          <Text style={[styles.finalCTADesc, { fontFamily: bodyFont }]}>{cmsContent.cta_desc}</Text>
+          <PressableCard onPress={() => router.push('/browse' as any)} style={styles.ctaPrimary}>
+            <View style={styles.ctaInner}>
+              <Ionicons name="library-outline" size={18} color={COLORS.white} />
+              <Text style={[styles.ctaPrimaryText, { fontFamily: bodyFont }]}>Browse Library</Text>
+            </View>
+          </PressableCard>
         </View>
 
         <Footer />
@@ -238,321 +290,52 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-  },
-
-  // ===== HERO =====
-  hero: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 24,
-    paddingTop: 48,
-    paddingBottom: 64,
-    alignItems: 'center',
-  },
-  heroLogo: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 24,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  heroTitle: {
-    fontSize: 40,
-    color: COLORS.white,
-    textAlign: 'center',
-    lineHeight: 50,
-    marginBottom: 16,
-  },
-  heroSubtitle: {
-    fontSize: 17,
-    color: 'rgba(255,255,255,0.85)',
-    textAlign: 'center',
-    lineHeight: 28,
-    maxWidth: 560,
-    marginBottom: 32,
-  },
-  heroCTA: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    justifyContent: 'center',
-  },
-  ctaPrimary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: COLORS.accent,
-    paddingHorizontal: 28,
-    paddingVertical: 14,
-    borderRadius: 10,
-  },
-  ctaPrimaryText: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  ctaSecondary: {
-    paddingHorizontal: 28,
-    paddingVertical: 14,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.5)',
-  },
-  ctaSecondaryText: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: '500',
-  },
-
-  // ===== STATS =====
-  statsSection: {
-    paddingVertical: 48,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    backgroundColor: COLORS.secondary,
-  },
-  statsLabel: {
-    fontSize: 12,
-    letterSpacing: 3,
-    color: COLORS.gray,
-    marginBottom: 24,
-    textTransform: 'uppercase',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 24,
-  },
-  statCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    padding: 28,
-    alignItems: 'center',
-    minWidth: 150,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  statNumber: {
-    fontSize: 36,
-    color: COLORS.primary,
-    marginTop: 8,
-  },
-  statLabel: {
-    fontSize: 15,
-    color: COLORS.gray,
-    marginTop: 4,
-  },
-
-  // ===== FEATURED BOOKS =====
-  featuredSection: {
-    paddingVertical: 48,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-  },
-  sectionLabel: {
-    fontSize: 12,
-    letterSpacing: 3,
-    color: COLORS.gray,
-    marginBottom: 8,
-    textTransform: 'uppercase',
-  },
-  sectionTitle: {
-    fontSize: 30,
-    color: COLORS.text,
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  featuredScroll: {
-    paddingLeft: 8,
-    paddingRight: 24,
-    gap: 16,
-  },
-  featuredCard: {
-    width: 200,
-    backgroundColor: COLORS.white,
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: '#f0f0f0',
-  },
-  featuredCover: {
-    width: 200,
-    height: 260,
-  },
-  featuredCoverPlaceholder: {
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  featuredCoverTitle: {
-    color: COLORS.white,
-    fontSize: 15,
-    textAlign: 'center',
-  },
-  featuredCoverAuthor: {
-    color: COLORS.secondary,
-    fontSize: 12,
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  featuredInfo: {
-    padding: 14,
-  },
-  featuredTitle: {
-    fontSize: 14,
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  featuredAuthor: {
-    fontSize: 12,
-    color: COLORS.gray,
-    marginBottom: 8,
-  },
-  featuredBadge: {
-    backgroundColor: COLORS.secondary,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-  },
-  featuredBadgeText: {
-    fontSize: 11,
-    color: COLORS.primary,
-  },
-
-  // ===== BENEFITS =====
-  benefitsSection: {
-    backgroundColor: COLORS.primary,
-    paddingVertical: 56,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-  },
-  benefitsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 16,
-    marginTop: 8,
-    maxWidth: 900,
-  },
-  benefitCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 14,
-    padding: 24,
-    width: 210,
-    alignItems: 'center',
-  },
-  benefitIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(90,31,43,0.08)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  benefitTitle: {
-    fontSize: 15,
-    color: COLORS.text,
-    marginBottom: 6,
-    textAlign: 'center',
-  },
-  benefitDesc: {
-    fontSize: 13,
-    color: COLORS.gray,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  benefitCTA: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 28,
-    backgroundColor: COLORS.accent,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  benefitCTAText: {
-    color: COLORS.primary,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-
-  // ===== PHILOSOPHY =====
-  philosophySection: {
-    paddingVertical: 56,
-    paddingHorizontal: 32,
-    alignItems: 'center',
-    backgroundColor: COLORS.secondary,
-  },
-  philosophyQuote: {
-    fontSize: 22,
-    color: COLORS.primary,
-    textAlign: 'center',
-    lineHeight: 34,
-    maxWidth: 600,
-  },
-  philosophyDivider: {
-    width: 48,
-    height: 3,
-    backgroundColor: COLORS.accent,
-    borderRadius: 2,
-    marginVertical: 24,
-  },
-  philosophyDesc: {
-    fontSize: 16,
-    color: COLORS.gray,
-    textAlign: 'center',
-    lineHeight: 26,
-    maxWidth: 500,
-  },
-  learnMoreBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 20,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-  },
-  learnMoreText: {
-    color: COLORS.primary,
-    fontSize: 15,
-    fontWeight: '500',
-  },
-
-  // ===== FINAL CTA =====
-  finalCTA: {
-    paddingVertical: 56,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-  },
-  finalCTATitle: {
-    fontSize: 30,
-    color: COLORS.text,
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  finalCTADesc: {
-    fontSize: 16,
-    color: COLORS.gray,
-    textAlign: 'center',
-    marginBottom: 24,
-    maxWidth: 400,
-  },
+  container: { flex: 1, backgroundColor: COLORS.white },
+  hero: { backgroundColor: COLORS.primary, paddingHorizontal: 24, paddingTop: 48, paddingBottom: 64, alignItems: 'center' },
+  heroLogo: { width: 100, height: 100, borderRadius: 50, marginBottom: 24, backgroundColor: 'rgba(0,0,0,0.3)' },
+  heroTitle: { fontSize: 40, color: COLORS.white, textAlign: 'center', lineHeight: 50, marginBottom: 16 },
+  heroSubtitle: { fontSize: 17, color: 'rgba(255,255,255,0.85)', textAlign: 'center', lineHeight: 28, maxWidth: 560, marginBottom: 32 },
+  heroCTA: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },
+  ctaPrimary: { backgroundColor: COLORS.accent, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 10 },
+  ctaInner: { flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center' },
+  ctaPrimaryText: { color: COLORS.white, fontSize: 16, fontWeight: '600' },
+  ctaSecondary: { paddingHorizontal: 28, paddingVertical: 14, borderRadius: 10, borderWidth: 2, borderColor: 'rgba(255,255,255,0.5)' },
+  ctaSecondaryText: { color: COLORS.white, fontSize: 16, fontWeight: '500', textAlign: 'center' },
+  statsSection: { paddingVertical: 48, paddingHorizontal: 24, alignItems: 'center', backgroundColor: COLORS.secondary },
+  statsLabel: { fontSize: 12, letterSpacing: 3, color: COLORS.gray, marginBottom: 24, textTransform: 'uppercase' },
+  statsRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 24 },
+  statCard: { backgroundColor: COLORS.white, borderRadius: 16, padding: 28, alignItems: 'center', minWidth: 150 },
+  statNumber: { fontSize: 36, color: COLORS.primary, marginTop: 8 },
+  statLabel: { fontSize: 15, color: COLORS.gray, marginTop: 4 },
+  featuredSection: { paddingVertical: 48, paddingHorizontal: 24, alignItems: 'center' },
+  sectionLabel: { fontSize: 12, letterSpacing: 3, color: COLORS.gray, marginBottom: 8, textTransform: 'uppercase' },
+  sectionTitle: { fontSize: 30, color: COLORS.text, textAlign: 'center', marginBottom: 24 },
+  featuredScroll: { paddingLeft: 8, paddingRight: 24, gap: 16 },
+  featuredCard: { width: 200, backgroundColor: COLORS.white, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#f0f0f0' },
+  featuredCover: { width: 200, height: 260 },
+  featuredCoverPlaceholder: { backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center', padding: 16 },
+  featuredCoverTitle: { color: COLORS.white, fontSize: 15, textAlign: 'center' },
+  featuredCoverAuthor: { color: COLORS.secondary, fontSize: 12, marginTop: 8, textAlign: 'center' },
+  featuredInfo: { padding: 14 },
+  featuredTitle: { fontSize: 14, color: COLORS.text, marginBottom: 4 },
+  featuredAuthor: { fontSize: 12, color: COLORS.gray, marginBottom: 8 },
+  featuredBadge: { backgroundColor: COLORS.secondary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6, alignSelf: 'flex-start' },
+  featuredBadgeText: { fontSize: 11, color: COLORS.primary },
+  benefitsSection: { backgroundColor: COLORS.primary, paddingVertical: 56, paddingHorizontal: 24, alignItems: 'center' },
+  benefitsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 16, marginTop: 8, maxWidth: 900 },
+  benefitCard: { backgroundColor: COLORS.white, borderRadius: 14, padding: 24, width: 210, alignItems: 'center' },
+  benefitIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(90,31,43,0.08)', justifyContent: 'center', alignItems: 'center', marginBottom: 14 },
+  benefitTitle: { fontSize: 15, color: COLORS.text, marginBottom: 6, textAlign: 'center' },
+  benefitDesc: { fontSize: 13, color: COLORS.gray, textAlign: 'center', lineHeight: 20 },
+  benefitCTA: { marginTop: 28, backgroundColor: COLORS.accent, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 },
+  benefitCTAText: { color: COLORS.primary, fontSize: 15, fontWeight: '600' },
+  philosophySection: { paddingVertical: 56, paddingHorizontal: 32, alignItems: 'center', backgroundColor: COLORS.secondary },
+  philosophyQuote: { fontSize: 22, color: COLORS.primary, textAlign: 'center', lineHeight: 34, maxWidth: 600 },
+  philosophyDivider: { width: 48, height: 3, backgroundColor: COLORS.accent, borderRadius: 2, marginVertical: 24 },
+  philosophyDesc: { fontSize: 16, color: COLORS.gray, textAlign: 'center', lineHeight: 26, maxWidth: 500 },
+  learnMoreBtn: { marginTop: 20, paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8, borderWidth: 1, borderColor: COLORS.primary },
+  learnMoreText: { color: COLORS.primary, fontSize: 15, fontWeight: '500' },
+  finalCTA: { paddingVertical: 56, paddingHorizontal: 24, alignItems: 'center' },
+  finalCTATitle: { fontSize: 30, color: COLORS.text, textAlign: 'center', marginBottom: 12 },
+  finalCTADesc: { fontSize: 16, color: COLORS.gray, textAlign: 'center', marginBottom: 24, maxWidth: 400 },
 });
