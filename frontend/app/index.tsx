@@ -292,7 +292,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.white },
   hero: { backgroundColor: COLORS.primary, paddingHorizontal: 24, paddingTop: 48, paddingBottom: 64, alignItems: 'center' },
-  heroLogo: { width: 100, height: 100, borderRadius: 50, marginBottom: 24, backgroundColor: 'rgba(0,0,0,0.3)' },
+  heroLogo: { width: 100, height: 100, borderRadius: 50, marginBottom: 24, backgroundColor: '#fff' },
   heroTitle: { fontSize: 40, color: COLORS.white, textAlign: 'center', lineHeight: 50, marginBottom: 16 },
   heroSubtitle: { fontSize: 17, color: 'rgba(255,255,255,0.85)', textAlign: 'center', lineHeight: 28, maxWidth: 560, marginBottom: 32 },
   heroCTA: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },

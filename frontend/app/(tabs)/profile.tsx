@@ -20,20 +20,7 @@ import { Button } from '../../components/Button';
 import { ThemeToggle } from '../../components/ThemeToggle';
 import { api } from '../../lib/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Custom confirm dialog that works on web
-const showConfirm = (title: string, message: string, onConfirm: () => void, confirmText = 'OK', destructive = false) => {
-  if (Platform.OS === 'web') {
-    if (window.confirm(`${title}\n\n${message}`)) {
-      onConfirm();
-    }
-  } else {
-    Alert.alert(title, message, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: confirmText, style: destructive ? 'destructive' : 'default', onPress: onConfirm },
-    ]);
-  }
-};
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -49,7 +36,7 @@ export default function ProfileScreen() {
   const [displayName, setDisplayName] = useState(user?.display_name || '');
   const [bio, setBio] = useState(user?.bio || '');
   const [saving, setSaving] = useState(false);
-
+  const { showDialog, Dialog } = useConfirmDialog();
   const isGuest = user?.auth_provider === 'guest';
 
   const handleSaveProfile = async () => {
@@ -68,59 +55,66 @@ export default function ProfileScreen() {
   };
 
   const handleDeleteAccount = () => {
-    showConfirm(
+    showDialog(
       'Delete Account',
       'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.',
-      async () => {
-        try {
-          await deleteAccount();
-          
-          // Show clear success message before redirect
-          const successMessage = '✓ Your account and all data have been successfully erased.\n\nYou will now be redirected to the Welcome screen.';
-          
-          if (Platform.OS === 'web') {
-            window.alert(successMessage);
-          } else {
-            Alert.alert(
-              'Account Deleted', 
-              'Your account and all data have been successfully erased.',
-              [{ text: 'OK', onPress: () => router.replace('/') }]
-            );
-            return; // Don't redirect immediately on native - wait for alert dismiss
+      {
+        onConfirm: async () => {
+          try {
+            await deleteAccount();
+
+            // Show clear success message before redirect
+            const successMessage = '✓ Your account and all data have been successfully erased.\n\nYou will now be redirected to the Welcome screen.';
+
+            if (Platform.OS === 'web') {
+              showDialog('', successMessage, { type: 'alert' })
+            } else {
+              Alert.alert(
+                'Account Deleted',
+                'Your account and all data have been successfully erased.',
+                [{ text: 'OK', onPress: () => router.replace('/') }]
+              );
+              return; // Don't redirect immediately on native - wait for alert dismiss
+            }
+
+            router.replace('/');
+          } catch (error: any) {
+            const errorMessage = error?.message || 'Failed to delete account. Please try again.';
+            if (Platform.OS === 'web') {
+              window.alert(`Error: ${errorMessage}`);
+            } else {
+              Alert.alert('Error', errorMessage);
+            }
           }
-          
-          router.replace('/');
-        } catch (error: any) {
-          const errorMessage = error?.message || 'Failed to delete account. Please try again.';
-          if (Platform.OS === 'web') {
-            window.alert(`Error: ${errorMessage}`);
-          } else {
-            Alert.alert('Error', errorMessage);
-          }
-        }
-      },
-      'Delete',
-      true
+        },
+        confirmText: 'Delete',
+        destructive: true,
+        type: 'confirm'
+      }
+
     );
   };
 
   const handleSignOut = () => {
-    showConfirm(
+    showDialog(
       'Sign Out',
       'Are you sure you want to sign out?',
-      async () => {
-        try {
-          await signOut();
-          router.replace('/');
-        } catch (error) {
-          if (Platform.OS === 'web') {
-            window.alert('Error: Failed to sign out. Please try again.');
-          } else {
-            Alert.alert('Error', 'Failed to sign out. Please try again.');
+      {
+        onConfirm: async () => {
+          try {
+            await signOut();
+            router.replace('/');
+          } catch (error) {
+            if (Platform.OS === 'web') {
+              window.alert('Error: Failed to sign out. Please try again.');
+            } else {
+              Alert.alert('Error', 'Failed to sign out. Please try again.');
+            }
           }
-        }
-      },
-      'Sign Out'
+        },
+        confirmText: 'Sign Out',
+        type: 'confirm'
+      }
     );
   };
 
@@ -156,7 +150,7 @@ export default function ProfileScreen() {
             </Text>
           )}
         </View>
-        
+        <Dialog />
         {editing ? (
           <View style={styles.editForm}>
             <TextInput

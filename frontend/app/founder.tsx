@@ -72,6 +72,7 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     marginBottom: 20,
+    backgroundColor: '#fff'
   },
   heroTitle: {
     color: COLORS.white,
