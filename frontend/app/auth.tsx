@@ -22,6 +22,7 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 
 export default function AuthScreen() {
   const router = useRouter();
@@ -39,6 +40,8 @@ export default function AuthScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { showDialog, Dialog } = useConfirmDialog();
 
   useEffect(() => {
     const checkAppleAuth = async () => {
@@ -57,23 +60,24 @@ export default function AuthScreen() {
   };
 
   const handleEmailAuth = async () => {
+    setError(null);
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter email and password');
+      setError('Please enter email and password');
       return;
     }
 
     if (!validateEmail(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      setError('Please enter a valid email address');
       return;
     }
 
     if (mode === 'signup' && password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      setError('Passwords do not match');
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      setError('Password must be at least 6 characters');
       return;
     }
 
@@ -90,7 +94,10 @@ export default function AuthScreen() {
           },
         });
 
-        if (error) throw error;
+        if (error) {
+          setError(error.message || 'Invalid login credential')
+          throw error;
+        }
 
         if (data.user) {
           // Create user in our database
@@ -118,7 +125,7 @@ export default function AuthScreen() {
           }
 
           setUser(newUser as any);
-          Alert.alert('Success', 'Account created successfully!');
+          showDialog('Success', 'Account created successfully!', { type: 'alert' });
           router.back();
         }
       } else {
@@ -127,7 +134,10 @@ export default function AuthScreen() {
           password,
         });
 
-        if (error) throw error;
+        if (error) {
+          setError(error.message || 'Invalid login credential')
+          throw error;
+        }
 
         if (data.user) {
           // Get user from our database
@@ -152,7 +162,7 @@ export default function AuthScreen() {
         }
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Authentication failed');
+      setError(error.message || 'No user found');
     } finally {
       setLoading(false);
     }
@@ -191,7 +201,7 @@ export default function AuthScreen() {
         window.location.href = data.url;
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Google sign-in failed');
+      showDialog('Error', error.message || 'Google sign-in failed', { type: 'alert' });
     } finally {
       setGoogleLoading(false);
     }
@@ -266,11 +276,11 @@ export default function AuthScreen() {
           window.location.href = data.url;
         }
       } else {
-        Alert.alert('Not Available', 'Apple Sign-In is only available on iOS and web.');
+        showDialog('Not Available', 'Apple Sign-In is only available on iOS and web.', { type: 'alert' });
       }
     } catch (error: any) {
       if (error.code !== 'ERR_REQUEST_CANCELED') {
-        Alert.alert('Error', error.message || 'Apple sign-in failed');
+        showDialog('Error', error.message || 'Apple sign-in failed', { type: 'alert' });
       }
     } finally {
       setAppleLoading(false);
@@ -291,6 +301,8 @@ export default function AuthScreen() {
           presentation: 'modal',
         }}
       />
+
+      <Dialog />
 
       <ScrollView
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 20 }]}
@@ -342,6 +354,8 @@ export default function AuthScreen() {
             />
           )}
 
+          {error && <Text style={styles.error}>{error}</Text>}
+          
           <Button
             title={mode === 'signin' ? 'Sign In' : 'Create Account'}
             onPress={handleEmailAuth}
@@ -466,5 +480,10 @@ const styles = StyleSheet.create({
   },
   switchText: {
     fontSize: 14,
+  },
+  error: {
+    color: COLORS.error,
+    fontSize: 16,
+    marginVertical: 8
   },
 });

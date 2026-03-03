@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as AppleAuthentication from 'expo-apple-authentication';
-import { COLORS, THEMES } from '../constants/theme';
+import { COLORS, LOGO_URL, THEMES } from '../constants/theme';
 import { useAppStore } from '../lib/store';
 import { supabase } from '../lib/supabase';
 import { api } from '../lib/api';
@@ -25,6 +25,7 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import * as Crypto from 'expo-crypto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
 
 const { width, height } = Dimensions.get('window');
 
@@ -44,6 +45,8 @@ export default function WelcomeScreen() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { showDialog, Dialog } = useConfirmDialog();
 
   useEffect(() => {
     const checkAppleAuth = async () => {
@@ -93,30 +96,31 @@ export default function WelcomeScreen() {
       setUser(guestUser);
       router.replace('/(tabs)');
     } catch (error) {
-      Alert.alert('Error', 'Failed to continue as guest. Please try again.');
+      showDialog('Error', 'Failed to continue as guest. Please try again.', { type: 'alert' })
     } finally {
       setLoading(false);
     }
   };
 
   const handleEmailAuth = async () => {
+    setError(null);
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter email and password');
+      setError('Please enter email and password');
       return;
     }
 
     if (!validateEmail(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
+      setError('Please enter a valid email address');
       return;
     }
 
     if (mode === 'signup' && password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      setError('Passwords do not match');
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      setError('Password must be at least 6 characters');
       return;
     }
 
@@ -133,7 +137,10 @@ export default function WelcomeScreen() {
           },
         });
 
-        if (error) throw error;
+        if (error) {
+          setError(error.message || 'Invalid login credential')
+          throw error;
+        }
 
         if (data.user) {
           const newUser = {
@@ -146,14 +153,14 @@ export default function WelcomeScreen() {
           };
 
           await api.post('/users', newUser);
-          
+
           if (previousGuestId) {
             await migrateGuestData(previousGuestId, data.user.id);
           }
 
           await AsyncStorage.setItem('user', JSON.stringify(newUser));
           setUser(newUser);
-          Alert.alert('Success', 'Account created successfully!');
+          showDialog('Success', 'Account created successfully!', { type: 'alert' });
           router.replace('/(tabs)');
         }
       } else {
@@ -162,7 +169,10 @@ export default function WelcomeScreen() {
           password,
         });
 
-        if (error) throw error;
+        if (error) {
+          setError(error.message || 'Invalid login credential')
+          throw error;
+        }
 
         if (data.user) {
           let userData;
@@ -190,7 +200,7 @@ export default function WelcomeScreen() {
         }
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Authentication failed');
+      setError(error.message || 'Authentication failed');
     } finally {
       setLoading(false);
     }
@@ -202,8 +212,8 @@ export default function WelcomeScreen() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: Platform.OS === 'web' 
-            ? window.location.origin 
+          redirectTo: Platform.OS === 'web'
+            ? window.location.origin
             : 'libreya://auth/callback',
           queryParams: {
             access_type: 'offline',
@@ -212,13 +222,13 @@ export default function WelcomeScreen() {
         },
       });
 
-      if (error) throw error;
+      if (error) { throw error };
 
       if (Platform.OS === 'web' && data?.url) {
         window.location.href = data.url;
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Google sign-in failed');
+      showDialog('Error', error.message || 'Google sign-in failed', { type: 'alert' });
     } finally {
       setGoogleLoading(false);
     }
@@ -227,7 +237,7 @@ export default function WelcomeScreen() {
   const handleAppleSignIn = async () => {
     setAppleLoading(true);
     const previousGuestId = user?.auth_provider === 'guest' ? user.id : null;
-    
+
     try {
       if (Platform.OS === 'ios') {
         const credential = await AppleAuthentication.signInAsync({
@@ -263,11 +273,11 @@ export default function WelcomeScreen() {
               await api.post('/users', newUser);
             } catch {
               try {
-                await api.patch(`/users/${data.user.id}`, { 
+                await api.patch(`/users/${data.user.id}`, {
                   display_name: displayName,
-                  auth_provider: 'apple' 
+                  auth_provider: 'apple'
                 });
-              } catch {}
+              } catch { }
             }
 
             if (previousGuestId) {
@@ -293,11 +303,11 @@ export default function WelcomeScreen() {
           window.location.href = data.url;
         }
       } else {
-        Alert.alert('Not Available', 'Apple Sign-In is only available on iOS and web.');
+        showDialog('Not Available', 'Apple Sign-In is only available on iOS and web.', { type: 'alert' });
       }
     } catch (error: any) {
       if (error.code !== 'ERR_REQUEST_CANCELED') {
-        Alert.alert('Error', error.message || 'Apple sign-in failed');
+        showDialog('Error', error.message || 'Apple sign-in failed', { type: 'alert' });
       }
     } finally {
       setAppleLoading(false);
@@ -308,24 +318,20 @@ export default function WelcomeScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Stack.Screen options={{ headerShown: false }} />
-        
+
         <Image
           source={{ uri: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=800' }}
           style={styles.backgroundImage}
           resizeMode="cover"
         />
-        
+
         <LinearGradient
           colors={['transparent', 'rgba(90,31,43,0.8)', COLORS.primary]}
           style={styles.gradient}
         >
           <View style={[styles.content, { paddingBottom: insets.bottom + 20 }]}>
-            <Image
-              source={{ uri: 'https://customer-assets.emergentagent.com/job_b554f1a4-c35c-4e60-a285-bdc61c896871/artifacts/0ouwazt9_Libreya%20Logo.png' }}
-              style={styles.logo}
-              resizeMode="contain"
-            />
-            
+            <Image source={{ uri: LOGO_URL }} style={styles.heroLogo} resizeMode="contain" />
+
             <Text style={styles.title}>Libreya</Text>
             <Text style={styles.subtitle}>Your Gateway to Classic Literature</Text>
             <Text style={styles.description}>
@@ -423,6 +429,8 @@ export default function WelcomeScreen() {
         }}
       />
 
+      <Dialog />
+
       <ScrollView
         contentContainerStyle={[styles.formContent, { paddingBottom: insets.bottom + 20 }]}
         keyboardShouldPersistTaps="handled"
@@ -472,6 +480,8 @@ export default function WelcomeScreen() {
               autoComplete="password-new"
             />
           )}
+
+          {error && <Text style={styles.error}>{error}</Text>}
 
           <Button
             title={mode === 'signin' ? 'Sign In' : 'Create Account'}
@@ -713,4 +723,16 @@ const styles = StyleSheet.create({
   guestLinkText: {
     fontSize: 14,
   },
+  error: {
+    color: COLORS.error,
+    fontSize: 16,
+    marginVertical: 8
+  },
+  heroLogo: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 20,
+    backgroundColor: '#fff'
+  }
 });
