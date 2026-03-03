@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,16 +10,20 @@ import {
   Share,
   Platform,
   ActivityIndicator,
+  FlatList,
+  Modal,
+  Animated,
 } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useLocalSearchParams, useRouter, Stack, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
-import { COLORS, THEMES } from '../../constants/theme';
+import { COLORS, FONTS, THEMES } from '../../constants/theme';
 import { useAppStore } from '../../lib/store';
 import { AdBanner, AdSpacer } from '../../components/AdBanner';
 import { ErrorMessage } from '../../components/ErrorMessage';
 import { api } from '../../lib/api';
+import { AnimatedButton } from '@/components/AnimatedButton';
 
 const { width, height } = Dimensions.get('window');
 
@@ -33,13 +37,14 @@ export default function BookReaderScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
-  
+
   const theme = useAppStore((s) => s.theme);
   const colors = THEMES[theme];
   const user = useAppStore((s) => s.user);
   const isOffline = useAppStore((s) => s.isOffline);
   const error = useAppStore((s) => s.error);
-  
+  const pathname = usePathname();
+
   const currentBook = useAppStore((s) => s.currentBook);
   const currentActivity = useAppStore((s) => s.currentActivity);
   const fetchBook = useAppStore((s) => s.fetchBook);
@@ -49,7 +54,9 @@ export default function BookReaderScreen() {
   const incrementChapterRead = useAppStore((s) => s.incrementChapterRead);
   const resetChapterCount = useAppStore((s) => s.resetChapterCount);
   const fetchFavorites = useAppStore((s) => s.fetchFavorites);
-  
+  const fontsLoaded = useAppStore((s) => s.fontsLoaded);
+  const bodyFont = fontsLoaded ? FONTS.body : FONTS.bodyFallback;
+
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [currentChapter, setCurrentChapter] = useState(0);
   const [showControls, setShowControls] = useState(true);
@@ -59,6 +66,88 @@ export default function BookReaderScreen() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const isMobile = width < 768;
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [showTOC, setShowTOC] = useState(false);
+  const menuAnim = useRef(new Animated.Value(0)).current;
+
+  const menuItems = [
+    {
+      label: "Home",
+      icon: <Ionicons name="home-outline" size={26} color={colors.text} />,
+      onPress: () => {
+        setMenuVisible(false);
+        router.push("/");
+      },
+      hideOnNonUser: false
+    },
+    {
+      label: "Table of Contents",
+      icon: <Ionicons name="list-outline" size={26} color={colors.text} />,
+      onPress: () => {
+        setMenuVisible(false);
+        setShowTOC(true);
+      },
+      hideOnNonUser: false
+    },
+    {
+      label: isFavorite ? "Remove Favorite" : "Add to Favorite",
+      icon: <Ionicons
+        name={isFavorite ? 'heart' : 'heart-outline'}
+        size={24}
+        color={isFavorite ? COLORS.error : colors.text}
+      />,
+      loading: favoriteLoading,
+      onPress: () => {
+        setMenuVisible(false);
+        handleToggleFavorite();
+      },
+      hideOnNonUser: true
+    },
+    {
+      label: "Share",
+      icon: <Ionicons name="share-outline" size={26} color={colors.text} />,
+      onPress: () => {
+        setMenuVisible(false);
+        handleShare();
+      },
+      hideOnNonUser: false
+    },
+    {
+      label: "Profile",
+      icon: <Ionicons name="person-outline" size={26} color={colors.text} />,
+      onPress: () => {
+        setMenuVisible(false);
+        router.push('/profile');
+      },
+      hideOnNonUser: true
+    }
+
+  ];
+
+  const menuHeight = menuAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, menuItems.length * 52 + (user ? 16 : 68)],
+  });
+
+  const menuOpacity = menuAnim.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0, 0.5, 1],
+  });
+
+  const isActive = (path: string) => {
+    if (path === '/') return pathname === '/' || pathname === '';
+    return pathname.startsWith(path);
+  };
+
+  const toggleMenu = useCallback((open: boolean) => {
+    setMenuVisible(open);
+    Animated.timing(menuAnim, {
+      toValue: open ? 1 : 0,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  }, [menuAnim]);
 
   useEffect(() => {
     loadBook();
@@ -72,7 +161,7 @@ export default function BookReaderScreen() {
     if (!id) return;
     setLoading(true);
     setLoadError(null);
-    
+
     try {
       const book = await fetchBook(parseInt(id));
       if (book?.content_body) {
@@ -90,9 +179,9 @@ export default function BookReaderScreen() {
   const parseChapters = (content: string) => {
     const chapterRegex = /<h2>([^<]+)<\/h2>/gi;
     const matches = content.split(chapterRegex);
-    
+
     const parsedChapters: Chapter[] = [];
-    
+
     if (matches.length <= 1) {
       parsedChapters.push({
         title: currentBook?.title || 'Book',
@@ -105,7 +194,7 @@ export default function BookReaderScreen() {
           content: stripHtml(matches[0]),
         });
       }
-      
+
       for (let i = 1; i < matches.length; i += 2) {
         const title = matches[i]?.trim() || `Chapter ${Math.ceil(i / 2)}`;
         const chapterContent = matches[i + 1] || '';
@@ -115,9 +204,9 @@ export default function BookReaderScreen() {
         });
       }
     }
-    
+
     setChapters(parsedChapters);
-    
+
     if (currentActivity?.last_position) {
       const chapterIndex = Math.floor(currentActivity.last_position * parsedChapters.length);
       setCurrentChapter(Math.min(chapterIndex, parsedChapters.length - 1));
@@ -140,7 +229,7 @@ export default function BookReaderScreen() {
 
   const goToChapter = (index: number) => {
     if (index < 0 || index >= chapters.length) return;
-    
+
     if (index > currentChapter) {
       incrementChapterRead();
       if ((chaptersReadSinceAd + 1) >= 3) {
@@ -149,26 +238,27 @@ export default function BookReaderScreen() {
         setTimeout(() => setShowInterstitial(false), 2000);
       }
     }
-    
+
     setCurrentChapter(index);
     scrollRef.current?.scrollTo({ y: 0, animated: false });
-    
+
     const progress = index / chapters.length;
-    updateActivity({ 
+    updateActivity({
       last_position: progress,
-      chapter_read_count: (currentActivity?.chapter_read_count || 0) + 1 
+      chapter_read_count: (currentActivity?.chapter_read_count || 0) + 1
     });
   };
 
   const handleToggleFavorite = async () => {
+    console.log('user', user)
     if (!user || !currentBook) return;
-    
+
     setFavoriteLoading(true);
     const newFavoriteStatus = !isFavorite;
-    
+
     try {
       setIsFavorite(newFavoriteStatus);
-      
+
       const activity = {
         user_id: user.id,
         book_id: currentBook.id,
@@ -177,10 +267,10 @@ export default function BookReaderScreen() {
         highlights: currentActivity?.highlights || [],
         chapter_read_count: currentActivity?.chapter_read_count || 0,
       };
-      
+
       await api.post('/activity', activity);
       await fetchFavorites();
-      
+
       Alert.alert(
         newFavoriteStatus ? 'Added to Favorites' : 'Removed from Favorites',
         `"${currentBook.title}" has been ${newFavoriteStatus ? 'added to' : 'removed from'} your favorites.`
@@ -195,7 +285,7 @@ export default function BookReaderScreen() {
 
   const handleShare = async () => {
     if (!currentBook) return;
-    
+
     const shareData = {
       title: currentBook.title,
       text: `I'm reading "${currentBook.title}" by ${currentBook.author} on Libreya!`,
@@ -240,8 +330,8 @@ export default function BookReaderScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Stack.Screen options={{ headerShown: true, title: 'Error', headerStyle: { backgroundColor: colors.background }, headerTintColor: colors.text }} />
-        <ErrorMessage 
-          message={loadError || 'Book not found'} 
+        <ErrorMessage
+          message={loadError || 'Book not found'}
           onRetry={loadBook}
           type={isOffline ? 'offline' : 'error'}
         />
@@ -258,30 +348,39 @@ export default function BookReaderScreen() {
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
           headerRight: () => (
-            <View style={styles.headerButtons}>
-              <TouchableOpacity 
-                onPress={handleToggleFavorite} 
-                style={styles.headerBtn}
-                disabled={favoriteLoading}
+            isMobile ? (
+              // 🍔 Burger Menu (Small Devices)
+              /* Mobile hamburger */
+              <TouchableOpacity onPress={() => toggleMenu(!menuVisible)} style={styles.hamburger} activeOpacity={0.7}>
+                <Ionicons name={menuVisible ? 'close' : 'menu'} size={28} color={COLORS.primary} />
+              </TouchableOpacity>
+            ) : (
+              <View
+                style={[
+                  styles.headerButtons,
+                  { flexDirection: isMobile ? 'column' : 'row' },
+                ]}
               >
-                <Ionicons
-                  name={isFavorite ? 'heart' : 'heart-outline'}
-                  size={24}
-                  color={isFavorite ? COLORS.error : colors.text}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleShare} style={styles.headerBtn}>
-                <Ionicons name="share-outline" size={24} color={colors.text} />
-              </TouchableOpacity>
-            </View>
+                {menuItems.filter((item) => (user || (!user && !item.hideOnNonUser))).map((item, index) => (
+                  <AnimatedButton
+                    key={index}
+                    onPress={item.onPress}
+                    label=""
+                    color="inherit"
+                    buttonStyle={{ paddingLeft: 0, paddingRight: 0 }}
+                    icon={item.icon}
+                    loading={item.loading}
+                  />
+                ))}
+              </View>)
           ),
         }}
       />
-      
+
       <View style={[styles.progressContainer, { backgroundColor: colors.border }]}>
         <View style={[styles.progressBar, { width: `${progress}%`, backgroundColor: COLORS.primary }]} />
       </View>
-      
+
       <View style={[styles.chapterHeader, { backgroundColor: colors.surface }]}>
         <Text style={[styles.chapterTitle, { color: colors.text }]} numberOfLines={1}>
           {chapters[currentChapter]?.title}
@@ -290,7 +389,7 @@ export default function BookReaderScreen() {
           {currentChapter + 1} of {chapters.length} ({Math.round(progress)}%)
         </Text>
       </View>
-      
+
       <ScrollView
         ref={scrollRef}
         style={styles.content}
@@ -298,16 +397,16 @@ export default function BookReaderScreen() {
         showsVerticalScrollIndicator={true}
       >
         <Text
-          style={[styles.bookText, { color: colors.text, fontSize }]}
+          style={[styles.bookText, { color: colors.text, fontSize, alignSelf: "center" }]}
           selectable
         >
           {chapters[currentChapter]?.content}
         </Text>
-        
+
         <View style={styles.chapterEndAd}>
           <AdBanner />
         </View>
-        
+
         <View style={styles.chapterNavButtons}>
           <TouchableOpacity
             onPress={() => goToChapter(currentChapter - 1)}
@@ -322,7 +421,7 @@ export default function BookReaderScreen() {
               Previous
             </Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             onPress={() => goToChapter(currentChapter + 1)}
             disabled={currentChapter === chapters.length - 1}
@@ -338,7 +437,7 @@ export default function BookReaderScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
-      
+
       {showControls && (
         <View style={[styles.controls, { backgroundColor: colors.surface, paddingBottom: insets.bottom + 10 }]}>
           <View style={styles.fontControls}>
@@ -360,13 +459,13 @@ export default function BookReaderScreen() {
           </View>
         </View>
       )}
-      
+
       {showInterstitial && (
         <View style={styles.interstitialOverlay}>
           <View style={styles.interstitialContent}>
             <Text style={styles.interstitialText}>Advertisement</Text>
             <Text style={styles.interstitialSubtext}>Interstitial ad (every 3 chapters)</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.closeAdBtn}
               onPress={() => setShowInterstitial(false)}
             >
@@ -374,6 +473,82 @@ export default function BookReaderScreen() {
             </TouchableOpacity>
           </View>
         </View>
+      )}
+
+      {/* Table of Contents Modal */}
+      <Modal
+        visible={showTOC}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowTOC(false)}
+      >
+        <View style={styles.tocOverlay}>
+          <View style={[styles.tocModal, { backgroundColor: colors.background }]}>
+            <View style={[styles.tocHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.tocTitle, { color: colors.text }]}>Table of Contents</Text>
+              <TouchableOpacity onPress={() => setShowTOC(false)} style={styles.tocClose}>
+                <Ionicons name="close" size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={chapters}
+              keyExtractor={(_, index) => `chapter-${index}`}
+              renderItem={({ item, index }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.tocItem,
+                    index === currentChapter && { backgroundColor: `${COLORS.primary}20` },
+                  ]}
+                  onPress={() => {
+                    goToChapter(index);
+                    setShowTOC(false);
+                  }}
+                >
+                  <Text style={[styles.tocChapterNum, { color: COLORS.primary }]}>
+                    {index + 1}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.tocChapterTitle,
+                      { color: colors.text },
+                      index === currentChapter && { fontWeight: '600' },
+                    ]}
+                    numberOfLines={2}
+                  >
+                    {item.title}
+                  </Text>
+                  {index === currentChapter && (
+                    <Ionicons name="checkmark" size={20} color={COLORS.primary} />
+                  )}
+                </TouchableOpacity>
+              )}
+              contentContainerStyle={styles.tocList}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Mobile menu dropdown with animation */}
+      {isMobile && (
+        <Animated.View style={[styles.mobileMenu, { maxHeight: menuHeight, opacity: menuOpacity, overflow: 'hidden' }]}>
+          {menuItems.filter((item) => (user || (!user && !item.hideOnNonUser))).map((item) => (
+            <TouchableOpacity
+              key={item.label}
+              onPress={item.onPress}
+              style={[styles.mobileLink, isActive(item.label) && styles.mobileLinkActive]}
+              activeOpacity={0.7}
+            >
+              <Text style={[
+                styles.mobileLinkText,
+                { fontFamily: bodyFont },
+                isActive(item.label) && styles.mobileLinkTextActive,
+              ]}>
+                {item.label}
+              </Text>
+              {isActive(item.label) && <View style={styles.mobileLinkDot} />}
+            </TouchableOpacity>
+          ))}
+        </Animated.View>
       )}
     </View>
   );
@@ -498,5 +673,82 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 14,
     fontWeight: '600',
+  },
+  tocOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  tocModal: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '80%',
+  },
+  tocHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  tocTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+  },
+  tocClose: {
+    padding: 8,
+  },
+  tocList: {
+    padding: 8,
+  },
+  tocItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    gap: 12,
+  },
+  tocChapterNum: {
+    fontSize: 16,
+    fontWeight: '600',
+    width: 30,
+    textAlign: 'center',
+  },
+  tocChapterTitle: {
+    flex: 1,
+    fontSize: 16,
+  },
+  hamburger: {
+    padding: 8,
+  },
+  mobileMenu: {
+    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.lightGray,
+  },
+  mobileLink: {
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  mobileLinkActive: {
+    borderBottomColor: COLORS.primary,
+  },
+  mobileLinkText: {
+    fontSize: 16,
+    color: COLORS.text,
+  },
+  mobileLinkTextActive: {
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
+  mobileLinkDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.accent,
   },
 });

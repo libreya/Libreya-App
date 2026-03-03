@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from './api';
-import * as Crypto from 'expo-crypto';
 import { supabase } from './supabase';
 import { Platform } from 'react-native';
 
@@ -61,6 +60,7 @@ interface AppState {
   chaptersReadSinceAd: number;
   isOffline: boolean;
   error: string | null;
+  fontsLoaded: boolean;
 
   initializeApp: () => Promise<void>;
   setUser: (user: User | null) => void;
@@ -81,6 +81,7 @@ interface AppState {
   signOut: () => Promise<void>;
   incrementChapterRead: () => void;
   resetChapterCount: () => void;
+  setFontsLoaded: (fontsLoaded: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -97,6 +98,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   chaptersReadSinceAd: 0,
   isOffline: false,
   error: null,
+  fontsLoaded: false,
 
   initializeApp: async () => {
     try {
@@ -442,4 +444,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   resetChapterCount: () => {
     set({ chaptersReadSinceAd: 0 });
   },
+
+  setFontsLoaded: (offline) => set({ isOffline: offline }),
 }));
