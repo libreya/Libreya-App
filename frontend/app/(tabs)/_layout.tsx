@@ -3,16 +3,21 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, THEMES } from '../../constants/theme';
 import { useAppStore } from '../../lib/store';
+import { useWindowDimensions } from 'react-native';
 
 export default function TabLayout() {
   const theme = useAppStore((s) => s.theme);
   const colors = THEMES[theme];
+   const { width } = useWindowDimensions();
+  const isSmallDevice = width < 380; // adjust breakpoint if needed
+
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: colors.textSecondary,
+        tabBarShowLabel: !isSmallDevice,
         tabBarStyle: {
           backgroundColor: colors.background,
           borderTopColor: colors.border,
