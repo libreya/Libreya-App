@@ -341,7 +341,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ user: updatedUser });
     await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
 
-    api.post('/users/accept-terms', { user_id: user.id, accepted: true }).catch(() => {});
+    await api.post(`/users/${user.id}/accept-terms`, { user_id: user.id, accepted: true, terms_accepted: true }).catch((e) => {
+      console.debug('Error on accepting terms', e)
+    });
   },
 
   deleteAccount: async () => {
