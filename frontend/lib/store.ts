@@ -353,22 +353,22 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     try {
       // Sign out from Supabase Auth first
-      if (user.auth_provider !== 'guest') {
+      //if (user.auth_provider !== 'guest') {
         await supabase.auth.signOut();
-      }
+      //}
       
       // Delete user data from backend (this also deletes from auth.users)
       const response = await api.delete(`/users/${user.id}`);
       console.log('Delete account response:', response);
       
       // Sign out from Supabase Auth (in case backend couldn't)
-      if (user.auth_provider !== 'guest') {
+      //if (user.auth_provider !== 'guest') {
         try {
           await supabase.auth.signOut();
         } catch (e) {
           // Ignore sign out errors - user is already deleted
         }
-      }
+     // }
       
       // Clear ALL local storage related to auth
       await AsyncStorage.removeItem('user');
