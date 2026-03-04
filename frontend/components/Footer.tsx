@@ -115,7 +115,8 @@ const styles = StyleSheet.create({
   footerLogo: {
     width: 36,
     height: 36,
-    borderRadius: 6,
+    borderRadius: 18,
+    backgroundColor: '#fff'
   },
   brandName: {
     fontSize: 22,

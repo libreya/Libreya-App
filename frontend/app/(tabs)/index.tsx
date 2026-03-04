@@ -70,11 +70,7 @@ export default function LibraryScreen() {
         colors={['transparent', 'rgba(90,31,43,0.9)', COLORS.primary]}
         style={styles.heroGradient}
       >
-        <Image
-          source={{ uri: LOGO_URL }}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+        <Image source={{ uri: LOGO_URL }} style={styles.heroLogo} resizeMode="contain" />
         <Text style={styles.heroTitle}>Welcome to Libreya</Text>
         <Text style={styles.heroSubtitle}>Your Gateway to Classic Literature</Text>
       </LinearGradient>
@@ -196,4 +192,11 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 24,
   },
+  heroLogo: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 20,
+    backgroundColor: '#fff'
+  }
 });

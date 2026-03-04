@@ -71,20 +71,14 @@ export default function AboutScreen() {
         </View>
 
         {/* The Reader We Serve */}
-        <View style={[styles.section, styles.accentBg]}>
+        <View style={[styles.section, {backgroundColor: COLORS.secondary, maxWidth: '100%'}]}>
           <Text style={[styles.sectionTitle, { fontFamily: headingFont, color: COLORS.primary }]}>The Reader We Serve</Text>
-          <Text style={[styles.bodyText, { fontFamily: bodyFont }]}>Libreya is for readers who move with intention:</Text>
+          {/* <Text style={[styles.bodyText, { fontFamily: bodyFont }]}>Libreya is for readers who move with intention:</Text> */}
           <View style={styles.bulletList}>
             <Text style={[styles.bulletItem, { fontFamily: bodyFont }]}>• For those who believe great books deserve focus, not distraction.</Text>
             <Text style={[styles.bulletItem, { fontFamily: bodyFont }]}>• For students who seek clarity.</Text>
             <Text style={[styles.bulletItem, { fontFamily: bodyFont }]}>• For thinkers who return to the classics out of curiosity, not obligation.</Text>
             <Text style={[styles.bulletItem, { fontFamily: bodyFont }]}>• For modern readers who crave depth in a world designed for speed.</Text>
-          </View>
-          <Text style={[styles.bodyText, { fontFamily: bodyFont, marginTop: 16 }]}>Libreya readers value:</Text>
-          <View style={styles.bulletList}>
-            <Text style={[styles.bulletItem, { fontFamily: bodyFont }]}>• Substance over noise.</Text>
-            <Text style={[styles.bulletItem, { fontFamily: bodyFont }]}>• Design that respects attention.</Text>
-            <Text style={[styles.bulletItem, { fontFamily: bodyFont }]}>• Literature that endures.</Text>
           </View>
         </View>
 
@@ -105,6 +99,16 @@ export default function AboutScreen() {
             <Text style={[styles.bulletItem, { fontFamily: bodyFont }]}>• Personalized Tools: Highlighting and favorites to make every book your own.</Text>
             <Text style={[styles.bulletItem, { fontFamily: bodyFont }]}>• Seamless Continuity: Resume reading across all your devices.</Text>
             <Text style={[styles.bulletItem, { fontFamily: bodyFont }]}>• Focus-Driven: Designed for immersion, not stimulation.</Text>
+          </View>
+        </View>
+
+        {/* Why Libreya Exists */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { fontFamily: headingFont }]}>Libreya readers value</Text>
+          <View style={styles.bulletList}>
+            <Text style={[styles.bulletItem, { fontFamily: bodyFont }]}>• Substance over noise.</Text>
+            <Text style={[styles.bulletItem, { fontFamily: bodyFont }]}>• Design that respects attention.</Text>
+            <Text style={[styles.bulletItem, { fontFamily: bodyFont }]}>• Literature that endures.</Text>
           </View>
         </View>
 

@@ -13,6 +13,7 @@ import {
   FlatList,
   Modal,
   Animated,
+  useWindowDimensions,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,8 +26,6 @@ import { ErrorMessage } from '../../components/ErrorMessage';
 import { api } from '../../lib/api';
 import { AnimatedButton } from '@/components/AnimatedButton';
 
-const { width, height } = Dimensions.get('window');
-
 interface Chapter {
   title: string;
   content: string;
@@ -37,7 +36,7 @@ export default function BookReaderScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
-
+  const { width } = useWindowDimensions();
   const theme = useAppStore((s) => s.theme);
   const colors = THEMES[theme];
   const user = useAppStore((s) => s.user);
@@ -377,6 +376,30 @@ export default function BookReaderScreen() {
         }}
       />
 
+      {/* Mobile menu dropdown with animation */}
+      {isMobile && (
+        <Animated.View style={[styles.mobileMenu, { maxHeight: menuHeight, opacity: menuOpacity, overflow: 'hidden' }]}>
+          {menuItems.filter((item) => (user || (!user && !item.hideOnNonUser))).map((item) => (
+            <TouchableOpacity
+              key={item.label}
+              onPress={item.onPress}
+              style={[styles.mobileLink, isActive(item.label) && styles.mobileLinkActive]}
+              activeOpacity={0.7}
+            >
+              <Text style={[
+                styles.mobileLinkText,
+                { fontFamily: bodyFont },
+                isActive(item.label) && styles.mobileLinkTextActive,
+              ]}>
+                {item.label}
+              </Text>
+              {isActive(item.label) && <View style={styles.mobileLinkDot} />}
+            </TouchableOpacity>
+          ))}
+        </Animated.View>
+      )}
+
+
       <View style={[styles.progressContainer, { backgroundColor: colors.border }]}>
         <View style={[styles.progressBar, { width: `${progress}%`, backgroundColor: COLORS.primary }]} />
       </View>
@@ -527,29 +550,6 @@ export default function BookReaderScreen() {
           </View>
         </View>
       </Modal>
-
-      {/* Mobile menu dropdown with animation */}
-      {isMobile && (
-        <Animated.View style={[styles.mobileMenu, { maxHeight: menuHeight, opacity: menuOpacity, overflow: 'hidden' }]}>
-          {menuItems.filter((item) => (user || (!user && !item.hideOnNonUser))).map((item) => (
-            <TouchableOpacity
-              key={item.label}
-              onPress={item.onPress}
-              style={[styles.mobileLink, isActive(item.label) && styles.mobileLinkActive]}
-              activeOpacity={0.7}
-            >
-              <Text style={[
-                styles.mobileLinkText,
-                { fontFamily: bodyFont },
-                isActive(item.label) && styles.mobileLinkTextActive,
-              ]}>
-                {item.label}
-              </Text>
-              {isActive(item.label) && <View style={styles.mobileLinkDot} />}
-            </TouchableOpacity>
-          ))}
-        </Animated.View>
-      )}
     </View>
   );
 }
