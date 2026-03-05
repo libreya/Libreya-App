@@ -208,7 +208,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   fetchBooks: async (params) => {
     try {
       set({ isOffline: false });
-      let endpoint = '/books?limit=500';  // Increased to load all 300+ books
+      let endpoint = '/books?limit=300';  // Increased to load all 300+ books
       if (params?.category) endpoint += `&category=${params.category}`;
       if (params?.search) endpoint += `&search=${params.search}`;
       const books = await api.get(endpoint);

@@ -79,15 +79,15 @@ export default function HomeScreen() {
   const bodyFont = fontsLoaded ? FONTS.body : FONTS.bodyFallback;
 
   const [featuredBooks, setFeaturedBooks] = useState<Book[]>([]);
-  const [totalBooks, setTotalBooks] = useState(301);
-  const [totalCategories, setTotalCategories] = useState(25);
+  const [totalBooks, setTotalBooks] = useState(300); // Current service is limited to fetch 300 books only (/books?limit=300)
+  const [totalCategories, setTotalCategories] = useState(9); // There are 9 Genres based on initial 300 books
 
   // CMS content with defaults
   const [cmsContent, setCmsContent] = useState(DEFAULTS);
 
   useEffect(() => {
     loadFeaturedBooks();
-    loadStats();
+    // loadStats(); // disable to minimize the service call on landing page
     loadCmsContent();
   }, []);
 
@@ -126,18 +126,18 @@ export default function HomeScreen() {
     }
   };
 
-  const loadStats = async () => {
-    try {
-      const cats = await api.get('/books/categories/list');
-      if (cats) setTotalCategories(cats.length || 25);
-    } catch (e) {
-      // Use defaults
-    }
-  };
+  // const loadStats = async () => {
+  //   try {
+  //     const cats = await api.post('/books/categories/list');
+  //     if (cats) setTotalCategories(cats.length || 25);
+  //   } catch (e) {
+  //     // Use defaults
+  //   }
+  // };
 
   const stats = [
-    { number: `${totalBooks}+`, label: 'Classics', icon: 'book' as const },
-    { number: `${totalCategories}+`, label: 'Genres', icon: 'grid' as const },
+    { number: `${totalBooks}`, label: 'Classics', icon: 'book' as const },
+    { number: `${totalCategories}`, label: 'Genres', icon: 'grid' as const },
     { number: '100%', label: 'Free', icon: 'heart' as const },
   ];
 

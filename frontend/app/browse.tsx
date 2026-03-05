@@ -55,9 +55,11 @@ export default function BrowseScreen() {
   const loadInitialData = async () => {
     try {
       const [booksData, catsData] = await Promise.all([
-        api.get('/books?limit=200'),
-        api.get('/books/categories/list'),
+        api.get('/books?limit=300'),
+        api.post('/books/categories/list'),
       ]);
+      console.debug('booksData', booksData.length)
+      console.debug('catsData', catsData.length)
       if (Array.isArray(booksData)) setBooks(booksData);
       if (Array.isArray(catsData)) setCategories(catsData);
     } catch (e) {
@@ -70,7 +72,7 @@ export default function BrowseScreen() {
   const loadBooks = async () => {
     setSearching(true);
     try {
-      let endpoint = '/books?limit=200';
+      let endpoint = '/books?limit=300';
       if (selectedCategory) endpoint += `&category=${encodeURIComponent(selectedCategory)}`;
       if (searchQuery.trim()) endpoint += `&search=${encodeURIComponent(searchQuery.trim())}`;
       const data = await api.get(endpoint);

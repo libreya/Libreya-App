@@ -54,7 +54,7 @@ export default function SearchScreen() {
 
   const loadCategories = async () => {
     try {
-      const cats = await api.get('/books/categories/list');
+      const cats = await api.post('/books/categories/list');
       if (Array.isArray(cats)) setCategories(cats);
     } catch (e) {
       // silent
@@ -64,7 +64,7 @@ export default function SearchScreen() {
   const handleSearch = async () => {
     setLoading(true);
     try {
-      let endpoint = '/books?limit=100';
+      let endpoint = '/books?limit=300';
       if (searchQuery.trim()) {
         endpoint += `&search=${encodeURIComponent(searchQuery.trim())}`;
       }
@@ -235,6 +235,8 @@ const styles = StyleSheet.create({
   },
   categoryList: {
     maxHeight: 50,
+    minHeight: 35,
+    marginBottom: 16
   },
   categoryContent: {
     paddingHorizontal: 16,

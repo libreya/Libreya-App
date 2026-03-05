@@ -217,9 +217,9 @@ export const api = {
       const userId = endpoint.split('/')[2];
       const { data: updated, error } = await supabase
         .from('users')
-        .update({ 
-          terms_accepted: true, 
-          terms_accepted_at: new Date().toISOString() 
+        .update({
+          terms_accepted: true,
+          terms_accepted_at: new Date().toISOString()
         })
         .eq('id', userId)
         .select()
@@ -285,6 +285,14 @@ export const api = {
         .single();
       if (error) throw new Error(error.message);
       return newBook;
+    }
+
+    if (endpoint.startsWith('/books/categories/list')) {
+      const { data, error } = await supabase.rpc('get_distinct_categories');
+      if (error) throw new Error(error.message);
+      const formatted: string[] =
+        data?.map((item: { category: string }) => item.category).sort((a: string, b: string) => a.localeCompare(b)) ?? [];
+      return formatted;
     }
 
     // ============= ADMIN SETTINGS =============
