@@ -42,6 +42,8 @@ export default function AuthScreen() {
   const [appleAuthAvailable, setAppleAuthAvailable] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { showDialog, Dialog } = useConfirmDialog();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     const checkAppleAuth = async () => {
@@ -339,7 +341,15 @@ export default function AuthScreen() {
             placeholder="Enter your password"
             value={password}
             onChangeText={setPassword}
-            secureTextEntry
+            secureTextEntry={!showPassword}
+            icon={
+              <Ionicons
+                name={showPassword ? 'eye-off' : 'eye'}
+                size={20}
+                color="gray"
+              />
+            }
+            onIconPress={() => setShowPassword(!showPassword)}
             autoComplete={mode === 'signup' ? 'password-new' : 'password'}
           />
 
@@ -349,13 +359,21 @@ export default function AuthScreen() {
               placeholder="Confirm your password"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
-              secureTextEntry
+              secureTextEntry={!showConfirmPassword}
+              icon={
+                <Ionicons
+                  name={showConfirmPassword ? 'eye-off' : 'eye'}
+                  size={20}
+                  color="gray"
+                />
+              }
+              onIconPress={() => setShowConfirmPassword(!showConfirmPassword)}
               autoComplete="password-new"
             />
           )}
 
           {error && <Text style={styles.error}>{error}</Text>}
-          
+
           <Button
             title={mode === 'signin' ? 'Sign In' : 'Create Account'}
             onPress={handleEmailAuth}
