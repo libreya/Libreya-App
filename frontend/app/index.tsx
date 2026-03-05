@@ -113,17 +113,72 @@ export default function HomeScreen() {
   };
 
   const loadFeaturedBooks = async () => {
-    try {
-      const data = await api.get('/books/featured?limit=5');
-      if (data && data.length > 0) {
-        setFeaturedBooks(data);
-      } else {
-        const fallback = await api.get('/books?limit=5');
-        setFeaturedBooks(fallback || []);
+    const hardCodeData = [
+      {
+        "id": 1,
+        "title": "Pride and Prejudice",
+        "author": "Jane Austen",
+        "category": "Fiction",
+        "cover_image": "https://www.gutenberg.org/cache/epub/1342/pg1342.cover.medium.jpg",
+        "is_featured": true,
+        "read_count": 30,
+        "description": "A classic work by Jane Austen. This public domain text is sourced from Project Gutenberg."
+      },
+      {
+        "id": 56,
+        "title": "Emma",
+        "author": "Jane Austen",
+        "category": "Fiction",
+        "cover_image": "https://www.gutenberg.org/cache/epub/158/pg158.cover.medium.jpg",
+        "is_featured": true,
+        "read_count": 0,
+        "description": "A classic work by Jane Austen. This public domain text is sourced from Project Gutenberg."
+      },
+      {
+        "id": 57,
+        "title": "Mansfield Park",
+        "author": "Jane Austen",
+        "category": "Fiction",
+        "cover_image": "https://www.gutenberg.org/cache/epub/141/pg141.cover.medium.jpg",
+        "is_featured": true,
+        "read_count": 0,
+        "description": "A classic work by Jane Austen. This public domain text is sourced from Project Gutenberg."
+      },
+      {
+        "id": 59,
+        "title": "Persuasion",
+        "author": "Jane Austen",
+        "category": "Fiction",
+        "cover_image": "https://www.gutenberg.org/cache/epub/105/pg105.cover.medium.jpg",
+        "is_featured": true,
+        "read_count": 0,
+        "description": "A classic work by Jane Austen. This public domain text is sourced from Project Gutenberg."
+      },
+      {
+        "id": 55,
+        "title": "Sense and Sensibility",
+        "author": "Jane Austen",
+        "category": "Fiction",
+        "cover_image": "https://www.gutenberg.org/cache/epub/161/pg161.cover.medium.jpg",
+        "is_featured": true,
+        "read_count": 0,
+        "description": "A classic work by Jane Austen. This public domain text is sourced from Project Gutenberg."
       }
-    } catch (e) {
-      // Silent
-    }
+    ];
+
+    // Return hard coded featured books to optimize page load
+    setFeaturedBooks(hardCodeData)
+    // try {
+    //   const data = await api.get('/books/featured?limit=5');
+    //   if (data && data.length > 0) {
+    //     setFeaturedBooks(data);
+    //   } else {
+    //     const fallback = await api.get('/books?limit=5');
+    //     setFeaturedBooks(fallback || []);
+    //   }
+    // } catch (e) {
+    //   // Silent
+    // }
   };
 
   // const loadStats = async () => {
