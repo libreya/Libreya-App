@@ -249,7 +249,7 @@ export default function HomeScreen() {
           <Text style={[styles.sectionLabel, { fontFamily: bodyFont }]}>HANDPICKED FOR YOU</Text>
           <Text style={[styles.sectionTitle, { fontFamily: headingFont }]}>Featured Classics</Text>
           {featuredBooks.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={true} contentContainerStyle={styles.featuredScroll}>
               {featuredBooks.map((book, i) => (
                 <AnimatedCard key={book.id} delay={i * 80}>
                   <PressableCard
