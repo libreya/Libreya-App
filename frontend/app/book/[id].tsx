@@ -69,7 +69,21 @@ export default function BookReaderScreen() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [showTOC, setShowTOC] = useState(false);
   const menuAnim = useRef(new Animated.Value(0)).current;
+  const [readCountIncremented, setReadCountIncremented] = useState(false);
 
+  // call api to increment book read count, trigger via useeffect
+  const incrementReadCount = async () => {
+    if (!currentBook || readCountIncremented) return;
+
+    try {
+      await api.post(`/books/${currentBook.id}/increment-read`);
+      setReadCountIncremented(true);
+    } catch (err) {
+      console.log('Failed to increment read count', err);
+    }
+  };
+
+  // Menu items data
   const menuItems = [
     {
       label: "Home",
@@ -156,6 +170,18 @@ export default function BookReaderScreen() {
     setIsFavorite(currentActivity?.is_favorite || false);
   }, [currentActivity]);
 
+  // Increment current book counter when user stays 10 seconds on reader
+  // Or when user moves to another chapter but on a differnt session.
+  useEffect(() => {
+    if (!currentBook || readCountIncremented) return;
+
+    const timer = setTimeout(() => {
+      incrementReadCount();
+    }, 10000); // 10 seconds reading
+
+    return () => clearTimeout(timer);
+  }, [currentBook]);
+
   const loadBook = async () => {
     if (!id) return;
     setLoading(true);
@@ -228,6 +254,10 @@ export default function BookReaderScreen() {
 
   const goToChapter = (index: number) => {
     if (index < 0 || index >= chapters.length) return;
+
+    if (!readCountIncremented) {
+      incrementReadCount();
+    }
 
     if (index > currentChapter) {
       incrementChapterRead();

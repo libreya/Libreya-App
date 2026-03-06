@@ -287,6 +287,7 @@ export const api = {
       return newBook;
     }
 
+    // Get list of book categories
     if (endpoint.startsWith('/books/categories/list')) {
       const { data, error } = await supabase.rpc('get_distinct_categories');
       if (error) throw new Error(error.message);
@@ -322,6 +323,19 @@ export const api = {
         if (error) throw new Error(error.message);
         return newSetting;
       }
+    }
+
+    // Increment book read count
+    const match = endpoint.match(/^\/books\/(\d+)\/increment-read$/);
+
+    if (match) {
+      const bookId = Number(match[1]);
+      const { error } = await supabase.rpc('increment_book_read', {
+        book_id_input: bookId,
+      });
+
+      if (error) throw error;
+      return { success: true };
     }
 
     throw new Error(`Unknown POST endpoint: ${endpoint}`);
