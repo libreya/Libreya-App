@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
   statCard: { backgroundColor: COLORS.white, borderRadius: 16, padding: 28, alignItems: 'center', minWidth: 150 },
   statNumber: { fontSize: 36, color: COLORS.primary, marginTop: 8 },
   statLabel: { fontSize: 15, color: COLORS.gray, marginTop: 4 },
-  featuredSection: { paddingVertical: 48, paddingHorizontal: 24, alignItems: 'center' },
+  featuredSection: { paddingVertical: 48, paddingHorizontal: 24 },
   sectionLabel: { fontSize: 12, letterSpacing: 3, color: COLORS.gray, marginBottom: 8, textTransform: 'uppercase' },
   sectionTitle: { fontSize: 30, color: COLORS.text, textAlign: 'center', marginBottom: 24 },
   featuredScroll: { paddingLeft: 8, paddingRight: 24, gap: 16 },
