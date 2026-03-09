@@ -43,7 +43,8 @@ export default function Root({ children }: { children: React.ReactNode }) {
           - Remove default input borders/outlines for clean UI
           - Micro-animations for hover states
         */}
-        <style dangerouslySetInnerHTML={{ __html: `
+        <style dangerouslySetInnerHTML={{
+          __html: `
           html, body {
             height: 100%;
             margin: 0;
@@ -113,7 +114,8 @@ export default function Root({ children }: { children: React.ReactNode }) {
         `}} />
 
         {/* Ad-Blocker Detection */}
-        <script dangerouslySetInnerHTML={{ __html: `
+        <script dangerouslySetInnerHTML={{
+          __html: `
           window.__ADSENSE_STATUS = 'checking';
           window.addEventListener('load', function() {
             setTimeout(function() {
@@ -129,7 +131,72 @@ export default function Root({ children }: { children: React.ReactNode }) {
           });
         `}} />
       </head>
-      <body>{children}</body>
+      <body>
+
+        {/* SEO content visible to crawlers before the app loads */}
+        <div id="seo-content"
+          style={{
+            maxWidth: "900px",
+            margin: "0 auto",
+            padding: "40px 20px",
+            fontFamily: "Georgia, serif",
+            lineHeight: "1.7",
+            color: "#111"
+          }}
+        >
+          <h1>Libreya – Classic Literature, Reimagined</h1>
+
+          <p>
+            Libreya is a free digital library where readers can discover more than
+            300 timeless works of classic literature written by some of the greatest
+            authors in history. Every book available on the platform is part of the
+            public domain and presented in a clean, modern reading format.
+          </p>
+
+          <h2>Discover the World's Greatest Books</h2>
+
+          <p>
+            Readers can explore famous novels and literary masterpieces from
+            celebrated authors such as Jane Austen, Charles Dickens,
+            Leo Tolstoy, and Fyodor Dostoevsky. These influential works have
+            shaped storytelling and philosophy across generations.
+          </p>
+
+          <p>
+            Libreya makes these classics accessible to everyone by providing a
+            beautifully designed reading experience across devices. The goal is
+            simple: make timeless literature easy to discover and enjoyable to read.
+          </p>
+
+          <h2>A Free Library for Everyone</h2>
+
+          <p>
+            All books available through Libreya are completely free to read.
+            There are no subscriptions or paywalls. The platform focuses on
+            preserving and sharing public domain literature so readers everywhere
+            can experience some of the greatest stories ever written.
+          </p>
+        </div>
+
+        {children}
+
+        {/* Hide SEO text after React app loads */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+        window.addEventListener('DOMContentLoaded', function() {
+          setTimeout(function() {
+            var seo = document.getElementById('seo-content');
+            if (seo) {
+              seo.style.display = 'none';
+            }
+          }, 1000);
+        });
+      `,
+          }}
+        />
+
+      </body>
     </html>
   );
 }
