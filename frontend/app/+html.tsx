@@ -186,6 +186,22 @@ export default function Root({ children }: { children: React.ReactNode }) {
           </p>
         </div>
 
+
+        {/* Hide static SEO content after SPA loads */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+    window.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        var seo = document.getElementById('seo-content');
+        if (seo) seo.style.display = 'none';
+        var footer = document.getElementById('seo-footer');
+        if (footer) footer.style.display = 'none';
+      }, 1000);
+    });
+  `}} />
+
+        {children /* Expo SPA */}
+
         {/* Footer for AdSense-required pages */}
         <div
           id="seo-footer"
@@ -202,22 +218,9 @@ export default function Root({ children }: { children: React.ReactNode }) {
           <a href="/privacy" style={{ color: "#fff", margin: "0 10px" }}>Privacy Policy</a> |
           <a href="/contact" style={{ color: "#fff", margin: "0 10px" }}>Contact</a> |
           <a href="/disclaimer" style={{ color: "#fff", margin: "0 10px" }}>Disclaimer</a>
+          <p style={{ marginTop: "15px", color: "#f3e8ea" }}>© 2026 Libreya. All rights reserved.</p>
         </div>
 
-        {/* Hide static SEO content after SPA loads */}
-        <script dangerouslySetInnerHTML={{
-          __html: `
-    window.addEventListener('DOMContentLoaded', function() {
-      setTimeout(function() {
-        var seo = document.getElementById('seo-content');
-        if (seo) seo.style.display = 'none';
-        var footer = document.getElementById('seo-footer');
-        if (footer) footer.style.display = 'none';
-      }, 1000);
-    });
-  `}} />
-
-        {children /* Expo SPA */}
       </body>
     </html>
   );
