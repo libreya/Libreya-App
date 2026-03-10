@@ -148,69 +148,41 @@ export default function Root({ children }: { children: React.ReactNode }) {
           <h1>Libreya – Classic Literature, Reimagined</h1>
 
           <p>
-            Libreya is a free digital library that allows readers to explore and enjoy over
-            300 timeless works of classic literature from some of the world's greatest authors.
-            Every book is part of the public domain and has been carefully formatted to provide
-            a modern and comfortable reading experience across all devices.
+            Libreya is a free online library for classic books. You can read more than
+            300 famous works from great authors. Every book is in the public domain
+            and free for everyone.
           </p>
 
-          <h2>Discover the World's Greatest Books</h2>
+          <h2>Read Famous Classic Books</h2>
 
           <p>
-            From the elegant social novels of <strong>Jane Austen</strong> to the philosophical
-            masterpieces of <strong>Fyodor Dostoevsky</strong>, Libreya brings together literature
-            that has shaped human thought for generations. Readers can navigate through classic
-            novels, plays, essays, and poetry with ease, discovering works that inspire, entertain,
-            and educate.
+            Explore stories written by authors like Jane Austen, Charles Dickens,
+            Leo Tolstoy, and Fyodor Dostoevsky. Their novels are some of the most
+            important works in world literature.
           </p>
 
           <p>
-            Each work is presented in a clean, distraction-free layout that makes reading long texts
-            enjoyable. Libreya’s platform allows users to browse by author, genre, or title,
-            making it simple to find both well-known favorites and hidden gems.
+            Libreya makes these books easy to read online. The pages are clean,
+            simple, and designed for long reading sessions on any device.
           </p>
 
           <h2>A Free Library for Everyone</h2>
 
           <p>
-            Accessibility is at the heart of Libreya. All books on the platform are completely free
-            to read, with no subscriptions, paywalls, or limitations. Whether you are a student,
-            literature enthusiast, or casual reader, Libreya ensures that anyone can access the
-            classics that have stood the test of time.
+            All books on Libreya are free. There are no subscriptions and no
+            paywalls. Anyone can read the classics anytime.
           </p>
 
           <p>
-            By focusing on public domain works, Libreya preserves cultural heritage while giving
-            readers an easy way to engage with literature in a modern digital format. This means
-            your favorite classics are never more than a few clicks away.
+            Students, teachers, and readers can explore timeless stories and ideas
+            that have inspired people for generations.
           </p>
 
-          <h2>Learn, Explore, and Immerse Yourself</h2>
+          <h2>Start Reading Today</h2>
 
           <p>
-            Beyond simply reading, Libreya encourages exploration. Readers can connect works by
-            theme, author, or historical period, discovering patterns and insights across literature.
-            The platform provides a space for learning, inspiration, and deep engagement with
-            the written word.
-          </p>
-
-          <p>
-            For those new to classic literature, Libreya makes the experience approachable. Short
-            summaries, author highlights, and curated reading suggestions guide users through the
-            vast library of works, ensuring every visit is educational and enjoyable.
-          </p>
-
-          <h2>A Platform Built for Modern Readers</h2>
-
-          <p>
-            Libreya combines the timeless value of classic literature with the convenience of modern
-            technology. Whether on a desktop, tablet, or smartphone, readers can immerse themselves
-            in beautifully formatted texts that are easy on the eyes and simple to navigate.
-          </p>
-
-          <p>
-            Start your journey into classic literature today. Discover stories, ideas, and authors
-            that have influenced generations, all for free and always accessible through Libreya.
+            Browse authors, discover famous novels, and enjoy classic literature
+            from around the world with Libreya.
           </p>
         </div>
 
@@ -226,11 +198,31 @@ export default function Root({ children }: { children: React.ReactNode }) {
             if (seo) {
               seo.style.display = 'none';
             }
+
+            var adp = document.getElementById('adsense-required-pages');
+            if (adp) {
+              adp.style.display = 'none';
+            }
           }, 1000);
         });
       `,
           }}
         />
+
+        <div
+          id="adsense-required-pages"
+          style={{
+            textAlign: "center",
+            padding: "20px",
+            fontSize: "14px",
+            color: "#555"
+          }}
+        >
+          <a href="/about">About</a> |
+          <a href="/privacy">Privacy Policy</a> |
+          <a href="/contact">Contact</a> |
+          <a href="/disclaimer">Disclaimer</a>
+        </div>
 
       </body>
     </html>
