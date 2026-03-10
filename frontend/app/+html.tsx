@@ -167,6 +167,50 @@ export default function Root({ children }: { children: React.ReactNode }) {
             <li><a href="/books/jane-eyre.html" style={{ color: "#fff" }}>Jane Eyre – Charlotte Brontë</a></li> */}
           </ul>
 
+          <h2 style={{ fontSize: "32px", marginBottom: "20px", fontWeight: 700 }}>
+            Author Feature: Jane Austen
+          </h2>
+
+          <p>
+            Few writers have captured the subtleties of human relationships and social life as elegantly as Jane Austen.
+            More than two centuries after her works were first published, her novels remain beloved for their wit, psychological insight, and timeless portrayal of love, ambition, and society.
+          </p>
+
+          <p>
+            Born on December 16, 1775, in Steventon, Austen grew up in a close-knit family that encouraged reading and storytelling.
+            Her father, a clergyman, maintained a large home library, giving her early access to literature that would shape her voice as a writer.
+            By her early twenties, she had already drafted early versions of several novels that would later become literary classics.
+          </p>
+
+          <p>
+            Austen’s fiction focuses on the lives of the English gentry during the late 18th and early 19th centuries.
+            Through sharp dialogue and subtle irony, she explored themes such as marriage, morality, class, and the limited opportunities available to women in her time.
+            Her writing is celebrated for its realism and its ability to reveal deep emotional truths beneath everyday social interactions.
+          </p>
+
+          <h3 style={{ fontSize: "24px", marginTop: "30px" }}>Famous Works</h3>
+          <ul style={{ listStyle: "disc inside", fontSize: "18px", marginTop: "10px" }}>
+            <li><strong>Pride and Prejudice (1813)</strong> — A sparkling romantic comedy about misunderstandings, pride, and personal growth between Elizabeth Bennet and Mr. Darcy.</li>
+            <li><strong>Sense and Sensibility (1811)</strong> — The story of two sisters navigating love and hardship with very different temperaments.</li>
+            <li><strong>Emma (1815)</strong> — A charming and insightful tale about matchmaking, self-deception, and maturity.</li>
+            <li><strong>Mansfield Park (1814)</strong> — A deeper exploration of morality, privilege, and social responsibility.</li>
+            <li><strong>Persuasion (1817)</strong> — A poignant novel about second chances and enduring love.</li>
+          </ul>
+
+          <p>
+            Although Austen published anonymously during her lifetime—her books credited simply to “A Lady”—her identity became widely known only after her death in 1817 at the age of 41.
+            Today she is widely regarded as one of the greatest novelists in the English language.
+          </p>
+
+          <p>
+            What makes Jane Austen remarkable is her ability to make the ordinary extraordinary.
+            With keen observation and elegant prose, she transformed drawing rooms, dinner conversations, and social visits into stories of profound emotional and social insight.
+          </p>
+
+          <p>
+            Her novels continue to inspire readers, scholars, and filmmakers around the world, proving that stories about human character, love, and society never lose their relevance.
+          </p>
+
           <h2 style={{ fontSize: "26px", marginTop: "40px" }}>Easy Reading Online</h2>
           <p style={{ fontSize: "18px", opacity: 0.9 }}>
             Libreya makes reading classic books simple. Pages are clean and easy to read.
@@ -185,7 +229,6 @@ export default function Root({ children }: { children: React.ReactNode }) {
             Browse authors, find famous novels, and enjoy classic literature with Libreya.
           </p>
         </div>
-
 
         {/* Hide static SEO content after SPA loads */}
         <script dangerouslySetInnerHTML={{
