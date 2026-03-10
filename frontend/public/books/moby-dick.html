@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Moby Dick – Free Online Reading | Libreya</title>
+  <meta name="description" content="Read Moby Dick by Herman Melville online for free. Enjoy this classic novel in a clean, modern reading interface.">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="/favicon.png">
+  <style>
+    /* Theme & Body */
+    body {
+      margin: 0;
+      background: linear-gradient(180deg,#5A1F2B 0%,#7B2E3E 100%);
+      font-family: Georgia, serif;
+      line-height: 1.7;
+      color: #fff;
+      min-height: 100vh;
+      padding: 80px 20px 100px 20px;
+      text-align: center;
+    }
+
+    h1 { font-size: 44px; margin-bottom: 25px; font-weight: 700; }
+    h2 { font-size: 26px; margin-top: 40px; margin-bottom: 12px; opacity: 0.95; }
+    p { font-size: 18px; opacity: 0.9; margin: 15px 0; max-width: 800px; margin-left: auto; margin-right: auto; }
+
+    /* Footer */
+    #seo-footer {
+      text-align: center;
+      padding: 30px 20px;
+      font-size: 14px;
+      font-family: Georgia, serif;
+      color: #f3e8ea;
+      border-top: 1px solid rgba(255,255,255,0.15);
+    }
+    #seo-footer a { color: #fff; margin: 0 10px; text-decoration: none; }
+    #seo-footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div id="seo-content">
+    <h1>Moby Dick – Herman Melville</h1>
+
+    <p>
+      First published in 1851, Moby Dick tells the story of Captain Ahab's quest to hunt the great white whale. 
+      It is a tale of adventure, obsession, and the human struggle against nature.
+    </p>
+
+    <h2>About the Author</h2>
+    <p>
+      Herman Melville (1819–1891) was an American novelist, short story writer, and poet. He is best known for Moby Dick, a masterpiece of American literature.
+    </p>
+
+    <h2>Reading Online with Libreya</h2>
+    <p>
+      Libreya presents Moby Dick in a clean, readable format. You can enjoy the full text online for free. 
+      No subscriptions or paywalls are required.
+    </p>
+
+    <h2>Other Classic Books</h2>
+    <ul style="list-style:none; padding:0; font-size:18px;">
+      <li><a href="/books/pride-and-prejudice" style="color:#fff;">Pride and Prejudice – Jane Austen</a></li>
+      <li><a href="/books/crime-and-punishment" style="color:#fff;">Crime and Punishment – Fyodor Dostoevsky</a></li>
+      <li><a href="/books/war-and-peace" style="color:#fff;">War and Peace – Leo Tolstoy</a></li>
+    </ul>
+  </div>
+
+  <!-- Footer -->
+  <div id="seo-footer">
+    <a href="/about">About</a> |
+    <a href="/privacy">Privacy Policy</a> |
+    <a href="/contact">Contact</a> |
+    <a href="/disclaimer">Disclaimer</a>
+  </div>
+
+  <!-- Hide SEO content after SPA loads -->
+  <script>
+    window.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        var seo = document.getElementById('seo-content');
+        if (seo) seo.style.display = 'none';
+        var footer = document.getElementById('seo-footer');
+        if (footer) footer.style.display = 'none';
+      }, 1000);
+    });
+  </script>
+</body>
+</html>

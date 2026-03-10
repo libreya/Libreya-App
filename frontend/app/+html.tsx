@@ -8,6 +8,8 @@ export default function Root({ children }: { children: React.ReactNode }) {
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
+        <title>Libreya – Classic Literature, Reimagined | Free Online Library</title>
+        <meta name="description" content="Libreya is a free online library with 300+ classic books. Read works by Jane Austen, Charles Dickens, Leo Tolstoy, and more. Beautifully formatted, free forever." />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta
           name="viewport"
@@ -111,44 +113,6 @@ export default function Root({ children }: { children: React.ReactNode }) {
             display: block;
             overflow: visible !important;
           }
-
-          /* SEO Landing Section */
-
-#seo-content {
-  background: linear-gradient(180deg,#5A1F2B 0%,#7B2E3E 100%);
-  color: #ffffff;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.seo-container {
-  max-width: 760px;
-  padding: 80px 30px;
-  text-align: center;
-}
-
-.seo-container h1 {
-  font-family: Georgia, serif;
-  font-size: 42px;
-  font-weight: 700;
-  margin-bottom: 25px;
-}
-
-.seo-container h2 {
-  font-family: Georgia, serif;
-  font-size: 26px;
-  margin-top: 40px;
-  margin-bottom: 12px;
-  opacity: 0.95;
-}
-
-.seo-container p {
-  font-size: 18px;
-  line-height: 1.7;
-  opacity: 0.9;
-}
         `}} />
 
         {/* Ad-Blocker Detection */}
@@ -170,116 +134,90 @@ export default function Root({ children }: { children: React.ReactNode }) {
         `}} />
       </head>
       <body>
-        <div id="seo-content">
-          <div className="seo-container">
-            <h1>Libreya – Classic Literature, Reimagined</h1>
+        <div
+          id="seo-content"
+          style={{
+            maxWidth: "100%",
+            margin: "0 auto",
+            padding: "80px 30px",
+            textAlign: "center",
+            fontFamily: "Georgia, serif",
+            lineHeight: 1.7,
+            color: "#ffffff",
+            background: "linear-gradient(180deg,#5A1F2B 0%,#7B2E3E 100%)"
+          }}
+        >
+          <h1 style={{ fontSize: "44px", marginBottom: "25px", fontWeight: 700 }}>
+            Libreya – Classic Literature, Reimagined
+          </h1>
 
-            <p>
-              Libreya is a free online library where you can read more than
-              300 timeless works of classic literature. Every book is part of
-              the public domain and available to read for free.
-            </p>
+          <p style={{ fontSize: "18px", opacity: 0.9 }}>
+            Libreya is a free online library with over 300 classic books.
+          </p>
+          <p style={{ fontSize: "18px", opacity: 0.9 }}>
+            Every book is public domain and free for anyone to read.
+          </p>
 
-            <h2>Read Famous Classic Books</h2>
+          <h2 style={{ fontSize: "26px", marginTop: "40px" }}>Featured Books</h2>
+          <ul style={{ listStyle: "none", padding: 0, fontSize: "18px" }}>
+            <li><a href="/books/pride-and-prejudice.html" style={{ color: "#fff" }}>Pride and Prejudice – Jane Austen</a></li>
+            <li><a href="/books/moby-dick.html" style={{ color: "#fff" }}>Moby Dick – Herman Melville</a></li>
+            <li><a href="/books/crime-and-punishment.html" style={{ color: "#fff" }}>Crime and Punishment – Fyodor Dostoevsky</a></li>
+            {/* <li><a href="/books/war-and-peace.html" style={{ color: "#fff" }}>War and Peace – Leo Tolstoy</a></li>
+            <li><a href="/books/jane-eyre.html" style={{ color: "#fff" }}>Jane Eyre – Charlotte Brontë</a></li> */}
+          </ul>
 
-            <p>
-              Discover novels written by authors such as Jane Austen,
-              Charles Dickens, Leo Tolstoy, and Fyodor Dostoevsky.
-              These stories shaped literature and are still loved by
-              readers around the world.
-            </p>
+          <h2 style={{ fontSize: "26px", marginTop: "40px" }}>Easy Reading Online</h2>
+          <p style={{ fontSize: "18px", opacity: 0.9 }}>
+            Libreya makes reading classic books simple. Pages are clean and easy to read.
+          </p>
+          <p style={{ fontSize: "18px", opacity: 0.9 }}>
+            You can enjoy long reading sessions on any device.
+          </p>
 
-            <p>
-              Libreya presents these works in a clean and modern reading
-              format so you can enjoy classic books on any device.
-            </p>
+          <h2 style={{ fontSize: "26px", marginTop: "40px" }}>Free for Everyone</h2>
+          <p style={{ fontSize: "18px", opacity: 0.9 }}>
+            There are no subscriptions or paywalls. Students, teachers, and readers can explore these books anytime.
+          </p>
 
-            <h2>A Free Library for Everyone</h2>
-
-            <p>
-              All books on Libreya are completely free. There are no
-              subscriptions or paywalls. Anyone can explore classic
-              literature anytime.
-            </p>
-
-            <p>
-              Students, teachers, and curious readers can discover timeless
-              stories and ideas that inspired generations.
-            </p>
-
-            <h2>Start Reading Today</h2>
-
-            <p>
-              Browse authors, discover famous novels, and enjoy classic
-              literature from around the world with Libreya.
-            </p>
-          </div>
+          <h2 style={{ fontSize: "26px", marginTop: "40px" }}>Start Reading Today</h2>
+          <p style={{ fontSize: "18px", opacity: 0.9 }}>
+            Browse authors, find famous novels, and enjoy classic literature with Libreya.
+          </p>
         </div>
 
-        {children}
-
-        {/* Hide SEO text after React app loads */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-        window.addEventListener('DOMContentLoaded', function() {
-          setTimeout(function() {
-            var seo = document.getElementById('seo-content');
-            if (seo) {
-              seo.style.display = 'none';
-            }
-
-            var adp = document.getElementById('adsense-required-pages');
-            if (adp) {
-              adp.style.display = 'none';
-            }
-          }, 1000);
-        });
-      `,
-          }}
-        />
-
+        {/* Footer for AdSense-required pages */}
         <div
-          id="adsense-required-pages"
+          id="seo-footer"
           style={{
-            background: "#5A1F2B",
             textAlign: "center",
             padding: "30px 20px",
             fontSize: "14px",
-            fontFamily: "Georgia, serif",
             color: "#f3e8ea",
+            fontFamily: "Georgia, serif",
             borderTop: "1px solid rgba(255,255,255,0.15)"
           }}
         >
-          <a
-            href="/about"
-            style={{ color: "#ffffff", textDecoration: "none", margin: "0 10px" }}
-          >
-            About
-          </a>
-          |
-          <a
-            href="/privacy"
-            style={{ color: "#ffffff", textDecoration: "none", margin: "0 10px" }}
-          >
-            Privacy Policy
-          </a>
-          |
-          <a
-            href="/contact"
-            style={{ color: "#ffffff", textDecoration: "none", margin: "0 10px" }}
-          >
-            Contact
-          </a>
-          |
-          <a
-            href="/disclaimer"
-            style={{ color: "#ffffff", textDecoration: "none", margin: "0 10px" }}
-          >
-            Disclaimer
-          </a>
+          <a href="/about" style={{ color: "#fff", margin: "0 10px" }}>About</a> |
+          <a href="/privacy" style={{ color: "#fff", margin: "0 10px" }}>Privacy Policy</a> |
+          <a href="/contact" style={{ color: "#fff", margin: "0 10px" }}>Contact</a> |
+          <a href="/disclaimer" style={{ color: "#fff", margin: "0 10px" }}>Disclaimer</a>
         </div>
 
+        {/* Hide static SEO content after SPA loads */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+    window.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() {
+        var seo = document.getElementById('seo-content');
+        if (seo) seo.style.display = 'none';
+        var footer = document.getElementById('seo-footer');
+        if (footer) footer.style.display = 'none';
+      }, 1000);
+    });
+  `}} />
+
+        {children /* Expo SPA */}
       </body>
     </html>
   );
