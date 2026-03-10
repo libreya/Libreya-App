@@ -111,6 +111,44 @@ export default function Root({ children }: { children: React.ReactNode }) {
             display: block;
             overflow: visible !important;
           }
+
+          /* SEO Landing Section */
+
+#seo-content {
+  background: linear-gradient(180deg,#5A1F2B 0%,#7B2E3E 100%);
+  color: #ffffff;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.seo-container {
+  max-width: 760px;
+  padding: 80px 30px;
+  text-align: center;
+}
+
+.seo-container h1 {
+  font-family: Georgia, serif;
+  font-size: 42px;
+  font-weight: 700;
+  margin-bottom: 25px;
+}
+
+.seo-container h2 {
+  font-family: Georgia, serif;
+  font-size: 26px;
+  margin-top: 40px;
+  margin-bottom: 12px;
+  opacity: 0.95;
+}
+
+.seo-container p {
+  font-size: 18px;
+  line-height: 1.7;
+  opacity: 0.9;
+}
         `}} />
 
         {/* Ad-Blocker Detection */}
@@ -132,58 +170,50 @@ export default function Root({ children }: { children: React.ReactNode }) {
         `}} />
       </head>
       <body>
+        <div id="seo-content">
+          <div className="seo-container">
+            <h1>Libreya – Classic Literature, Reimagined</h1>
 
-        {/* SEO content visible to crawlers before the app loads */}
-        <div
-          id="seo-content"
-          style={{
-            maxWidth: "900px",
-            margin: "0 auto",
-            padding: "40px 20px",
-            fontFamily: "Georgia, serif",
-            lineHeight: "1.7",
-            color: "#111",
-          }}
-        >
-          <h1>Libreya – Classic Literature, Reimagined</h1>
+            <p>
+              Libreya is a free online library where you can read more than
+              300 timeless works of classic literature. Every book is part of
+              the public domain and available to read for free.
+            </p>
 
-          <p>
-            Libreya is a free online library for classic books. You can read more than
-            300 famous works from great authors. Every book is in the public domain
-            and free for everyone.
-          </p>
+            <h2>Read Famous Classic Books</h2>
 
-          <h2>Read Famous Classic Books</h2>
+            <p>
+              Discover novels written by authors such as Jane Austen,
+              Charles Dickens, Leo Tolstoy, and Fyodor Dostoevsky.
+              These stories shaped literature and are still loved by
+              readers around the world.
+            </p>
 
-          <p>
-            Explore stories written by authors like Jane Austen, Charles Dickens,
-            Leo Tolstoy, and Fyodor Dostoevsky. Their novels are some of the most
-            important works in world literature.
-          </p>
+            <p>
+              Libreya presents these works in a clean and modern reading
+              format so you can enjoy classic books on any device.
+            </p>
 
-          <p>
-            Libreya makes these books easy to read online. The pages are clean,
-            simple, and designed for long reading sessions on any device.
-          </p>
+            <h2>A Free Library for Everyone</h2>
 
-          <h2>A Free Library for Everyone</h2>
+            <p>
+              All books on Libreya are completely free. There are no
+              subscriptions or paywalls. Anyone can explore classic
+              literature anytime.
+            </p>
 
-          <p>
-            All books on Libreya are free. There are no subscriptions and no
-            paywalls. Anyone can read the classics anytime.
-          </p>
+            <p>
+              Students, teachers, and curious readers can discover timeless
+              stories and ideas that inspired generations.
+            </p>
 
-          <p>
-            Students, teachers, and readers can explore timeless stories and ideas
-            that have inspired people for generations.
-          </p>
+            <h2>Start Reading Today</h2>
 
-          <h2>Start Reading Today</h2>
-
-          <p>
-            Browse authors, discover famous novels, and enjoy classic literature
-            from around the world with Libreya.
-          </p>
+            <p>
+              Browse authors, discover famous novels, and enjoy classic
+              literature from around the world with Libreya.
+            </p>
+          </div>
         </div>
 
         {children}
@@ -212,16 +242,42 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <div
           id="adsense-required-pages"
           style={{
+            background: "#5A1F2B",
             textAlign: "center",
-            padding: "20px",
+            padding: "30px 20px",
             fontSize: "14px",
-            color: "#555"
+            fontFamily: "Georgia, serif",
+            color: "#f3e8ea",
+            borderTop: "1px solid rgba(255,255,255,0.15)"
           }}
         >
-          <a href="/about">About</a> |
-          <a href="/privacy">Privacy Policy</a> |
-          <a href="/contact">Contact</a> |
-          <a href="/disclaimer">Disclaimer</a>
+          <a
+            href="/about"
+            style={{ color: "#ffffff", textDecoration: "none", margin: "0 10px" }}
+          >
+            About
+          </a>
+          |
+          <a
+            href="/privacy"
+            style={{ color: "#ffffff", textDecoration: "none", margin: "0 10px" }}
+          >
+            Privacy Policy
+          </a>
+          |
+          <a
+            href="/contact"
+            style={{ color: "#ffffff", textDecoration: "none", margin: "0 10px" }}
+          >
+            Contact
+          </a>
+          |
+          <a
+            href="/disclaimer"
+            style={{ color: "#ffffff", textDecoration: "none", margin: "0 10px" }}
+          >
+            Disclaimer
+          </a>
         </div>
 
       </body>
