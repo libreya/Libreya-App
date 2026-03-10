@@ -246,10 +246,10 @@ export default function HomeScreen() {
 
         {/* ===== FEATURED BOOKS ===== */}
         <View style={styles.featuredSection}>
-          <Text style={[styles.sectionLabel, { fontFamily: bodyFont }]}>HANDPICKED FOR YOU</Text>
-          <Text style={[styles.sectionTitle, { fontFamily: headingFont }]}>Featured Classics</Text>
+          <Text style={[styles.sectionLabel, { textAlign: 'center', fontFamily: bodyFont }]}>HANDPICKED FOR YOU</Text>
+          <Text style={[styles.sectionTitle, { textAlign: 'center', fontFamily: headingFont }]}>Featured Classics</Text>
           {featuredBooks.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={true} contentContainerStyle={styles.featuredScroll}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={true} style={{ width: '100%' }} contentContainerStyle={styles.featuredScroll}>
               {featuredBooks.map((book, i) => (
                 <AnimatedCard key={book.id} delay={i * 80}>
                   <PressableCard
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
   featuredSection: { paddingVertical: 48, paddingHorizontal: 24 },
   sectionLabel: { fontSize: 12, letterSpacing: 3, color: COLORS.gray, marginBottom: 8, textTransform: 'uppercase' },
   sectionTitle: { fontSize: 30, color: COLORS.text, textAlign: 'center', marginBottom: 24 },
-  featuredScroll: { paddingLeft: 8, paddingRight: 24, gap: 16 },
+  featuredScroll: { paddingLeft: 8, paddingRight: 24, gap: 16, alignItems: 'center', justifyContent: 'center', flexGrow: 1},
   featuredCard: { width: 200, backgroundColor: COLORS.white, borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#f0f0f0' },
   featuredCover: { width: 200, height: 260 },
   featuredCoverPlaceholder: { backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center', padding: 16 },
