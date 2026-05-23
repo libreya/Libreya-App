@@ -4,6 +4,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useAppStore } from '../lib/store-web';
 import { Layout } from '../components/Layout';
+import { CookieBanner } from '../components/CookieBanner';
 import '../styles/globals.css';
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -48,6 +49,8 @@ export default function App({ Component, pageProps }: AppProps) {
           <Component {...pageProps} />
         </Layout>
       )}
+
+      <CookieBanner />
     </>
   );
 }

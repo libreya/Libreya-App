@@ -246,11 +246,23 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div style={{
           borderTop: '1px solid rgba(255,255,255,0.12)',
           padding: '16px 24px',
-          textAlign: 'center',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexWrap: 'wrap', gap: '12px',
         }}>
           <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)', marginBottom: 0 }}>
             © {new Date().getFullYear()} Libreya. All rights reserved.
           </p>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+            <a href="https://x.com/libreya_app" target="_blank" rel="noopener noreferrer" aria-label="X / Twitter" style={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.737-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </a>
+            <a href="https://instagram.com/libreya_app" target="_blank" rel="noopener noreferrer" aria-label="Instagram" style={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/></svg>
+            </a>
+            <a href="mailto:hello@libreya.app" aria-label="Email" style={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg>
+            </a>
+          </div>
         </div>
       </footer>
 
