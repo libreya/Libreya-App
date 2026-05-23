@@ -114,6 +114,10 @@ export default function BookPage() {
     }
   };
 
+  useEffect(() => {
+    if (isReading) window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [currentChapter, isReading]);
+
   const handleChapterChange = (chapterIndex: number) => {
     setCurrentChapter(chapterIndex);
     setShowChapterMenu(false);

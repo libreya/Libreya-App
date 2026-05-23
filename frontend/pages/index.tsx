@@ -72,7 +72,7 @@ export default function Home() {
       {/* ── HERO ── */}
       <div style={{
         backgroundColor: 'rgba(90,31,43,1)',
-        //backgroundImage: 'url(https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1200)',
+        backgroundImage: 'linear-gradient(rgba(20,6,11,0.62), rgba(20,6,11,0.62)), url(https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1200)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         padding: '72px 24px 80px',
