@@ -26,14 +26,6 @@ export default function App({ Component, pageProps }: AppProps) {
     initialize();
   }, [initializeApp]);
 
-  if (!appReady) {
-    return (
-      <div className="splash-screen">
-        <div className="spinner"></div>
-      </div>
-    );
-  }
-
   return (
     <>
       <Head>
@@ -41,6 +33,14 @@ export default function App({ Component, pageProps }: AppProps) {
         <meta name="description" content="Libreya - Read classic literature online" />
         <title>Libreya - Free Books</title>
       </Head>
+
+      {/* Splash overlay — covers page until app is ready, invisible to crawlers */}
+      {!appReady && (
+        <div className="splash-screen" style={{ position: 'fixed', inset: 0, zIndex: 9999 }}>
+          <div className="spinner"></div>
+        </div>
+      )}
+
       {skipLayout ? (
         <Component {...pageProps} />
       ) : (
