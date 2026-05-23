@@ -272,7 +272,7 @@ export default function BookPage() {
             >
               📖 Chapters
             </button>
-            <h1 style={{ margin: 0, fontSize: '1.3em', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <h1 style={{ margin: 0, fontSize: '1.3em', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'white' }}>
               {chapter.title}
             </h1>
           </div>
@@ -354,7 +354,7 @@ export default function BookPage() {
                 top: 0,
                 backgroundColor: 'var(--bg)'
               }}>
-                <h3 style={{ margin: '0 0 10px 0', color: '#5a1f2b' }}>Table of Contents</h3>
+                <h3 style={{ margin: '0 0 10px 0', color: 'var(--heading)' }}>Table of Contents</h3>
                 <div style={{
                   width: '100%',
                   height: '4px',
@@ -383,8 +383,8 @@ export default function BookPage() {
                       textAlign: 'left',
                       padding: '12px 15px',
                       margin: '5px 0',
-                      backgroundColor: idx === currentChapter ? '#c6a75e' : '#f5efe6',
-                      color: idx === currentChapter ? '#2b2b2b' : '#2b2b2b',
+                      backgroundColor: idx === currentChapter ? '#c6a75e' : 'var(--surface)',
+                      color: idx === currentChapter ? '#2b2b2b' : 'var(--text)',
                       border: '1px solid ' + (idx === currentChapter ? '#5a1f2b' : 'var(--border)'),
                       borderRadius: '6px',
                       cursor: 'pointer',
@@ -671,7 +671,7 @@ export default function BookPage() {
       </Head>
 
       <header>
-        <h1>{currentBook.title}</h1>
+        <h1 style={{ color: 'white' }}>{currentBook.title}</h1>
         <Link href="/browse" style={{ color: 'white' }}>
           Back to Browse
         </Link>
@@ -707,7 +707,7 @@ export default function BookPage() {
           <div style={{ flex: 1, minWidth: '300px' }}>
             <h2 style={{ marginBottom: '10px', borderBottom: 'none', paddingBottom: '0' }}>{currentBook.title}</h2>
             <p style={{ fontSize: '1.3em', color: '#c6a75e', marginBottom: '25px', fontStyle: 'italic' }}>
-              by <strong style={{ color: '#5a1f2b' }}>{currentBook.author}</strong>
+              by <strong style={{ color: 'var(--heading)' }}>{currentBook.author}</strong>
             </p>
             
             <div style={{
@@ -744,8 +744,8 @@ export default function BookPage() {
                 onClick={handleToggleFavorite}
                 style={{
                   backgroundColor: isFavorite ? '#c6a75e' : 'transparent',
-                  color: isFavorite ? '#2b2b2b' : '#5a1f2b',
-                  border: '2px solid #5a1f2b',
+                  color: isFavorite ? '#2b2b2b' : 'var(--heading)',
+                  border: '2px solid var(--heading)',
                   flex: '1',
                   minWidth: '160px'
                 }}
@@ -797,7 +797,7 @@ export default function BookPage() {
             <div style={{
               textAlign: 'center',
               paddingTop: '20px',
-              backgroundImage: 'linear-gradient(transparent, #ffffff)',
+              backgroundImage: 'linear-gradient(transparent, var(--bg))',
               marginTop: '-60px',
               paddingBottom: '40px'
             }}>

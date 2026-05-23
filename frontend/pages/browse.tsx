@@ -14,6 +14,7 @@ export default function Browse() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [genreMenuOpen, setGenreMenuOpen] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -126,55 +127,80 @@ export default function Browse() {
         </div>
       </div>
 
-      {/* Genre chips */}
-      <div style={{
+      {/* Genre — desktop chips */}
+      <div className="genre-desktop" style={{
         backgroundColor: 'rgba(90, 31, 43, 1.00)',
-        overflowX: 'auto',
-        whiteSpace: 'nowrap',
         padding: '10px 16px',
-        display: 'flex',
         gap: '8px',
-        scrollbarWidth: 'none',
+        justifyContent: 'center',
+        flexWrap: 'wrap',
       }}>
-        <button
-          onClick={() => setSelectedCategory(null)}
-          style={{
-            display: 'inline-block',
-            padding: '6px 16px',
-            borderRadius: '20px',
-            border: `1px solid ${!selectedCategory ? '#2b2b2b' : 'rgba(255,255,255,0.25)'}`,
-            backgroundColor: !selectedCategory ? '#2b2b2b' : 'transparent',
-            color: !selectedCategory ? '#c6a75e' : 'rgba(255,255,255,0.75)',
-            fontWeight: !selectedCategory ? '600' : '400',
-            fontSize: '0.875rem',
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-            transition: 'all 0.15s',
-          }}
-        >
-          All
-        </button>
-        {categories.map((cat) => (
+        {[null, ...categories].map((cat) => (
           <button
-            key={cat}
-            onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
+            key={cat ?? 'all'}
+            onClick={() => setSelectedCategory(cat)}
             style={{
-              display: 'inline-block',
-              padding: '6px 16px',
-              borderRadius: '20px',
+              padding: '6px 16px', borderRadius: '20px', whiteSpace: 'nowrap',
               border: `1px solid ${selectedCategory === cat ? '#2b2b2b' : 'rgba(255,255,255,0.25)'}`,
               backgroundColor: selectedCategory === cat ? '#2b2b2b' : 'transparent',
               color: selectedCategory === cat ? '#c6a75e' : 'rgba(255,255,255,0.75)',
               fontWeight: selectedCategory === cat ? '600' : '400',
-              fontSize: '0.875rem',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              transition: 'all 0.15s',
+              fontSize: '0.875rem', cursor: 'pointer', transition: 'all 0.15s',
             }}
           >
-            {cat}
+            {cat ?? 'All'}
           </button>
         ))}
+      </div>
+
+      {/* Genre — mobile burger */}
+      <div className="genre-mobile" style={{ backgroundColor: 'rgba(90, 31, 43, 1.00)', position: 'relative' }}>
+        <button
+          onClick={() => setGenreMenuOpen(!genreMenuOpen)}
+          style={{
+            width: '100%', padding: '12px 16px', background: 'none', border: 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            color: 'white', fontSize: '0.9rem', cursor: 'pointer',
+          }}
+        >
+          <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <span>Genre{selectedCategory ? `: ${selectedCategory}` : ''}</span>
+          </span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+            style={{ transform: genreMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+
+        {genreMenuOpen && (
+          <div style={{
+            position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+            backgroundColor: '#3a1018', borderTop: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+          }}>
+            {[null, ...categories].map((cat) => (
+              <button
+                key={cat ?? 'all'}
+                onClick={() => { setSelectedCategory(cat); setGenreMenuOpen(false); }}
+                style={{
+                  width: '100%', padding: '13px 20px', background: 'none', border: 'none',
+                  borderBottom: '1px solid rgba(255,255,255,0.07)',
+                  textAlign: 'left', cursor: 'pointer',
+                  color: selectedCategory === cat ? '#c6a75e' : 'rgba(255,255,255,0.8)',
+                  fontWeight: selectedCategory === cat ? '600' : '400',
+                  fontSize: '0.9rem',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                }}
+              >
+                {cat ?? 'All'}
+                {selectedCategory === cat && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c6a75e" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <main className="container">
@@ -298,8 +324,13 @@ export default function Browse() {
 
         div[style*="overflowX"]::-webkit-scrollbar { display: none; }
 
+        .genre-desktop { display: flex; }
+        .genre-mobile { display: none; }
+
         @media (max-width: 768px) {
           .container { padding: 16px 12px; }
+          .genre-desktop { display: none !important; }
+          .genre-mobile { display: block; }
         }
 
         @media (max-width: 480px) {

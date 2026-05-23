@@ -33,7 +33,7 @@ const ICONS = {
 function MenuItem({ iconPath, label, onClick, danger = false, href }: {
   iconPath: string; label: string; onClick?: () => void; danger?: boolean; href?: string;
 }) {
-  const color = danger ? '#c92a2a' : '#333';
+  const color = danger ? '#c92a2a' : 'var(--text)';
   const inner = (
     <div style={{
       display: 'flex', alignItems: 'center', gap: '12px',
@@ -227,7 +227,7 @@ export default function ProfilePage() {
         <Section title="APPEARANCE">
           <div style={{ backgroundColor: 'var(--surface)', borderRadius: '12px', padding: '14px 16px', marginBottom: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-              <Icon d={ICONS.sun} color="#333" size={22} />
+              <Icon d={ICONS.sun} color="var(--text)" size={22} />
               <span style={{ fontSize: '1rem', color: 'var(--text)' }}>Theme</span>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -238,9 +238,9 @@ export default function ProfilePage() {
                   style={{
                     flex: 1, padding: '6px 4px', borderRadius: '8px', fontSize: '0.75rem',
                     fontWeight: theme === t ? '600' : '400', cursor: 'pointer',
-                    border: `1.5px solid ${theme === t ? '#2b2b2b' : 'var(--border)'}`,
-                    backgroundColor: theme === t ? '#2b2b2b' : 'var(--surface)',
-                    color: theme === t ? '#c6a75e' : 'var(--text-secondary)',
+                    border: `1.5px solid ${theme === t ? 'var(--heading)' : 'var(--border)'}`,
+                    backgroundColor: theme === t ? 'var(--heading)' : 'var(--surface)',
+                    color: theme === t ? 'var(--bg)' : 'var(--text-secondary)',
                     textTransform: 'capitalize',
                   }}
                 >

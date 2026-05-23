@@ -154,7 +154,7 @@ export default function Home() {
         {isLoading ? (
           <FeaturedBooksRowSkeleton />
         ) : (
-          <div style={{
+          <div className="featured-books-row" style={{
             display: 'flex', gap: '16px', overflowX: 'auto',
             paddingBottom: '12px', scrollbarWidth: 'thin', scrollbarColor: '#c6a75e transparent',
           }}>
@@ -216,7 +216,7 @@ export default function Home() {
             <div key={author} style={{
               display: 'flex', gap: '24px', alignItems: 'flex-start',
               padding: '28px 0',
-              borderBottom: i < 9 ? '1px solid var(--border)' : 'none',
+              borderBottom: i < 4 ? '1px solid var(--border)' : 'none',
             }}>
               <div style={{
                 width: '56px', height: '56px', borderRadius: '50%', flexShrink: 0,
@@ -330,8 +330,16 @@ export default function Home() {
           transform: translateY(-4px);
           box-shadow: 0 8px 24px rgba(0,0,0,0.12);
         }
-        @media (max-width: 600px) {
+        .featured-books-row {
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+        @media (max-width: 980px) {
           .container { padding-top: 32px !important; }
+          .featured-books-row {
+            justify-content: flex-start;
+            flex-wrap: nowrap;
+          }
         }
       `}</style>
     </>

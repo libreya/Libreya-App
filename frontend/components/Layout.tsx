@@ -68,7 +68,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               alt="Libreya"
               style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
             />
-            <span style={{ fontSize: '1.375rem', fontWeight: '700', color: '#5a1f2b', fontFamily: 'inherit' }}>
+            <span style={{ fontSize: '1.375rem', fontWeight: '700', color: 'var(--heading)', fontFamily: 'inherit' }}>
               Libreya
             </span>
           </Link>
@@ -81,8 +81,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   display: 'block', padding: '6px 13px', borderRadius: '8px',
                   fontSize: '0.9375rem',
                   fontWeight: isActive(path) ? '600' : '400',
-                  color: isActive(path) ? '#5a1f2b' : 'var(--text)',
-                  backgroundColor: isActive(path) ? 'rgba(90,31,43,0.07)' : 'transparent',
+                  color: isActive(path) ? 'var(--heading)' : 'var(--text)',
+                  backgroundColor: isActive(path) ? 'rgba(198,167,94,0.12)' : 'transparent',
                   borderBottom: `2px solid ${isActive(path) ? '#c6a75e' : 'transparent'}`,
                   transition: 'all 0.15s',
                 }}>
@@ -147,7 +147,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   fontSize: '1rem',
                   fontWeight: isActive(path) ? '600' : '400',
-                  color: isActive(path) ? '#5a1f2b' : 'var(--text)',
+                  color: isActive(path) ? 'var(--heading)' : 'var(--text)',
                 }}>
                   {label}
                   {isActive(path) && (
@@ -276,8 +276,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           display: none;
         }
         .nav-link:hover {
-          background-color: rgba(90,31,43,0.05) !important;
-          color: #5a1f2b !important;
+          background-color: rgba(198,167,94,0.1) !important;
+          color: var(--heading) !important;
         }
         @media (max-width: 768px) {
           .layout-desktop-nav { display: none; }
