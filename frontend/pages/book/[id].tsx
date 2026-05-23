@@ -139,10 +139,6 @@ export default function BookPage() {
     setFontSize(prev => Math.max(prev - 0.1, 0.8));
   };
 
-  const resetFontSize = () => {
-    setFontSize(1.15);
-  };
-
   // Save chapter position to database when it changes (with debouncing)
   useEffect(() => {
     if (!user || !currentBook || !chaptersLoaded) return;
@@ -248,7 +244,7 @@ export default function BookPage() {
         </nav>
 
         {/* Chapter Reading Header */}
-        <header style={{
+        <header className="reader-header" style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -258,8 +254,9 @@ export default function BookPage() {
           zIndex: 100,
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', flex: 1 }}>
+          <div className="reader-header-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flex: 1 }}>
             <button
+              className="reader-chapters-btn"
               onClick={() => setShowChapterMenu(!showChapterMenu)}
               style={{
                 backgroundColor: 'transparent',
@@ -273,11 +270,11 @@ export default function BookPage() {
             >
               📖 Chapters
             </button>
-            <h1 style={{ margin: 0, fontSize: '1.3em', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'white' }}>
+            <h1 className="reader-title" style={{ margin: 0, fontSize: '1.3em', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'white' }}>
               {chapter.title}
             </h1>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="reader-font-controls" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button
               onClick={decreaseFontSize}
               title="Decrease font size"
@@ -313,10 +310,11 @@ export default function BookPage() {
             </button>
           </div>
           <button
+            className="reader-back-btn"
             onClick={() => setIsReading(false)}
             style={{
               backgroundColor: '#c6a75e',
-              color: 'var(--text)',
+              color: '#2b2b2b',
               padding: '8px 16px',
               minWidth: 'auto',
               fontWeight: '600',
@@ -517,44 +515,65 @@ export default function BookPage() {
               gap: 8px;
               padding: 10px 15px !important;
             }
-
-            nav a,
-            nav button {
+            nav a, nav button {
               font-size: 0.8em;
               padding: 4px 8px !important;
             }
 
-            header {
-              flex-direction: column;
-              padding: 12px 15px !important;
-              gap: 10px !important;
-              top: 50px !important;
+            /* Reader header: 2-row layout */
+            .reader-header {
+              flex-wrap: wrap;
+              padding: 10px 12px !important;
+              gap: 8px;
+              top: 44px !important;
             }
-
-            header > div:first-child {
-              width: 100%;
+            /* Row 1: Back button + chapter title */
+            .reader-header::before {
+              content: none;
+            }
+            .reader-back-btn {
+              order: 0;
+              padding: 7px 14px !important;
+              font-size: 0.875em !important;
+              margin-left: 0 !important;
+              flex-shrink: 0;
+            }
+            .reader-title {
+              order: 1;
+              font-size: 1em !important;
+              flex: 1;
               min-width: 0;
             }
-
-            header h1 {
-              font-size: 1.1em !important;
+            /* Row 2: Chapters + font controls together */
+            .reader-header-left {
+              order: 2;
+              width: 100%;
+              gap: 8px;
             }
-
-            header button {
+            .reader-chapters-btn {
               padding: 6px 10px !important;
-              font-size: 0.85em !important;
+              font-size: 0.8em !important;
+              flex-shrink: 0;
+            }
+            .reader-font-controls {
+              order: 2;
+              margin-left: auto;
+              gap: 6px !important;
+            }
+            .reader-font-controls button {
+              padding: 5px 9px !important;
+              font-size: 0.9em !important;
+            }
+            .reader-font-controls span {
+              font-size: 0.78em !important;
+              min-width: 36px !important;
             }
 
             main {
               padding-bottom: 130px !important;
             }
-
             main > div:first-child {
-              padding: 30px 20px !important;
-            }
-
-            main > div > div {
-              font-size: 1em !important;
+              padding: 24px 16px !important;
             }
           }
 
@@ -562,101 +581,34 @@ export default function BookPage() {
             nav {
               gap: 4px;
               padding: 8px 10px !important;
-              justify-content: flex-start;
               overflow-x: auto;
             }
-
-            nav a,
-            nav button {
-              font-size: 0.7em;
+            nav a, nav button {
+              font-size: 0.72em;
               padding: 4px 6px !important;
               flex-shrink: 0;
             }
 
-            header {
-              padding: 10px 8px !important;
-              top: 45px !important;
+            .reader-header {
+              padding: 8px 10px !important;
             }
-
-            header > div:first-child button {
-              padding: 5px 8px !important;
-              font-size: 0.75em !important;
+            .reader-back-btn {
+              padding: 6px 12px !important;
+              font-size: 0.8em !important;
             }
-
-            header h1 {
-              font-size: 1em !important;
-            }
-
-            header > div:last-child {
-              gap: 5px !important;
-              align-items: center;
-            }
-
-            header > div:last-child button {
-              padding: 5px 8px !important;
-              font-size: 0.7em !important;
-            }
-
-            header > div:last-child span {
-              font-size: 0.7em !important;
-              min-width: 35px !important;
-            }
-
-            header > button {
-              padding: 5px 10px !important;
-              font-size: 0.75em !important;
-              margin-left: 5px !important;
+            .reader-title {
+              font-size: 0.9em !important;
             }
 
             main {
               max-width: 100% !important;
-              padding: 10px !important;
+              padding: 8px !important;
               padding-bottom: 140px !important;
             }
-
             main > div:first-child {
-              padding: 20px 15px !important;
+              padding: 18px 14px !important;
               border-radius: 8px !important;
-              margin-bottom: 20px !important;
-            }
-
-            main > div > div {
-              font-size: 0.95em !important;
-              line-height: 1.8 !important;
-            }
-
-            footer-nav {
-              padding: 15px !important;
-              gap: 10px !important;
-            }
-
-            footer-nav button {
-              padding: 10px 12px !important;
-              font-size: 0.8em !important;
-            }
-
-            footer-nav > div {
-              flex: 1 !important;
-            }
-
-            footer-nav p {
-              font-size: 0.8em !important;
-            }
-
-            div[style*="position: fixed"][style*="bottom: 0"] {
-              flex-direction: column !important;
-              padding: 10px !important;
-              gap: 8px !important;
-            }
-
-            div[style*="position: fixed"][style*="bottom: 0"] button {
-              padding: 10px 12px !important;
-              font-size: 0.8em !important;
-              flex: 1 !important;
-            }
-
-            div[style*="position: fixed"][style*="bottom: 0"] > div:nth-child(2) {
-              flex: 1 !important;
+              margin-bottom: 16px !important;
             }
           }
         `}</style>
@@ -679,15 +631,16 @@ export default function BookPage() {
       </header>
 
       <main className="container" style={{ maxWidth: '900px' }}>
-        <div style={{ display: 'flex', gap: '40px', marginBottom: '40px', flexWrap: 'wrap' }}>
+        <div className="book-layout" style={{ display: 'flex', gap: '40px', marginBottom: '40px', flexWrap: 'wrap' }}>
           {currentBook.cover_image && (
-            <div style={{
+            <div className="book-cover-col" style={{
               flex: '0 0 250px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center'
             }}>
               <img
+                className="book-cover-img"
                 src={currentBook.cover_image}
                 alt={currentBook.title}
                 style={{
@@ -705,12 +658,12 @@ export default function BookPage() {
               </p>
             </div>
           )}
-          <div style={{ flex: 1, minWidth: '300px' }}>
-            <h2 style={{ marginBottom: '10px', borderBottom: 'none', paddingBottom: '0' }}>{currentBook.title}</h2>
+          <div className="book-info-col" style={{ flex: 1, minWidth: '300px' }}>
+            <h2 className="book-detail-title" style={{ marginBottom: '10px', borderBottom: 'none', paddingBottom: '0' }}>{currentBook.title}</h2>
             <p style={{ fontSize: '1.3em', color: '#c6a75e', marginBottom: '25px', fontStyle: 'italic' }}>
               by <strong style={{ color: 'var(--heading)' }}>{currentBook.author}</strong>
             </p>
-            
+
             <div style={{
               backgroundColor: 'var(--surface)',
               padding: '20px',
@@ -735,7 +688,7 @@ export default function BookPage() {
               </div>
             )}
 
-            <div style={{
+            <div className="book-actions" style={{
               display: 'flex',
               gap: '12px',
               flexWrap: 'wrap',
@@ -779,6 +732,7 @@ export default function BookPage() {
           <h3 style={{ marginBottom: '20px' }}>Preview</h3>
           {currentBook.content_body ? (
             <div
+              className="book-preview-content"
               dangerouslySetInnerHTML={{ __html: currentBook.content_body.substring(0, 800) }}
               style={{
                 lineHeight: '1.8',
@@ -809,6 +763,51 @@ export default function BookPage() {
           )}
         </section>
       </main>
+
+      <style>{`
+        @media (max-width: 600px) {
+          .book-layout {
+            gap: 20px !important;
+            flex-direction: column;
+          }
+          .book-cover-col {
+            flex: 0 0 auto !important;
+            flex-direction: row !important;
+            align-items: flex-start !important;
+            gap: 16px;
+            width: 100%;
+          }
+          .book-cover-img {
+            width: 110px !important;
+            max-width: 110px !important;
+            height: 155px !important;
+            flex-shrink: 0;
+          }
+          .book-cover-col > p {
+            font-size: 0.8em !important;
+            margin-top: 8px !important;
+            text-align: left !important;
+          }
+          .book-info-col {
+            min-width: 0 !important;
+            width: 100% !important;
+          }
+          .book-detail-title {
+            display: none;
+          }
+          .book-actions {
+            flex-direction: column;
+          }
+          .book-actions button {
+            min-width: 0 !important;
+            width: 100%;
+            flex: none !important;
+          }
+          .book-preview-content {
+            padding: 16px !important;
+          }
+        }
+      `}</style>
     </>
   );
 }
