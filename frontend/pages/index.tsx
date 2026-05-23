@@ -92,8 +92,8 @@ export default function Home() {
           fontSize: '1.1em', color: 'rgba(255,255,255,0.85)',
           maxWidth: '540px', margin: '0 auto 36px', lineHeight: '1.8',
         }}>
-          Discover over 300 timeless masterpieces from the world's greatest authors.
-          Beautifully formatted, completely free, forever.
+          Discover over 300 timeless classics from the world's greatest authors.
+          Every book is beautifully formatted and completely free to read.
         </p>
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <Link href="/browse">
@@ -209,55 +209,35 @@ export default function Home() {
       <div className="container" style={{ paddingTop: '56px', paddingBottom: '0' }}>
         <h2 style={{ marginBottom: '8px' }}>Featured Authors</h2>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '30px', fontSize: '1.05em' }}>
-          Timeless voices whose works have shaped world literature
+          Timeless voices whose works have shaped world literature.
         </p>
-        {featuredBooks.length === 0 ? (
-          <p style={{ color: 'var(--text-secondary)' }}>No featured authors available at the moment.</p>
-        ) : (() => {
-          const authorMap = new Map<string, typeof featuredBooks>();
-          featuredBooks.forEach(book => {
-            const author = book.author || 'Unknown Author';
-            if (!authorMap.has(author)) authorMap.set(author, []);
-            authorMap.get(author)!.push(book);
-          });
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {Array.from(authorMap.entries()).map(([author, authorBooks], i, arr) => {
-                const genres = [...new Set(authorBooks.map(b => b.category).filter(Boolean))].slice(0, 2).join(' · ');
-                const count = authorBooks.length;
-                const info = AUTHOR_BIOS[author];
-                return (
-                  <div key={author} style={{
-                    display: 'flex', gap: '24px', alignItems: 'flex-start',
-                    padding: '28px 0',
-                    borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none',
-                  }}>
-                    <div style={{
-                      width: '56px', height: '56px', borderRadius: '50%', flexShrink: 0,
-                      backgroundColor: 'rgba(90,31,43,1)', color: '#c6a75e',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '1.2rem', fontWeight: '700',
-                    }}>
-                      {author.split(' ').filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <h3 style={{ fontSize: '1.1em', marginBottom: '4px' }}>{author}</h3>
-                      <p style={{ fontSize: '0.78em', color: 'var(--text-secondary)', marginBottom: '10px' }}>
-                        {info ? `${info.nationality} · ${info.years}` : genres || null}
-                        {count > 0 && ` · ${count} work${count !== 1 ? 's' : ''} in collection`}
-                      </p>
-                      {info?.bio && (
-                        <p style={{ fontSize: '0.93em', color: 'var(--text-secondary)', lineHeight: '1.7', marginBottom: 0 }}>
-                          {info.bio}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {Object.entries(AUTHOR_BIOS).slice(0, 5).map(([author, info], i) => (
+            <div key={author} style={{
+              display: 'flex', gap: '24px', alignItems: 'flex-start',
+              padding: '28px 0',
+              borderBottom: i < 9 ? '1px solid var(--border)' : 'none',
+            }}>
+              <div style={{
+                width: '56px', height: '56px', borderRadius: '50%', flexShrink: 0,
+                backgroundColor: 'rgba(90,31,43,1)', color: '#c6a75e',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '1.2rem', fontWeight: '700',
+              }}>
+                {author.split(' ').filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+              </div>
+              <div style={{ flex: 1 }}>
+                <h3 style={{ fontSize: '1.1em', marginBottom: '4px' }}>{author}</h3>
+                <p style={{ fontSize: '0.78em', color: 'var(--text-secondary)', marginBottom: '10px' }}>
+                  {info.nationality} · {info.years}
+                </p>
+                <p style={{ fontSize: '0.93em', color: 'var(--text-secondary)', lineHeight: '1.7', marginBottom: 0 }}>
+                  {info.bio}
+                </p>
+              </div>
             </div>
-          );
-        })()}
+          ))}
+        </div>
       </div>
 
       {/* ── BENEFITS ── */}
@@ -311,7 +291,7 @@ export default function Home() {
           fontSize: '1.25em', fontStyle: 'italic', color: 'var(--heading)',
           maxWidth: '600px', margin: '0 auto', lineHeight: '1.8',
         }}>
-          "Libreya is not built for endless scrolling; it is built for intentional reading."
+          "Libreya is built for intentional reading, not endless scrolling."
         </p>
         <div style={{
           width: '48px', height: '3px', backgroundColor: '#c6a75e',
