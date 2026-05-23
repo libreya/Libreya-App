@@ -17,14 +17,16 @@ export default function AdBanner({ slot = '', format = 'auto', style, className 
   const pushed = useRef(false);
 
   useEffect(() => {
-    if (pushed.current) return;
+    if (!slot || pushed.current) return;
     pushed.current = true;
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch (_) {
       // AdSense not loaded (dev, ad blocker, etc.)
     }
-  }, []);
+  }, [slot]);
+
+  if (!slot) return null;
 
   return (
     <div className={className} style={{ textAlign: 'center', overflow: 'hidden', ...style }}>

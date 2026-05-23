@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAppStore } from '../../lib/store-web';
+import AdBanner from '../../components/AdBanner';
 
 interface Chapter {
   id: number;
@@ -768,8 +769,10 @@ export default function BookPage() {
           </div>
         </div>
 
+        <AdBanner slot="9986559126" format="horizontal" style={{ margin: '40px 0' }} />
+
         <section style={{
-          marginTop: '50px',
+          marginTop: '10px',
           paddingTop: '30px',
           borderTop: '3px solid #c6a75e'
         }}>

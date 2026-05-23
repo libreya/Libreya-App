@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useAppStore } from '../lib/store-web';
 import { FeaturedBooksRowSkeleton } from '../components/Skeleton';
+import AdBanner from '../components/AdBanner';
 
 interface AuthorInfo { nationality: string; years: string; bio: string; }
 
@@ -238,6 +239,11 @@ export default function Home() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* ── AD ── */}
+      <div className="container" style={{ paddingTop: '40px', paddingBottom: '0' }}>
+        <AdBanner slot="9986559126" format="horizontal" />
       </div>
 
       {/* ── BENEFITS ── */}

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAppStore } from '../lib/store-web';
 import { FavoritesGridSkeleton } from '../components/Skeleton';
+import AdBanner from '../components/AdBanner';
 
 export default function FavoritesPage() {
   const router = useRouter();
@@ -36,6 +37,7 @@ export default function FavoritesPage() {
           <FavoritesGridSkeleton />
         ) : favorites.length > 0 ? (
           <>
+            <AdBanner slot="9986559126" format="horizontal" style={{ margin: '20px 0' }} />
             <section style={{ marginBottom: '50px' }}>
               <div style={{
                 display: 'grid',

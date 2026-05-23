@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useAppStore } from '../lib/store-web';
 import { api } from '../lib/api';
 import { BrowseGridSkeleton } from '../components/Skeleton';
+import AdBanner from '../components/AdBanner';
 
 export default function Browse() {
   const books = useAppStore((s) => s.books);
@@ -214,6 +215,8 @@ export default function Browse() {
             </>
           )}
         </p>
+
+        <AdBanner slot="9986559126" format="horizontal" style={{ margin: '0 0 24px' }} />
 
         {isLoading ? (
           <BrowseGridSkeleton />
