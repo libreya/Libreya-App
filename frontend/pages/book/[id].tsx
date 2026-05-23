@@ -258,26 +258,25 @@ export default function BookPage() {
           zIndex: 100,
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
-          <div className="reader-header-left" style={{ display: 'flex', alignItems: 'center', gap: '15px', flex: 1 }}>
-            <button
-              className="reader-chapters-btn"
-              onClick={() => setShowChapterMenu(!showChapterMenu)}
-              style={{
-                backgroundColor: 'transparent',
-                color: 'white',
-                border: '2px solid white',
-                padding: '8px 12px',
-                minWidth: 'auto',
-                fontWeight: '600'
-              }}
-              title="Table of Contents"
-            >
-              📖 Chapters
-            </button>
-            <h1 className="reader-title" style={{ margin: 0, fontSize: '1.3em', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'white' }}>
-              {chapter.title}
-            </h1>
-          </div>
+          <button
+            className="reader-chapters-btn"
+            onClick={() => setShowChapterMenu(!showChapterMenu)}
+            style={{
+              backgroundColor: 'transparent',
+              color: 'white',
+              border: '2px solid white',
+              padding: '8px 12px',
+              minWidth: 'auto',
+              fontWeight: '600',
+              flexShrink: 0
+            }}
+            title="Table of Contents"
+          >
+            📖 Chapters
+          </button>
+          <h1 className="reader-title" style={{ margin: '0 15px', fontSize: '1.3em', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'white' }}>
+            {chapter.title}
+          </h1>
           <div className="reader-font-controls" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button
               onClick={decreaseFontSize}
@@ -524,16 +523,14 @@ export default function BookPage() {
               padding: 4px 8px !important;
             }
 
-            /* Reader header: 2-row layout */
+            /* Reader header: 2-row layout on mobile
+               Row 1: [← Back]  [📖 Chapters]  [A− % A+]
+               Row 2: [Chapter title — full width]          */
             .reader-header {
               flex-wrap: wrap;
               padding: 10px 12px !important;
               gap: 8px;
               top: 44px !important;
-            }
-            /* Row 1: Back button + chapter title */
-            .reader-header::before {
-              content: none;
             }
             .reader-back-btn {
               order: 0;
@@ -542,19 +539,8 @@ export default function BookPage() {
               margin-left: 0 !important;
               flex-shrink: 0;
             }
-            .reader-title {
-              order: 1;
-              font-size: 1em !important;
-              flex: 1;
-              min-width: 0;
-            }
-            /* Row 2: Chapters + font controls together */
-            .reader-header-left {
-              order: 2;
-              width: 100%;
-              gap: 8px;
-            }
             .reader-chapters-btn {
+              order: 1;
               padding: 6px 10px !important;
               font-size: 0.8em !important;
               flex-shrink: 0;
@@ -571,6 +557,16 @@ export default function BookPage() {
             .reader-font-controls span {
               font-size: 0.78em !important;
               min-width: 36px !important;
+            }
+            /* Title: own full-width row below the controls */
+            .reader-title {
+              order: 3;
+              flex: 0 0 100% !important;
+              margin: 0 !important;
+              font-size: 1em !important;
+              white-space: normal !important;
+              overflow: visible !important;
+              text-overflow: unset !important;
             }
 
             main {
