@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useAppStore } from '../lib/store-web';
+import { FavoritesGridSkeleton } from '../components/Skeleton';
 
 export default function FavoritesPage() {
   const router = useRouter();
@@ -32,11 +33,8 @@ export default function FavoritesPage() {
 
       <main className="container">
         {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-            <div className="spinner" style={{ margin: '0 auto', width: '40px', height: '40px' }}></div>
-            <p style={{ marginTop: '20px', color: 'var(--text-secondary)' }}>Loading your favorites...</p>
-          </div>
-        ) : !isLoading && favorites.length > 0 ? (
+          <FavoritesGridSkeleton />
+        ) : favorites.length > 0 ? (
           <>
             <section style={{ marginBottom: '50px' }}>
               <div style={{

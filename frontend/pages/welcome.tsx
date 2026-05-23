@@ -75,6 +75,6 @@ export default function Welcome() {
 export async function getStaticProps() {
   return {
     props: {},
-    revalidate: 86400,
+    
   };
 }

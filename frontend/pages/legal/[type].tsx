@@ -70,6 +70,6 @@ export async function getStaticPaths() {
 export async function getStaticProps(context: any) {
   return {
     props: {},
-    revalidate: 86400,
+    
   };
 }

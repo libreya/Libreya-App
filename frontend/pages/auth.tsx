@@ -240,6 +240,6 @@ export default function Auth() {
 export async function getStaticProps() {
   return {
     props: {},
-    revalidate: 86400,
+    
   };
 }

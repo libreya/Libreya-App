@@ -40,5 +40,5 @@ export default function Contact() {
 }
 
 export async function getStaticProps() {
-  return { props: {}, revalidate: 86400 };
+  return { props: {} };
 }

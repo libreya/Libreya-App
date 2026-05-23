@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useAppStore } from '../lib/store-web';
 import { api } from '../lib/api';
+import { BrowseGridSkeleton } from '../components/Skeleton';
 
 export default function Browse() {
   const books = useAppStore((s) => s.books);
@@ -189,7 +190,7 @@ export default function Browse() {
         </p>
 
         {isLoading ? (
-          <p>Loading books...</p>
+          <BrowseGridSkeleton />
         ) : books.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 24px' }}>
             <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '16px' }}>

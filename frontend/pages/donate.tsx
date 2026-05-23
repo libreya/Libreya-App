@@ -33,5 +33,5 @@ export default function Donate() {
 }
 
 export async function getStaticProps() {
-  return { props: {}, revalidate: 86400 };
+  return { props: {} };
 }

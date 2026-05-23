@@ -44,5 +44,5 @@ export default function Founder() {
 }
 
 export async function getStaticProps() {
-  return { props: {}, revalidate: 86400 };
+  return { props: {} };
 }

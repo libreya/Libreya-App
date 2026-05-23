@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAppStore } from '../lib/store-web';
+import { FeaturedBooksRowSkeleton } from '../components/Skeleton';
 
 interface AuthorInfo { nationality: string; years: string; bio: string; }
 
@@ -150,10 +151,7 @@ export default function Home() {
         <h2 style={{ marginBottom: '24px' }}>Featured Classics</h2>
 
         {isLoading ? (
-          <div style={{ textAlign: 'center', padding: '40px 20px' }}>
-            <div className="spinner" style={{ margin: '0 auto', width: '40px', height: '40px' }}></div>
-            <p style={{ marginTop: '20px', color: 'var(--text-secondary)' }}>Loading books...</p>
-          </div>
+          <FeaturedBooksRowSkeleton />
         ) : (
           <div style={{
             display: 'flex', gap: '16px', overflowX: 'auto',
