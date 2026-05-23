@@ -74,6 +74,7 @@ interface AppState {
   updateActivity: (activity: Partial<UserActivity>) => Promise<void>;
   toggleFavorite: (bookId: number) => Promise<void>;
   addHighlight: (text: string, position: number, chapter?: number) => Promise<void>;
+  signInAsGuest: () => Promise<void>;
   acceptTerms: () => Promise<void>;
   deleteAccount: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -320,6 +321,26 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { currentActivity } = get();
     const highlights = [...(currentActivity?.highlights || []), { text, position, chapter }];
     await get().updateActivity({ highlights });
+  },
+
+  signInAsGuest: async () => {
+    const guestId = crypto.randomUUID();
+    const guestUser: User = {
+      id: guestId,
+      display_name: 'Guest',
+      auth_provider: 'guest',
+      is_admin: false,
+      terms_accepted: true,
+    };
+    try {
+      const saved = await api.post('/users', guestUser);
+      const user = { ...guestUser, ...saved };
+      storage.setItem('user', JSON.stringify(user));
+      set({ user });
+    } catch {
+      storage.setItem('user', JSON.stringify(guestUser));
+      set({ user: guestUser });
+    }
   },
 
   acceptTerms: async () => {

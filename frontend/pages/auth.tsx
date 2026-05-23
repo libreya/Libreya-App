@@ -10,6 +10,7 @@ export default function Auth() {
   const user = useAppStore((s) => s.user);
   const setUser = useAppStore((s) => s.setUser);
   const signOut = useAppStore((s) => s.signOut);
+  const signInAsGuest = useAppStore((s) => s.signInAsGuest);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -57,6 +58,17 @@ export default function Auth() {
       setPassword('');
     } catch (error: any) {
       setErrorMessage(error.message || 'An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGuestAuth = async () => {
+    setLoading(true);
+    try {
+      await signInAsGuest();
+    } catch {
+      setErrorMessage('Failed to create guest session. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -214,9 +226,23 @@ export default function Auth() {
               backgroundColor: 'var(--bg)',
               color: 'var(--text)',
               border: '1px solid var(--border)',
+              marginBottom: '10px',
             }}
           >
             Sign in with Google
+          </button>
+
+          <button
+            onClick={handleGuestAuth}
+            disabled={loading}
+            style={{
+              width: '100%',
+              backgroundColor: 'transparent',
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--border)',
+            }}
+          >
+            Continue as Guest
           </button>
         </div>
 
