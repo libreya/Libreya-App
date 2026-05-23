@@ -4,20 +4,20 @@ import Link from 'next/link';
 const STORAGE_KEY = 'libreya_cookie_consent';
 
 export function CookieBanner() {
-  const [visible, setVisible] = useState(false);
+  const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem(STORAGE_KEY)) {
-      setVisible(true);
+    if (localStorage.getItem(STORAGE_KEY)) {
+      setHidden(true);
     }
   }, []);
 
   const accept = () => {
     localStorage.setItem(STORAGE_KEY, 'accepted');
-    setVisible(false);
+    setHidden(true);
   };
 
-  if (!visible) return null;
+  if (hidden) return null;
 
   return (
     <div style={{
