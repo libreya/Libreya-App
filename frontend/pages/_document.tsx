@@ -14,6 +14,11 @@ export default function Document() {
           href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap"
           rel="stylesheet"
         />
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4299148862195882"
+          crossOrigin="anonymous"
+        />
       </Head>
       <body>
         <Main />
