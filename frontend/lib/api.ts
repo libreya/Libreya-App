@@ -1,17 +1,17 @@
-/**
- * Serverless API - Direct Supabase Integration
- * No backend server required - works on Vercel, Netlify, etc.
- */
 import { supabase } from './supabase';
 
 const ADMIN_EMAIL = 'hello@libreya.app';
+
+function qp(endpoint: string): URLSearchParams {
+  return new URLSearchParams(endpoint.includes('?') ? endpoint.split('?')[1] : '');
+}
 
 export const api = {
   // ============= BOOKS =============
   async get(endpoint: string) {
     // Parse endpoint to determine what to fetch
     if (endpoint.startsWith('/books/featured')) {
-      const limit = parseInt(new URLSearchParams(endpoint.split('?')[1]).get('limit') || '10');
+      const limit = parseInt(qp(endpoint).get('limit') || '10');
       const { data, error } = await supabase
         .from('books')
         .select('id, title, author, category, cover_image, is_featured, read_count, description')
@@ -23,7 +23,7 @@ export const api = {
     }
 
     if (endpoint.startsWith('/books/recommended')) {
-      const limit = parseInt(new URLSearchParams(endpoint.split('?')[1]).get('limit') || '10');
+      const limit = parseInt(qp(endpoint).get('limit') || '10');
       const { data, error } = await supabase
         .from('books')
         .select('id, title, author, category, cover_image, is_featured, read_count, description')
@@ -34,9 +34,7 @@ export const api = {
     }
 
     if (endpoint.startsWith('/books') && endpoint.includes('?')) {
-      // Parse query params
-      const queryString = endpoint.split('?')[1];
-      const params = new URLSearchParams(queryString);
+      const params = qp(endpoint);
       const limit = parseInt(params.get('limit') || '50');
       const offset = parseInt(params.get('offset') || '0');
       const category = params.get('category');
@@ -147,6 +145,13 @@ export const api = {
       return data || [];
     }
 
+    // ============= BOOK CATEGORIES =============
+    if (endpoint.startsWith('/books/categories/list')) {
+      const { data, error } = await supabase.rpc('get_distinct_categories');
+      if (error) throw new Error(error.message);
+      return (data?.map((item: { category: string }) => item.category) ?? []).sort((a: string, b: string) => a.localeCompare(b));
+    }
+
     throw new Error(`Unknown GET endpoint: ${endpoint}`);
   },
 
@@ -158,12 +163,9 @@ export const api = {
         .from('users')
         .select('*')
         .eq('id', data.id)
-        .single();
+        .maybeSingle();
 
-      if (existing) {
-        // User exists - return existing
-        return existing;
-      }
+      if (existing) return existing;
 
       // Check by email
       if (data.email) {
@@ -171,7 +173,7 @@ export const api = {
           .from('users')
           .select('*')
           .eq('email', data.email)
-          .single();
+          .maybeSingle();
 
         if (existingByEmail) {
           return existingByEmail;
@@ -241,39 +243,17 @@ export const api = {
 
     // ============= ACTIVITY =============
     if (endpoint === '/activity') {
-      const { data: existing } = await supabase
+      const now = new Date().toISOString();
+      const { data: result, error } = await supabase
         .from('user_activity')
-        .select('*')
-        .eq('user_id', data.user_id)
-        .eq('book_id', data.book_id)
+        .upsert(
+          { ...data, updated_at: now },
+          { onConflict: 'user_id,book_id' }
+        )
+        .select()
         .single();
-
-      if (existing) {
-        // Update existing
-        const { data: updated, error } = await supabase
-          .from('user_activity')
-          .update({
-            ...data,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', existing.id)
-          .select()
-          .single();
-        if (error) throw new Error(error.message);
-        return updated;
-      } else {
-        // Create new
-        const { data: newActivity, error } = await supabase
-          .from('user_activity')
-          .insert({
-            ...data,
-            created_at: new Date().toISOString(),
-          })
-          .select()
-          .single();
-        if (error) throw new Error(error.message);
-        return newActivity;
-      }
+      if (error) throw new Error(error.message);
+      return result;
     }
 
     // ============= ADMIN BOOKS =============
@@ -287,42 +267,16 @@ export const api = {
       return newBook;
     }
 
-    // Get list of book categories
-    if (endpoint.startsWith('/books/categories/list')) {
-      const { data, error } = await supabase.rpc('get_distinct_categories');
-      if (error) throw new Error(error.message);
-      const formatted: string[] =
-        data?.map((item: { category: string }) => item.category).sort((a: string, b: string) => a.localeCompare(b)) ?? [];
-      return formatted;
-    }
-
     // ============= ADMIN SETTINGS =============
     if (endpoint === '/admin/settings') {
       const { key, value } = data;
-      const { data: existing } = await supabase
+      const { data: result, error } = await supabase
         .from('app_settings')
-        .select('*')
-        .eq('key', key)
+        .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' })
+        .select()
         .single();
-
-      if (existing) {
-        const { data: updated, error } = await supabase
-          .from('app_settings')
-          .update({ value, updated_at: new Date().toISOString() })
-          .eq('key', key)
-          .select()
-          .single();
-        if (error) throw new Error(error.message);
-        return updated;
-      } else {
-        const { data: newSetting, error } = await supabase
-          .from('app_settings')
-          .insert({ key, value, created_at: new Date().toISOString() })
-          .select()
-          .single();
-        if (error) throw new Error(error.message);
-        return newSetting;
-      }
+      if (error) throw new Error(error.message);
+      return result;
     }
 
     // Increment book read count

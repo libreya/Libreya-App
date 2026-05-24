@@ -23,7 +23,7 @@ export default function Browse() {
       try {
         const [, catsData] = await Promise.all([
           fetchBooks(),
-          api.post('/books/categories/list'),
+          api.get('/books/categories/list'),
         ]);
         if (Array.isArray(catsData)) setCategories(catsData);
       } finally {
