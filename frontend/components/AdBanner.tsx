@@ -28,9 +28,12 @@ export default function AdBanner({ slot = '', format = 'auto', style, className 
       return; // AdSense not loaded — keep placeholder
     }
 
-    // Give AdSense time to fill; if it does, reveal the ad by hiding the placeholder
+    // Give AdSense time to fill; only hide the placeholder when a real visible ad
+    // iframe exists — an unapproved/unfilled slot still injects an invisible iframe
+    // which would otherwise trick an offsetHeight-only check.
     const timer = setTimeout(() => {
-      if (insRef.current && insRef.current.offsetHeight > 50) {
+      const iframe = insRef.current?.querySelector<HTMLIFrameElement>('iframe');
+      if (iframe && iframe.offsetWidth > 50 && iframe.offsetHeight > 50) {
         setShowPlaceholder(false);
       }
     }, 2500);
