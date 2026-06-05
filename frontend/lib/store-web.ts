@@ -24,6 +24,7 @@ export interface Book {
   is_featured: boolean;
   read_count: number;
   description?: string;
+  source_url?: string;
 }
 
 export interface UserActivity {
