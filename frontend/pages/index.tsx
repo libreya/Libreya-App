@@ -5,6 +5,35 @@ import { useAppStore } from '../lib/store-web';
 import { FeaturedBooksRowSkeleton } from '../components/Skeleton';
 import AdBanner from '../components/AdBanner';
 
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'Libreya',
+  url: 'https://libreya.app',
+  description: 'Free classic literature reading platform with over 300 public domain books.',
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: 'https://libreya.app/browse?q={search_term_string}',
+    'query-input': 'required name=search_term_string',
+  },
+};
+
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'Libreya',
+  url: 'https://libreya.app',
+  logo: 'https://libreya.app/icon.png',
+  description:
+    'Libreya is a free online reading platform dedicated to making classic literature accessible to everyone, with over 300 public domain books from Project Gutenberg and Standard Ebooks.',
+  sameAs: ['https://libreya.app'],
+  contactPoint: {
+    '@type': 'ContactPoint',
+    email: 'hello@libreya.app',
+    contactType: 'customer support',
+  },
+};
+
 interface AuthorInfo { nationality: string; years: string; bio: string; }
 
 const AUTHOR_BIOS: Record<string, AuthorInfo> = {
@@ -63,10 +92,33 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Libreya - Free Classic Books</title>
-        <meta name="description" content="Read thousands of classic books for free with Libreya" />
-        <meta name="keywords" content="books, reading, classics, free, literature" />
+        <title>Libreya – Free Classic Books Online | 300+ Titles</title>
+        <meta
+          name="description"
+          content="Read over 300 classic books for free on Libreya. Works by Jane Austen, Dostoevsky, Dickens, Shakespeare, and more — beautifully formatted, no account required."
+        />
+        <meta name="keywords" content="free classic books, read online, public domain literature, Project Gutenberg, classic novels, free ebooks" />
         <link rel="canonical" href="https://libreya.app/" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Libreya – Free Classic Books Online | 300+ Titles" />
+        <meta
+          property="og:description"
+          content="Read over 300 classic books for free. Works by Jane Austen, Dostoevsky, Dickens, Shakespeare, and more — beautifully formatted with no subscriptions required."
+        />
+        <meta property="og:url" content="https://libreya.app/" />
+        <meta property="og:image" content="https://libreya.app/icon.png" />
+        <meta property="og:site_name" content="Libreya" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="Libreya – Free Classic Books Online" />
+        <meta name="twitter:description" content="Read over 300 classic books for free. No account required." />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+        />
       </Head>
 
       {/* ── HERO ── */}

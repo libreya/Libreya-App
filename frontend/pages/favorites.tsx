@@ -30,6 +30,7 @@ export default function FavoritesPage() {
       <Head>
         <title>My Favorites - Libreya</title>
         <meta name="description" content="Your favorite books on Libreya" />
+        <meta name="robots" content="noindex, nofollow" />
       </Head>
 
       <main className="container">

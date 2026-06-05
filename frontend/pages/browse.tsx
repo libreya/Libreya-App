@@ -59,8 +59,18 @@ export default function Browse() {
   return (
     <>
       <Head>
-        <title>Browse Books - Libreya</title>
-        <meta name="description" content="Browse thousands of classic books on Libreya" />
+        <title>Browse Classic Books – Free Online Library | Libreya</title>
+        <meta
+          name="description"
+          content="Browse over 300 classic books on Libreya. Search by title, author, or genre — Fiction, Mystery, Adventure, Romance, Science Fiction, Philosophy, and more. Free to read."
+        />
+        <link rel="canonical" href="https://libreya.app/browse" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Browse Classic Books – Free Online Library | Libreya" />
+        <meta property="og:description" content="Browse over 300 free classic books by title, author, or genre on Libreya." />
+        <meta property="og:url" content="https://libreya.app/browse" />
+        <meta property="og:image" content="https://libreya.app/icon.png" />
+        <meta name="twitter:card" content="summary" />
       </Head>
 
       {/* Hero */}

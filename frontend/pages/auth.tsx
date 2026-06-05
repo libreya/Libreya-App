@@ -94,6 +94,7 @@ export default function Auth() {
       <>
         <Head>
           <title>Profile - Libreya</title>
+          <meta name="robots" content="noindex, nofollow" />
         </Head>
         <main className="container" style={{ maxWidth: '500px' }}>
           <div style={{ backgroundColor: 'var(--surface)', padding: '20px', borderRadius: '8px' }}>
@@ -112,7 +113,12 @@ export default function Auth() {
   return (
     <>
       <Head>
-        <title>Sign In - Libreya</title>
+        <title>Sign In – Create a Free Account | Libreya</title>
+        <meta name="description" content="Sign in or create a free Libreya account to save your reading progress, build a favorites list, and sync across devices." />
+        <link rel="canonical" href="https://libreya.app/auth" />
+        <meta property="og:title" content="Sign In – Create a Free Account | Libreya" />
+        <meta property="og:description" content="Create a free Libreya account to save reading progress and favorites." />
+        <meta property="og:url" content="https://libreya.app/auth" />
       </Head>
       <main className="container" style={{ maxWidth: '500px' }}>
         <div style={{ backgroundColor: 'var(--surface)', padding: '30px', borderRadius: '8px' }}>

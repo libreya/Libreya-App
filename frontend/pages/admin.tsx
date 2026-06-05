@@ -19,6 +19,7 @@ export default function AdminPage() {
       <>
         <Head>
           <title>Admin - Libreya</title>
+          <meta name="robots" content="noindex, nofollow" />
         </Head>
         <header>
           <h1>Admin Dashboard</h1>
@@ -37,6 +38,7 @@ export default function AdminPage() {
     <>
       <Head>
         <title>Admin Dashboard - Libreya</title>
+        <meta name="robots" content="noindex, nofollow" />
       </Head>
       <header>
         <h1>Admin Dashboard</h1>

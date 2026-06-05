@@ -121,7 +121,7 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <>
-        <Head><title>Profile - Libreya</title></Head>
+        <Head><title>Profile - Libreya</title><meta name="robots" content="noindex, nofollow" /></Head>
         <div style={{ maxWidth: '480px', margin: '80px auto', padding: '0 16px', textAlign: 'center' }}>
           <div style={{
             width: '80px', height: '80px', borderRadius: '50%', backgroundColor: '#2b2b2b',
@@ -145,6 +145,7 @@ export default function ProfilePage() {
       <Head>
         <title>My Profile - Libreya</title>
         <meta name="description" content="Your reading profile on Libreya" />
+        <meta name="robots" content="noindex, nofollow" />
       </Head>
 
       <div style={{ maxWidth: '600px', margin: '0 auto', paddingBottom: '48px' }}>
