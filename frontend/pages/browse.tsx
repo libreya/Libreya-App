@@ -12,11 +12,13 @@ export default function Browse() {
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [hasInput, setHasInput] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSearching, setIsSearching] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [genreMenuOpen, setGenreMenuOpen] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const loadInitialData = async () => {
@@ -33,27 +35,46 @@ export default function Browse() {
     loadInitialData();
   }, []);
 
-  useEffect(() => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const nowHasInput = value.length > 0;
+    if (nowHasInput !== hasInput) setHasInput(nowHasInput);
     if (searchTimer.current) clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(async () => {
+      setSearchTerm(value);
       setIsSearching(true);
       try {
         await fetchBooks({
           category: selectedCategory ?? undefined,
-          search: searchTerm.trim() || undefined,
+          search: value.trim() || undefined,
         });
       } finally {
         setIsSearching(false);
       }
     }, 300);
-    return () => {
-      if (searchTimer.current) clearTimeout(searchTimer.current);
-    };
-  }, [searchTerm, selectedCategory]);
+  };
+
+  const handleCategoryChange = async (cat: string | null) => {
+    setSelectedCategory(cat);
+    setGenreMenuOpen(false);
+    setIsSearching(true);
+    try {
+      await fetchBooks({
+        category: cat ?? undefined,
+        search: inputRef.current?.value.trim() || undefined,
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const clearFilters = () => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (inputRef.current) inputRef.current.value = '';
+    setHasInput(false);
     setSearchTerm('');
     setSelectedCategory(null);
+    fetchBooks();
   };
 
   return (
@@ -103,10 +124,10 @@ export default function Browse() {
             <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
+            ref={inputRef}
             type="text"
             placeholder="Search by title or author..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleInputChange}
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setSearchFocused(false)}
             style={{
@@ -118,9 +139,15 @@ export default function Browse() {
               fontSize: '1rem',
             }}
           />
-          {searchTerm && (
+          {hasInput && (
             <button
-              onClick={() => setSearchTerm('')}
+              onClick={() => {
+                if (inputRef.current) inputRef.current.value = '';
+                setHasInput(false);
+                if (searchTimer.current) clearTimeout(searchTimer.current);
+                setSearchTerm('');
+                fetchBooks({ category: selectedCategory ?? undefined });
+              }}
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0', display: 'flex', alignItems: 'center' }}
               aria-label="Clear search"
             >
@@ -149,7 +176,7 @@ export default function Browse() {
         {[null, ...categories].map((cat) => (
           <button
             key={cat ?? 'all'}
-            onClick={() => setSelectedCategory(cat)}
+            onClick={() => handleCategoryChange(cat)}
             style={{
               padding: '6px 16px', borderRadius: '20px', whiteSpace: 'nowrap',
               border: `1px solid ${selectedCategory === cat ? '#2b2b2b' : 'rgba(255,255,255,0.25)'}`,
@@ -193,7 +220,7 @@ export default function Browse() {
             {[null, ...categories].map((cat) => (
               <button
                 key={cat ?? 'all'}
-                onClick={() => { setSelectedCategory(cat); setGenreMenuOpen(false); }}
+                onClick={() => handleCategoryChange(cat)}
                 style={{
                   width: '100%', padding: '13px 20px', background: 'none', border: 'none',
                   borderBottom: '1px solid rgba(255,255,255,0.07)',
