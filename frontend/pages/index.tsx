@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAppStore } from '../lib/store-web';
 import { FeaturedBooksRowSkeleton } from '../components/Skeleton';
 import AdBanner from '../components/AdBanner';
@@ -74,8 +75,7 @@ export default function Home({ initialFeaturedBooks }: HomeProps) {
         <meta name="keywords" content="free classic books, read online, public domain literature, Project Gutenberg, classic novels, free ebooks" />
         <meta name="author" content="Libreya Editorial Team" />
         <meta property="article:modified_time" content="2026-06-28T00:00:00+00:00" />
-        <link rel="preload" as="image" href="https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1200" />
-        <link rel="canonical" href="https://libreya.app/" />
+<link rel="canonical" href="https://libreya.app/" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Libreya – Free Classic Books Online | 300+ Titles" />
         <meta
@@ -105,23 +105,21 @@ export default function Home({ initialFeaturedBooks }: HomeProps) {
         backgroundColor: 'rgba(90,31,43,1)',
         textAlign: 'center',
       }}>
-        <img
+        <Image
           src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1200"
           alt=""
-          aria-hidden="true"
-          fetchPriority="high"
-          style={{
-            position: 'absolute', inset: 0, width: '100%', height: '100%',
-            objectFit: 'cover', objectPosition: 'center',
-          }}
+          aria-hidden={true}
+          fill
+          priority
+          sizes="100vw"
+          style={{ objectFit: 'cover', objectPosition: 'center' }}
         />
         <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(20,6,11,0.62)' }} />
         <div style={{ position: 'relative', zIndex: 1, padding: '72px 24px 80px' }}>
-          <img
+          <Image
             src="https://customer-assets.emergentagent.com/job_b554f1a4-c35c-4e60-a285-bdc61c896871/artifacts/0ouwazt9_Libreya%20Logo.png"
             alt="Libreya"
-            fetchPriority="high"
-            loading="eager"
+            priority
             width={100}
             height={100}
             style={{ borderRadius: '50%', objectFit: 'cover', marginBottom: '24px', backgroundColor: '#fff' }}
