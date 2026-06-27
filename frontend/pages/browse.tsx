@@ -9,18 +9,19 @@ import AdBanner from '../components/AdBanner';
 
 interface BrowseProps {
   initialBooks: Book[];
+  initialCategories: string[];
 }
 
-export default function Browse({ initialBooks }: BrowseProps) {
+export default function Browse({ initialBooks, initialCategories }: BrowseProps) {
   const storeBooks = useAppStore((s) => s.books);
   // Use store books once they load; fall back to SSR books on first render
   const books = storeBooks.length > 0 ? storeBooks : initialBooks;
   const fetchBooks = useAppStore((s) => s.fetchBooks);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>(initialCategories);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [hasInput, setHasInput] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(initialBooks.length === 0);
   const [isSearching, setIsSearching] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const [genreMenuOpen, setGenreMenuOpen] = useState(false);
@@ -32,7 +33,7 @@ export default function Browse({ initialBooks }: BrowseProps) {
       try {
         const [, catsData] = await Promise.all([
           fetchBooks(),
-          api.get('/books/categories/list'),
+          categories.length === 0 ? api.get('/books/categories/list') : Promise.resolve(null),
         ]);
         if (Array.isArray(catsData)) setCategories(catsData);
       } finally {
@@ -406,15 +407,20 @@ export default function Browse({ initialBooks }: BrowseProps) {
               { name: 'Poetry', desc: 'Verse from Homer to Whitman — epic poetry, lyric collections, and the works that defined literary traditions.' },
               { name: 'History', desc: 'Historical chronicles from Thucydides to Gibbon — events recorded by the people who witnessed them.' },
             ].map(genre => (
-              <div key={genre.name} style={{
-                padding: '16px 20px',
-                border: '1px solid var(--border)',
-                borderRadius: '10px',
-                backgroundColor: 'var(--bg)',
-              }}>
-                <p style={{ fontWeight: '600', marginBottom: '6px', color: 'var(--heading)' }}>{genre.name}</p>
-                <p style={{ fontSize: '0.88em', color: 'var(--text-secondary)', lineHeight: '1.7', margin: 0 }}>{genre.desc}</p>
-              </div>
+              <Link key={genre.name} href={`/browse?category=${encodeURIComponent(genre.name)}`} style={{ textDecoration: 'none' }}>
+                <div className="genre-card" style={{
+                  padding: '16px 20px',
+                  border: '1px solid var(--border)',
+                  borderRadius: '10px',
+                  backgroundColor: 'var(--bg)',
+                  cursor: 'pointer',
+                  transition: 'border-color 0.15s, box-shadow 0.15s',
+                  height: '100%',
+                }}>
+                  <p style={{ fontWeight: '600', marginBottom: '6px', color: '#c6a75e' }}>{genre.name}</p>
+                  <p style={{ fontSize: '0.88em', color: 'var(--text-secondary)', lineHeight: '1.7', margin: 0 }}>{genre.desc}</p>
+                </div>
+              </Link>
             ))}
           </div>
 
@@ -449,6 +455,11 @@ export default function Browse({ initialBooks }: BrowseProps) {
           box-shadow: 0 8px 24px rgba(0,0,0,0.12);
         }
 
+        .genre-card:hover {
+          border-color: #c6a75e !important;
+          box-shadow: 0 2px 12px rgba(198,167,94,0.15);
+        }
+
         .container { max-width: 1200px; margin: 0 auto; padding: 24px 16px; }
 
         div[style*="overflowX"]::-webkit-scrollbar { display: none; }
@@ -480,14 +491,26 @@ export async function getServerSideProps() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    const { data } = await supabaseServer
-      .from('books')
-      .select('id, title, author, category, cover_image, is_featured, read_count, description')
-      .order('read_count', { ascending: false })
-      .limit(50);
+    const [booksResult, catsResult] = await Promise.all([
+      supabaseServer
+        .from('books')
+        .select('id, title, author, category, cover_image, is_featured, read_count, description')
+        .order('read_count', { ascending: false })
+        .limit(50),
+      supabaseServer
+        .from('books')
+        .select('category')
+        .not('category', 'is', null),
+    ]);
 
-    return { props: { initialBooks: data || [] } };
+    const uniqueCategories: string[] = [
+      ...new Set<string>(
+        (catsResult.data || []).map((b: { category: string }) => b.category).filter(Boolean)
+      ),
+    ].sort();
+
+    return { props: { initialBooks: booksResult.data || [], initialCategories: uniqueCategories } };
   } catch {
-    return { props: { initialBooks: [] } };
+    return { props: { initialBooks: [], initialCategories: [] } };
   }
 }
