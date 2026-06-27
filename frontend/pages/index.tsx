@@ -43,11 +43,17 @@ const BENEFITS = [
   { icon: '◑', title: 'Custom Themes', desc: 'Read in light, dark, sepia, or night mode.' },
 ];
 
-export default function Home() {
-  const featuredBooks = useAppStore((s) => s.featuredBooks);
+interface HomeProps {
+  initialFeaturedBooks: Array<{ id: number; title: string; author: string; category?: string; cover_image?: string; is_featured: boolean; read_count: number; description?: string }>;
+}
+
+export default function Home({ initialFeaturedBooks }: HomeProps) {
+  const storeFeaturedBooks = useAppStore((s) => s.featuredBooks);
   const fetchFeaturedBooks = useAppStore((s) => s.fetchFeaturedBooks);
   const user = useAppStore((s) => s.user);
   const [isLoading, setIsLoading] = useState(true);
+
+  const featuredBooks = storeFeaturedBooks.length > 0 ? storeFeaturedBooks : initialFeaturedBooks;
 
   useEffect(() => {
     fetchFeaturedBooks().then(() => setIsLoading(false));
@@ -168,7 +174,7 @@ export default function Home() {
         </p>
         <h2 style={{ marginBottom: '24px' }}>Featured Classics</h2>
 
-        {isLoading ? (
+        {isLoading && featuredBooks.length === 0 ? (
           <FeaturedBooksRowSkeleton />
         ) : (
           <div className="featured-books-row" style={{
@@ -254,6 +260,49 @@ export default function Home() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* ── EDITORIAL ── */}
+      <div style={{ backgroundColor: 'var(--surface)', padding: '64px 32px', borderTop: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: '820px', margin: '0 auto' }}>
+          <h2 style={{ fontSize: '1.5rem', marginBottom: '20px' }}>Literature That Has Stood the Test of Time</h2>
+          <p style={{ lineHeight: '1.9', color: 'var(--text-secondary)', marginBottom: '18px' }}>
+            Every book in the Libreya library was chosen because it has endured. These are not books that were merely
+            popular in their time; they are works that continue to be read, taught, translated, and argued over because
+            they say something that remains true beyond the moment of their writing. Pride and Prejudice was first
+            published in 1813. Crime and Punishment appeared in 1866. The Great Gatsby in 1925. And yet readers who
+            encounter any of these books for the first time today find them as immediate and involving as anything
+            written yesterday.
+          </p>
+          <p style={{ lineHeight: '1.9', color: 'var(--text-secondary)', marginBottom: '18px' }}>
+            That endurance is not accidental. The writers represented here were working at the limits of what language
+            can do — pushing fiction, drama, poetry, and philosophy toward their fullest expression. They were asking
+            questions that have no final answers: How should we live? What do we owe to one another? What does it mean
+            to be free, to be honest, to be good? These are our questions too. That is why Dostoevsky, writing in
+            19th-century St. Petersburg, can feel like a contemporary. That is why Austen's observations on social
+            performance and self-deception read like something you might have thought yourself.
+          </p>
+          <p style={{ lineHeight: '1.9', color: 'var(--text-secondary)', marginBottom: '18px' }}>
+            Libreya presents over 300 of these works in a reading experience designed for how people actually read
+            today. Every book is sourced from Project Gutenberg or Standard Ebooks — the two most trusted repositories
+            of public domain literature — and formatted for comfortable, consistent reading on any screen. No
+            subscription. No account required. No barrier of any kind between you and the books.
+          </p>
+          <p style={{ lineHeight: '1.9', color: 'var(--text-secondary)', marginBottom: '28px' }}>
+            Our library spans nine genres: fiction, adventure, mystery, science fiction, romance, philosophy, drama,
+            poetry, and history. Whether you are reading the classics for the first time or returning to books you
+            love, the Libreya library will have something worth your time. Start with a book you have always meant to
+            read, or let the browse page surface something unexpected.
+          </p>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <Link href="/browse"><button>Browse the Library</button></Link>
+            <Link href="/about">
+              <button style={{ backgroundColor: 'transparent', border: '1px solid var(--heading)', color: 'var(--heading)' }}>
+                Our Mission
+              </button>
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -369,8 +418,22 @@ export default function Home() {
 }
 
 export async function getServerSideProps() {
-  // This enables SSR for AdSense
-  return {
-    props: {},
-  };
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    const supabaseServer = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const { data } = await supabaseServer
+      .from('books')
+      .select('id, title, author, category, cover_image, is_featured, read_count, description')
+      .eq('is_featured', true)
+      .order('read_count', { ascending: false })
+      .limit(10);
+
+    return { props: { initialFeaturedBooks: data || [] } };
+  } catch {
+    return { props: { initialFeaturedBooks: [] } };
+  }
 }

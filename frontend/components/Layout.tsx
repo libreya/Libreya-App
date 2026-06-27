@@ -4,10 +4,11 @@ import { useRouter } from 'next/router';
 import { useAppStore } from '../lib/store-web';
 
 const NAV_LOGGED_OUT = [
-  { label: 'Home',   path: '/' },
-  { label: 'Browse', path: '/browse' },
-  { label: 'About',  path: '/about' },
-  { label: 'Donate', path: '/donate' },
+  { label: 'Home',    path: '/' },
+  { label: 'Browse',  path: '/browse' },
+  { label: 'About',   path: '/about' },
+  { label: 'FAQ',     path: '/faq' },
+  { label: 'Contact', path: '/contact' },
 ];
 
 const NAV_LOGGED_IN = [
@@ -15,6 +16,7 @@ const NAV_LOGGED_IN = [
   { label: 'Browse',    path: '/browse' },
   { label: 'Favorites', path: '/favorites' },
   { label: 'About',     path: '/about' },
+  { label: 'FAQ',       path: '/faq' },
 ];
 
 const FOOTER_LINKS = {
