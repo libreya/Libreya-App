@@ -13,7 +13,7 @@ const websiteSchema = {
   url: 'https://libreya.app',
   description: 'Free classic literature reading platform with over 300 public domain books.',
   author: { '@type': 'Organization', name: 'Libreya', url: 'https://libreya.app' },
-  datePublished: '2024-01-15',
+  datePublished: '2025-11-15',
   dateModified: '2026-06-27',
   potentialAction: {
     '@type': 'SearchAction',
