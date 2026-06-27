@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useAppStore } from '../../lib/store-web';
 import { supabase } from '../../lib/supabase';
 import AdBanner from '../../components/AdBanner';
+import { AUTHOR_BIOS } from '../../lib/authorBios';
 
 interface Chapter {
   id: number;
@@ -13,7 +14,31 @@ interface Chapter {
   startPos: number;
 }
 
-export default function BookPage() {
+interface InitialBook {
+  id: number;
+  title: string;
+  author: string;
+  category?: string;
+  cover_image?: string;
+  description?: string;
+  source_url?: string;
+  read_count?: number;
+}
+
+interface RelatedBook {
+  id: number;
+  title: string;
+  author: string;
+  cover_image?: string;
+  category?: string;
+}
+
+interface BookPageProps {
+  initialBook: InitialBook | null;
+  relatedBooks: RelatedBook[];
+}
+
+export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
   const router = useRouter();
   const { id } = router.query;
   const fetchBook = useAppStore((s) => s.fetchBook);
@@ -77,7 +102,7 @@ export default function BookPage() {
       tempDiv.innerHTML = currentBook.content_body;
 
       const h2s = Array.from(tempDiv.querySelectorAll('h2'));
-      
+
       if (h2s.length === 0) {
         // No chapter headings found, treat entire content as one chapter
         extractedChapters.push({
@@ -174,10 +199,10 @@ export default function BookPage() {
   // Save chapter position to database when it changes (with debouncing)
   useEffect(() => {
     if (!user || !currentBook || !chaptersLoaded) return;
-    
+
     // Only save if chapter actually changed from the last saved position
     if (lastSavedChapter === currentChapter) return;
-    
+
     // Use a timeout to debounce saves (wait 1 second after last change before saving)
     const saveTimer = setTimeout(() => {
       updateActivity({ last_position: currentChapter });
@@ -187,7 +212,34 @@ export default function BookPage() {
     return () => clearTimeout(saveTimer);
   }, [currentChapter, user, currentBook, updateActivity, chaptersLoaded, lastSavedChapter]);
 
-  if (!currentBook) {
+  // Use server-fetched data for meta/schema; fall back as content loads
+  const displayBook = currentBook || initialBook;
+
+  const description = gutendexSummary || currentBook?.description || initialBook?.description || '';
+  const metaDescription = description
+    ? description.substring(0, 155)
+    : `Read ${displayBook?.title || ''} by ${displayBook?.author || ''} for free on Libreya. Classic literature, beautifully formatted with chapter navigation and multiple reading themes.`;
+
+  const canonicalUrl = displayBook ? `https://libreya.app/book/${displayBook.id}` : 'https://libreya.app';
+  const ogImage = displayBook?.cover_image || 'https://libreya.app/icon.png';
+
+  const bookSchema = displayBook ? {
+    '@context': 'https://schema.org',
+    '@type': 'Book',
+    name: displayBook.title,
+    author: { '@type': 'Person', name: displayBook.author },
+    description: metaDescription,
+    ...(displayBook.category ? { genre: displayBook.category } : {}),
+    inLanguage: 'en',
+    url: canonicalUrl,
+    ...(displayBook.cover_image ? { image: displayBook.cover_image } : {}),
+    isAccessibleForFree: true,
+    provider: { '@type': 'Organization', name: 'Libreya', url: 'https://libreya.app' },
+  } : null;
+
+  const authorInfo = displayBook ? AUTHOR_BIOS[displayBook.author] : null;
+
+  if (!displayBook) {
     return (
       <>
         <Head>
@@ -213,7 +265,14 @@ export default function BookPage() {
     return (
       <>
         <Head>
-          <title>Reading {currentBook.title} - Libreya</title>
+          <title>Reading {displayBook.title} - Libreya</title>
+          <meta name="description" content={metaDescription} />
+          {bookSchema && (
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(bookSchema) }}
+            />
+          )}
         </Head>
 
         {/* Top Navigation Menu */}
@@ -250,8 +309,8 @@ export default function BookPage() {
             onClick={() => {
               if (navigator.share) {
                 navigator.share({
-                  title: currentBook.title,
-                  text: `Reading ${currentBook.title} by ${currentBook.author} on Libreya`,
+                  title: displayBook.title,
+                  text: `Reading ${displayBook.title} by ${displayBook.author} on Libreya`,
                   url: window.location.href
                 });
               } else {
@@ -647,12 +706,30 @@ export default function BookPage() {
   return (
     <>
       <Head>
-        <title>{currentBook.title} - Libreya</title>
-        <meta name="description" content={`Read ${currentBook.title} by ${currentBook.author} on Libreya`} />
+        <title>{displayBook.title} by {displayBook.author} – Free Classic Literature | Libreya</title>
+        <meta name="description" content={metaDescription} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:type" content="book" />
+        <meta property="og:title" content={`${displayBook.title} by ${displayBook.author} – Libreya`} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:image" content={ogImage} />
+        <meta property="og:site_name" content="Libreya" />
+        {displayBook.author && <meta property="book:author" content={displayBook.author} />}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${displayBook.title} by ${displayBook.author}`} />
+        <meta name="twitter:description" content={metaDescription} />
+        <meta name="twitter:image" content={ogImage} />
+        {bookSchema && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(bookSchema) }}
+          />
+        )}
       </Head>
 
       <header>
-        <h1 style={{ color: 'white' }}>{currentBook.title}</h1>
+        <h1 style={{ color: 'white' }}>{displayBook.title}</h1>
         <Link href="/browse" style={{ color: 'white' }}>
           Back to Browse
         </Link>
@@ -660,7 +737,7 @@ export default function BookPage() {
 
       <main className="container" style={{ maxWidth: '900px' }}>
         <div className="book-layout" style={{ display: 'flex', gap: '40px', marginBottom: '40px', flexWrap: 'wrap' }}>
-          {currentBook.cover_image && (
+          {displayBook.cover_image && (
             <div className="book-cover-col" style={{
               flex: '0 0 250px',
               display: 'flex',
@@ -669,8 +746,8 @@ export default function BookPage() {
             }}>
               <img
                 className="book-cover-img"
-                src={currentBook.cover_image}
-                alt={currentBook.title}
+                src={displayBook.cover_image}
+                alt={`${displayBook.title} book cover`}
                 style={{
                   width: '100%',
                   maxWidth: '250px',
@@ -682,14 +759,14 @@ export default function BookPage() {
                 }}
               />
               <p style={{ marginTop: '15px', fontSize: '0.95em', color: 'var(--text-secondary)', textAlign: 'center' }}>
-                {currentBook.read_count || 0} readers
+                {(currentBook?.read_count ?? displayBook.read_count) || 0} readers
               </p>
             </div>
           )}
           <div className="book-info-col" style={{ flex: 1, minWidth: '300px' }}>
-            <h2 className="book-detail-title" style={{ marginBottom: '10px', borderBottom: 'none', paddingBottom: '0' }}>{currentBook.title}</h2>
+            <h2 className="book-detail-title" style={{ marginBottom: '10px', borderBottom: 'none', paddingBottom: '0' }}>{displayBook.title}</h2>
             <p style={{ fontSize: '1.3em', color: '#c6a75e', marginBottom: '25px', fontStyle: 'italic' }}>
-              by <strong style={{ color: 'var(--heading)' }}>{currentBook.author}</strong>
+              by <strong style={{ color: 'var(--heading)' }}>{displayBook.author}</strong>
             </p>
 
             <div style={{
@@ -699,18 +776,22 @@ export default function BookPage() {
               marginBottom: '25px',
               borderLeft: '4px solid #c6a75e'
             }}>
-              {currentBook.category && (
+              {displayBook.category && (
                 <p style={{ marginBottom: '10px' }}>
-                  <strong>Category:</strong> <span style={{ color: 'var(--text-secondary)' }}>{currentBook.category}</span>
+                  <strong>Category:</strong> <span style={{ color: 'var(--text-secondary)' }}>{displayBook.category}</span>
                 </p>
               )}
               <p style={{ marginBottom: '10px' }}>
                 <strong>Status:</strong> <span style={{ color: '#4CAF50' }}>Available</span>
               </p>
+              <p style={{ marginBottom: 0 }}>
+                <strong>Source:</strong>{' '}
+                <span style={{ color: 'var(--text-secondary)' }}>Public Domain — Project Gutenberg</span>
+              </p>
             </div>
 
             <div style={{ marginBottom: '25px' }}>
-              <h4 style={{ marginBottom: '12px' }}>About</h4>
+              <h4 style={{ marginBottom: '12px' }}>About This Book</h4>
               {summaryLoading ? (
                 <div aria-label="Loading summary">
                   {[100, 90, 95, 70].map((w, i) => (
@@ -724,8 +805,10 @@ export default function BookPage() {
                     }} />
                   ))}
                 </div>
-              ) : (gutendexSummary || currentBook.description) ? (
-                <p style={{ color: 'var(--text-secondary)', lineHeight: '1.8' }}>{gutendexSummary || currentBook.description}</p>
+              ) : (gutendexSummary || currentBook?.description || initialBook?.description) ? (
+                <p style={{ color: 'var(--text-secondary)', lineHeight: '1.8' }}>
+                  {gutendexSummary || currentBook?.description || initialBook?.description}
+                </p>
               ) : null}
             </div>
 
@@ -763,6 +846,25 @@ export default function BookPage() {
           </div>
         </div>
 
+        {/* Author Bio */}
+        {authorInfo && (
+          <section style={{
+            marginBottom: '40px',
+            padding: '24px 28px',
+            backgroundColor: 'var(--surface)',
+            borderRadius: '10px',
+            borderLeft: '4px solid #c6a75e'
+          }}>
+            <h3 style={{ marginBottom: '6px' }}>About the Author</h3>
+            <p style={{ fontSize: '0.85em', color: 'var(--text-secondary)', marginBottom: '12px', fontWeight: '500' }}>
+              {authorInfo.nationality} · {authorInfo.years}
+            </p>
+            <p style={{ lineHeight: '1.8', color: 'var(--text-secondary)', marginBottom: 0 }}>
+              {authorInfo.bio}
+            </p>
+          </section>
+        )}
+
         <AdBanner slot="9986559126" format="horizontal" style={{ margin: '40px 0' }} />
 
         <section style={{
@@ -771,7 +873,7 @@ export default function BookPage() {
           borderTop: '3px solid #c6a75e'
         }}>
           <h3 style={{ marginBottom: '20px' }}>Preview</h3>
-          {currentBook.content_body ? (
+          {currentBook?.content_body ? (
             <div
               className="book-preview-content"
               dangerouslySetInnerHTML={{ __html: currentBook.content_body.substring(0, 800) }}
@@ -789,9 +891,13 @@ export default function BookPage() {
               }}
             />
           ) : (
-            <p style={{ color: 'var(--text-secondary)' }}>No preview available. Start reading to see the full content.</p>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              {currentBook
+                ? 'No preview available. Start reading to see the full content.'
+                : 'Loading preview...'}
+            </p>
           )}
-          {currentBook.content_body && currentBook.content_body.length > 800 && (
+          {currentBook?.content_body && currentBook.content_body.length > 800 && (
             <div style={{
               textAlign: 'center',
               paddingTop: '20px',
@@ -803,12 +909,94 @@ export default function BookPage() {
             </div>
           )}
         </section>
+
+        {/* About This Edition */}
+        <section style={{
+          marginTop: '40px',
+          padding: '24px 28px',
+          backgroundColor: 'var(--surface)',
+          borderRadius: '10px',
+          borderTop: '3px solid #c6a75e'
+        }}>
+          <h3 style={{ marginBottom: '12px' }}>About This Edition</h3>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: '1.8', marginBottom: 0 }}>
+            This edition of <em>{displayBook.title}</em> is sourced from Project Gutenberg, the world's oldest digital
+            library of public domain literature. The text has been carefully formatted for comfortable reading on any
+            screen — with consistent chapter navigation, adjustable font sizes, and multiple reading themes including
+            light, sepia, dark, and night modes. The original text has not been altered in any way.
+          </p>
+        </section>
+
+        {/* Related Books */}
+        {relatedBooks.length > 0 && (
+          <section style={{ marginTop: '48px', paddingBottom: '20px' }}>
+            <h3 style={{ marginBottom: '20px' }}>
+              More {displayBook.category ? displayBook.category + ' Classics' : 'Classic Books'}
+            </h3>
+            <div className="related-books-grid" style={{
+              display: 'flex',
+              gap: '16px',
+              flexWrap: 'wrap'
+            }}>
+              {relatedBooks.map(book => (
+                <Link
+                  key={book.id}
+                  href={`/book/${book.id}`}
+                  style={{ textDecoration: 'none', flex: '1', minWidth: '140px', maxWidth: '200px' }}
+                >
+                  <div className="related-book-card" style={{
+                    backgroundColor: 'var(--surface)',
+                    borderRadius: '10px',
+                    overflow: 'hidden',
+                    border: '1px solid var(--border)',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    cursor: 'pointer'
+                  }}>
+                    {book.cover_image ? (
+                      <img
+                        src={book.cover_image}
+                        alt={`${book.title} cover`}
+                        style={{ width: '100%', height: '180px', objectFit: 'cover', display: 'block' }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: '100%', height: '180px',
+                        backgroundColor: 'rgba(90,31,43,1)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px'
+                      }}>
+                        <p style={{ color: '#fff', fontSize: '0.85em', textAlign: 'center', margin: 0 }}>{book.title}</p>
+                      </div>
+                    )}
+                    <div style={{ padding: '12px' }}>
+                      <p style={{
+                        fontSize: '0.88em', fontWeight: '600', color: 'var(--text)',
+                        marginBottom: '4px', lineHeight: '1.3',
+                        display: '-webkit-box', WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical', overflow: 'hidden'
+                      }}>
+                        {book.title}
+                      </p>
+                      <p style={{ fontSize: '0.78em', color: 'var(--text-secondary)', marginBottom: 0 }}>
+                        {book.author}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
 
       <style>{`
         @keyframes skeletonPulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.4; }
+        }
+
+        .related-book-card:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 6px 20px rgba(0,0,0,0.1);
         }
 
         @media (max-width: 600px) {
@@ -852,14 +1040,65 @@ export default function BookPage() {
           .book-preview-content {
             padding: 16px !important;
           }
+          .related-books-grid {
+            gap: 12px !important;
+          }
+          .related-books-grid > a {
+            min-width: 120px !important;
+          }
         }
       `}</style>
     </>
   );
 }
 
-export async function getServerSideProps() {
-  return {
-    props: {},
-  };
+export async function getServerSideProps(context: { params: { id: string } }) {
+  const { id } = context.params;
+  const bookId = parseInt(id);
+
+  if (isNaN(bookId)) {
+    return { notFound: true };
+  }
+
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    const supabaseServer = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const { data: book } = await supabaseServer
+      .from('books')
+      .select('id, title, author, category, cover_image, description, source_url, read_count')
+      .eq('id', bookId)
+      .single();
+
+    if (!book) {
+      return { notFound: true };
+    }
+
+    const { data: relatedBooks } = book.category
+      ? await supabaseServer
+          .from('books')
+          .select('id, title, author, cover_image, category')
+          .eq('category', book.category)
+          .neq('id', bookId)
+          .order('read_count', { ascending: false })
+          .limit(4)
+      : { data: [] };
+
+    return {
+      props: {
+        initialBook: book,
+        relatedBooks: relatedBooks || [],
+      },
+    };
+  } catch {
+    return {
+      props: {
+        initialBook: null,
+        relatedBooks: [],
+      },
+    };
+  }
 }
