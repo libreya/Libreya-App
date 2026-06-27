@@ -25,6 +25,14 @@ const FOOTER_LINKS = {
     { label: 'About Us',         path: '/about' },
     { label: 'FAQ',              path: '/faq' },
   ],
+  Genres: [
+    { label: 'Fiction',          path: '/browse?category=Fiction' },
+    { label: 'Mystery',          path: '/browse?category=Mystery' },
+    { label: 'Adventure',        path: '/browse?category=Adventure' },
+    { label: 'Science Fiction',  path: '/browse?category=Science+Fiction' },
+    { label: 'Philosophy',       path: '/browse?category=Philosophy' },
+    { label: 'Drama',            path: '/browse?category=Drama' },
+  ],
   Legal: [
     { label: 'Privacy Policy',   path: '/legal/privacy' },
     { label: 'Terms of Service', path: '/legal/terms' },

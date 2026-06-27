@@ -73,7 +73,8 @@ export default function Home({ initialFeaturedBooks }: HomeProps) {
         />
         <meta name="keywords" content="free classic books, read online, public domain literature, Project Gutenberg, classic novels, free ebooks" />
         <meta name="author" content="Libreya Editorial Team" />
-        <meta property="article:modified_time" content="2026-06-27T00:00:00+00:00" />
+        <meta property="article:modified_time" content="2026-06-28T00:00:00+00:00" />
+        <link rel="preload" as="image" href="https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1200" />
         <link rel="canonical" href="https://libreya.app/" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Libreya – Free Classic Books Online | 300+ Titles" />
@@ -269,6 +270,42 @@ export default function Home({ initialFeaturedBooks }: HomeProps) {
         </div>
       </div>
 
+      {/* ── BROWSE BY GENRE ── */}
+      <div className="container" style={{ paddingTop: '56px', paddingBottom: '0' }}>
+        <h2 style={{ marginBottom: '8px' }}>Browse by Genre</h2>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '28px', fontSize: '1.05em' }}>
+          Nine curated collections spanning the full sweep of classic literature.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+          {[
+            { name: 'Fiction',        path: '/browse?category=Fiction',        desc: 'Novels by Austen, Tolstoy, Dickens, Dostoevsky — the cornerstones of the literary tradition.' },
+            { name: 'Mystery',        path: '/browse?category=Mystery',        desc: 'Detective fiction by Conan Doyle and Poe — the genre at its most inventive.' },
+            { name: 'Adventure',      path: '/browse?category=Adventure',      desc: 'Stevenson, Verne, and London — tales of exploration, survival, and discovery.' },
+            { name: 'Science Fiction', path: '/browse?category=Science+Fiction', desc: 'H.G. Wells and Jules Verne — the visionary works that founded the genre.' },
+            { name: 'Romance',        path: '/browse?category=Romance',        desc: 'Austen and the Brontës — love stories that are also sharp portraits of society.' },
+            { name: 'Philosophy',     path: '/browse?category=Philosophy',     desc: 'Plato, Marcus Aurelius, Kant — primary texts on how to live and what to think.' },
+            { name: 'Drama',          path: '/browse?category=Drama',          desc: 'Shakespeare, Ibsen, Chekhov — the plays that shaped Western theatrical tradition.' },
+            { name: 'Poetry',         path: '/browse?category=Poetry',         desc: 'Homer to Whitman — epic verse, lyric collections, and the Romantic odes.' },
+            { name: 'History',        path: '/browse?category=History',        desc: 'Thucydides to Gibbon — history written by those who witnessed it.' },
+          ].map(g => (
+            <Link key={g.name} href={g.path} style={{ textDecoration: 'none' }}>
+              <div className="genre-home-card" style={{
+                padding: '16px 18px',
+                border: '1px solid var(--border)',
+                borderRadius: '10px',
+                backgroundColor: 'var(--surface)',
+                cursor: 'pointer',
+                transition: 'border-color 0.15s, box-shadow 0.15s',
+                height: '100%',
+              }}>
+                <p style={{ fontWeight: '700', fontSize: '0.95em', color: '#c6a75e', marginBottom: '6px' }}>{g.name}</p>
+                <p style={{ fontSize: '0.82em', color: 'var(--text-secondary)', lineHeight: '1.6', margin: 0 }}>{g.desc}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+
       {/* ── EDITORIAL ── */}
       <div style={{ backgroundColor: 'var(--surface)', padding: '64px 32px', borderTop: '1px solid var(--border)' }}>
         <div style={{ maxWidth: '820px', margin: '0 auto' }}>
@@ -410,6 +447,10 @@ export default function Home({ initialFeaturedBooks }: HomeProps) {
         .featured-books-row {
           justify-content: center;
           flex-wrap: wrap;
+        }
+        .genre-home-card:hover {
+          border-color: #c6a75e !important;
+          box-shadow: 0 2px 12px rgba(198,167,94,0.15);
         }
         @media (max-width: 980px) {
           .container { padding-top: 32px !important; }
