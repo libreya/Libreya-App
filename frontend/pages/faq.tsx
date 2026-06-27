@@ -166,17 +166,19 @@ export default function FAQ() {
                     +
                   </span>
                 </div>
-                {isOpen && (
-                  <p style={{
-                    color: 'var(--text-secondary)',
-                    lineHeight: '1.8',
-                    paddingBottom: '20px',
-                    margin: 0,
-                    fontSize: '0.97em',
-                  }}>
-                    {faq.answer}
-                  </p>
-                )}
+                {/* Always rendered in HTML for search engines; visually hidden when closed */}
+                <p style={{
+                  color: 'var(--text-secondary)',
+                  lineHeight: '1.8',
+                  margin: 0,
+                  fontSize: '0.97em',
+                  maxHeight: isOpen ? '600px' : '0',
+                  overflow: 'hidden',
+                  paddingBottom: isOpen ? '20px' : '0',
+                  transition: 'max-height 0.25s ease, padding-bottom 0.25s ease',
+                }}>
+                  {faq.answer}
+                </p>
               </div>
             );
           })}

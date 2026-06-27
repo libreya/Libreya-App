@@ -919,6 +919,7 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
                       <img
                         src={book.cover_image}
                         alt={`${book.title} cover`}
+                        loading="lazy"
                         style={{ width: '100%', height: '180px', objectFit: 'cover', display: 'block' }}
                       />
                     ) : (

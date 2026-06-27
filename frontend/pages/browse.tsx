@@ -335,6 +335,9 @@ export default function Browse({ initialBooks, initialCategories }: BrowseProps)
                     <img
                       src={book.cover_image}
                       alt={book.title}
+                      loading="lazy"
+                      width={190}
+                      height={255}
                       style={{ width: '100%', height: '255px', objectFit: 'cover', display: 'block' }}
                     />
                   ) : (

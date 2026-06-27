@@ -110,7 +110,11 @@ export default function Home({ initialFeaturedBooks }: HomeProps) {
         <img
           src="https://customer-assets.emergentagent.com/job_b554f1a4-c35c-4e60-a285-bdc61c896871/artifacts/0ouwazt9_Libreya%20Logo.png"
           alt="Libreya"
-          style={{ width: '100px', height: '100px', borderRadius: '50%', objectFit: 'cover', marginBottom: '24px', backgroundColor: '#fff' }}
+          fetchPriority="high"
+          loading="eager"
+          width={100}
+          height={100}
+          style={{ borderRadius: '50%', objectFit: 'cover', marginBottom: '24px', backgroundColor: '#fff' }}
         />
         <h1 style={{
           fontSize: 'clamp(2rem, 5vw, 3.25rem)', color: '#fff',
@@ -198,6 +202,7 @@ export default function Home({ initialFeaturedBooks }: HomeProps) {
                 }}>
                   {book.cover_image ? (
                     <img src={book.cover_image} alt={book.title}
+                      loading="lazy" width={190} height={255}
                       style={{ width: '190px', height: '255px', objectFit: 'cover', display: 'block' }} />
                   ) : (
                     <div style={{
