@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:gutendex.com)",
-      "Bash(find c:\\\\github\\\\Libreya-App-v2 -type f \\\\\\( -name \"*.ts\" -o -name \"*.js\" \\\\\\) ! -path \"*/node_modules/*\" 2>nul | head -30)"
+      "Bash(find c:\\\\github\\\\Libreya-App-v2 -type f \\\\\\( -name \"*.ts\" -o -name \"*.js\" \\\\\\) ! -path \"*/node_modules/*\" 2>nul | head -30)",
+      "Bash(npx tsc *)"
     ],
     "additionalDirectories": [
       "c:\\github\\Libreya-App-v2"

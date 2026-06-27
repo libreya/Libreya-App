@@ -7,6 +7,45 @@ import { supabase } from '../../lib/supabase';
 import AdBanner from '../../components/AdBanner';
 import { AUTHOR_BIOS } from '../../lib/authorBios';
 
+const GENRE_CONTEXT: Record<string, { heading: string; body: string }> = {
+  Fiction: {
+    heading: 'About Classic Fiction',
+    body: `Classic fiction represents the highest achievements of literary imagination. The novels in this genre have shaped how generations of readers understand human nature, society, and the fundamental questions of existence. Reading 19th and early 20th-century novels offers far more than historical interest: these stories explore love, ambition, morality, and identity with an insight that remains startlingly relevant today. Authors like Tolstoy, Dostoevsky, Austen, Hardy, and Dickens wrote for readers much like us — people trying to make sense of a complicated world — and their observations on class, relationships, power, and conscience carry across centuries with barely diminished force. Classic fiction is also where the novel as an art form reached some of its greatest heights: innovative narrative structures, deeply realized characters, and prose styles that reward slow, attentive reading. These are not museum pieces. They are living works that continue to be discussed, adapted, and argued over because they capture something essential and enduring about human experience.`,
+  },
+  Adventure: {
+    heading: 'About Classic Adventure Literature',
+    body: `Classic adventure fiction captures the human impulse to explore the unknown, test limits, and discover what lies beyond the horizon. The great adventure novels of the 18th, 19th, and early 20th centuries were written at a time when vast regions of the world were still uncharted, when the ocean depths were mysterious, and when travel itself was frequently an act of real courage. Writers like Jules Verne, Robert Louis Stevenson, Jack London, and H. Rider Haggard channeled the excitement of an age of exploration into literature that has never lost its power to grip a reader. Beyond the surface-level thrills of shipwrecks, treasure hunts, and survival in the wilderness, the best adventure novels are also explorations of character under pressure: what do we reveal about ourselves when comfort and safety are stripped away? These stories answer that question with unforgettable vividness, and in doing so say something lasting about courage, loyalty, and the resilience of the human spirit.`,
+  },
+  Mystery: {
+    heading: 'About Classic Mystery Fiction',
+    body: `The golden age of mystery fiction produced some of the most enduringly popular works in literary history. The genre was essentially invented in the 19th century — Edgar Allan Poe's Dupin stories appeared in the 1840s, and Arthur Conan Doyle introduced Sherlock Holmes in 1887 — and the detective novel quickly became one of the most sophisticated and widely read forms of fiction ever created. Classic mysteries are more than puzzles to be solved: they are explorations of crime, justice, and human motivation that ask hard questions about what drives people to desperate actions, and about the nature of truth and the reliability of appearances. The detective figure — rational, observant, relentless — became one of the great archetypes of modern storytelling. Reading the original Holmes stories, or the early detective fiction that inspired them, is to encounter a genre at its freshest and most inventive, before its conventions became familiar enough to feel formulaic.`,
+  },
+  'Science Fiction': {
+    heading: 'About Classic Science Fiction',
+    body: `Science fiction as a literary genre was largely invented in the 19th century, and the early works of H.G. Wells and Jules Verne remain essential reading more than a century later. These writers imagined time machines, Martian invasions, submarine voyages, and journeys to the center of the earth at a moment when the pace of technological change was already astonishing to those living through it. Classic science fiction is visionary in a specific sense: it does not merely predict technology, but asks what technology reveals about human nature, social organization, and the relationship between progress and danger. Wells in particular was a social thinker as much as an inventor of ideas, and his best work — The Time Machine, The War of the Worlds, The Island of Doctor Moreau — remains as thought-provoking as anything written in the genre since. These stories laid the foundation for an entire tradition that continues to shape how we imagine the future.`,
+  },
+  Romance: {
+    heading: 'About Classic Romance Literature',
+    body: `Classic romance fiction is concerned with far more than love stories in the simple sense. The great romantic novels of Jane Austen, the Brontë sisters, and their contemporaries are deeply observant portraits of society, class, gender, and the constraints placed on individual lives — particularly women's lives — in the 18th and 19th centuries. Austen's wit and psychological precision, Emily Brontë's raw emotional intensity, and Charlotte Brontë's passionate moral vision are as compelling today as when they first appeared. These novels explore what it means to seek connection and meaning in a world that places enormous obstacles — economic, social, and familial — in the path of individual desire. They are also technically brilliant in ways that reward careful reading: the narrative architecture of Pride and Prejudice, or the lyrical power of Wuthering Heights, represents literary achievement of the very highest order. Reading them is to understand both the period that produced them and the timeless emotions they portray.`,
+  },
+  Philosophy: {
+    heading: 'About Classic Philosophy',
+    body: `The great works of philosophy address questions that remain as pressing today as when they were first posed: How should we live? What do we owe to others? What can we know with certainty? What is justice? Reading primary philosophical texts — Plato, Aristotle, Marcus Aurelius, Descartes, Hume, Kant, or Nietzsche — is to engage directly with some of the most rigorous and consequential thinking in human history. Unlike secondary sources or summaries, the original texts carry the full force of the argument and reveal the texture of the thinker's mind. Philosophy in the public domain ranges from ancient Athenian dialogues to Enlightenment treatises to 19th-century essays, and the diversity of positions represented is extraordinary. These works do not offer simple answers to hard questions — but wrestling with the questions they raise, and with the arguments for and against each position, is one of the most reliable ways to sharpen thought, deepen self-understanding, and engage more seriously with the world.`,
+  },
+  Drama: {
+    heading: 'About Classic Drama',
+    body: `Classic drama encompasses some of the most frequently performed and widely studied works in the entire literary tradition. Shakespeare's plays — written for the popular stage of Elizabethan England — have been continuously staged for over four centuries, and the best of them reward both reading and performance with equal richness and variety. The great 19th-century dramatists — Ibsen, Chekhov, Strindberg — transformed the stage into an instrument for social and psychological exploration, creating a modern tradition that shaped theatre across the 20th century and beyond. Drama differs from other literary forms in its economy: every line must carry weight, every scene must advance the action or deepen character, and the dialogue must work without the support of descriptive prose. Reading classic plays is to see language stripped to its most essential function — and to understand how much can be communicated with very little. It is a discipline that has produced some of literature's most memorable moments.`,
+  },
+  Poetry: {
+    heading: 'About Classic Poetry',
+    body: `Poetry is the oldest literary form, and the great poems of the Western and world traditions have never lost their capacity to move, surprise, and illuminate. Classical epic poetry — Homer's Iliad and Odyssey, Dante's Divine Comedy, Milton's Paradise Lost — works on a vast scale, telling stories of gods, heroes, and the fate of civilizations across thousands of lines of sustained verse. Lyric poetry — from the ancient Greek anthology to the English Romantic poets and Walt Whitman — operates at the opposite scale, capturing a single moment of feeling or perception with crystalline precision and extraordinary economy. Reading poetry in the public domain means access to the full sweep of this tradition: ancient verse, Renaissance sonnets, Romantic odes, Victorian narrative poems, and the earliest modernist experiments that transformed what poetry could be. Poetry rewards slow reading and re-reading in a way that few other forms match. Each reading of a great poem can reveal something that was not visible before.`,
+  },
+  History: {
+    heading: 'About Classic Historical Writing',
+    body: `Classical historical writing is both a source of information and a form of literature in its own right, and the best historical texts deserve to be read as both. The great historians of antiquity — Thucydides, Herodotus, Livy, Tacitus — were also artists, shaping their accounts of wars, cities, and empires with conscious craft and a clear point of view. Reading these texts is to experience history not as a dry catalogue of dates and events but as a narrative shaped by interpretation, rhetoric, and the perspective of the person recording it. Later historical works — from Gibbon's monumental Decline and Fall of the Roman Empire to the first-hand accounts of explorers, soldiers, and statesmen — occupy the fertile territory between literature and scholarship, offering information that is inseparable from the particular mind that observed and recorded it. Classic historical texts are invaluable as primary sources: they reveal not only what happened, but how people at the time understood what was happening around them.`,
+  },
+};
+
 interface Chapter {
   id: number;
   title: string;
@@ -919,13 +958,36 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
           borderTop: '3px solid #c6a75e'
         }}>
           <h3 style={{ marginBottom: '12px' }}>About This Edition</h3>
-          <p style={{ color: 'var(--text-secondary)', lineHeight: '1.8', marginBottom: 0 }}>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: '1.8', marginBottom: '14px' }}>
             This edition of <em>{displayBook.title}</em> is sourced from Project Gutenberg, the world's oldest digital
-            library of public domain literature. The text has been carefully formatted for comfortable reading on any
-            screen — with consistent chapter navigation, adjustable font sizes, and multiple reading themes including
-            light, sepia, dark, and night modes. The original text has not been altered in any way.
+            library of public domain literature, founded in 1971 by Michael Hart. Project Gutenberg houses over 70,000
+            freely available e-books whose copyrights have expired in the United States, and every text has been
+            verified to be free of copyright restrictions.
+          </p>
+          <p style={{ color: 'var(--text-secondary)', lineHeight: '1.8', marginBottom: 0 }}>
+            On Libreya, the text has been carefully formatted for comfortable reading on any screen — with consistent
+            chapter navigation, adjustable font sizes, and four reading themes: light, sepia, dark, and night mode.
+            Your reading position is saved automatically when you sign in, so you can pick up exactly where you left
+            off across any device. The original text has not been altered in any way; what you read here is the same
+            work as it appeared in its original published form.
           </p>
         </section>
+
+        {/* Genre Context */}
+        {displayBook.category && GENRE_CONTEXT[displayBook.category] && (
+          <section style={{
+            marginTop: '32px',
+            padding: '24px 28px',
+            backgroundColor: 'var(--surface)',
+            borderRadius: '10px',
+            borderLeft: '4px solid #c6a75e'
+          }}>
+            <h3 style={{ marginBottom: '14px' }}>{GENRE_CONTEXT[displayBook.category].heading}</h3>
+            <p style={{ color: 'var(--text-secondary)', lineHeight: '1.9', marginBottom: 0 }}>
+              {GENRE_CONTEXT[displayBook.category].body}
+            </p>
+          </section>
+        )}
 
         {/* Related Books */}
         {relatedBooks.length > 0 && (

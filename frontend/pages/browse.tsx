@@ -357,6 +357,71 @@ export default function Browse({ initialBooks }: BrowseProps) {
             ))}
           </div>
         )}
+      {/* Editorial section — always visible to search engines */}
+      <div style={{ backgroundColor: 'var(--surface)', borderTop: '1px solid var(--border)', marginTop: '40px', padding: '48px 24px' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+
+          <h2 style={{ fontSize: '1.4rem', marginBottom: '16px' }}>Why Read Classic Literature?</h2>
+          <p style={{ lineHeight: '1.9', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+            The books in this library have endured for a reason. A novel written 150 years ago can illuminate a feeling
+            you had this morning. The works of Austen, Tolstoy, Dickens, Dostoevsky, and their contemporaries were not
+            written as historical artifacts — they were written for readers exactly like us: people trying to understand
+            love, ambition, justice, and what it means to live well. That they still do this so powerfully is not
+            coincidence. It is the definition of great literature.
+          </p>
+          <p style={{ lineHeight: '1.9', color: 'var(--text-secondary)', marginBottom: '40px' }}>
+            Libreya makes over 300 of these works freely available in a modern, comfortable reading experience. Every
+            book is sourced from Project Gutenberg or Standard Ebooks — the two most trusted repositories of public
+            domain literature — and carefully formatted for reading on any screen. No subscription, no account
+            required. Just the books.
+          </p>
+
+          <h2 style={{ fontSize: '1.4rem', marginBottom: '20px' }}>Explore by Genre</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+            {[
+              { name: 'Fiction', desc: 'Novels and novellas that shaped how we understand human nature — Austen, Tolstoy, Dickens, Dostoevsky, and more.' },
+              { name: 'Adventure', desc: 'Tales of exploration, survival, and discovery by Stevenson, Verne, London, and the writers who defined the genre.' },
+              { name: 'Mystery', desc: 'The foundational detective fiction of Conan Doyle, Poe, and others — the genre at its freshest and most inventive.' },
+              { name: 'Science Fiction', desc: 'Early visionary works by H.G. Wells and Jules Verne that laid the foundation for the entire genre.' },
+              { name: 'Romance', desc: 'Classic love stories from Austen, the Brontës, and others — sharp social portraits as much as love stories.' },
+              { name: 'Philosophy', desc: 'Primary texts from Plato, Marcus Aurelius, Hume, Kant, and others — essential thinking on how to live.' },
+              { name: 'Drama', desc: 'Plays by Shakespeare, Ibsen, Chekhov, and the great theatrical voices of the literary tradition.' },
+              { name: 'Poetry', desc: 'Verse from Homer to Whitman — epic poetry, lyric collections, and the works that defined literary traditions.' },
+              { name: 'History', desc: 'Historical chronicles from Thucydides to Gibbon — events recorded by the people who witnessed them.' },
+            ].map(genre => (
+              <div key={genre.name} style={{
+                padding: '16px 20px',
+                border: '1px solid var(--border)',
+                borderRadius: '10px',
+                backgroundColor: 'var(--bg)',
+              }}>
+                <p style={{ fontWeight: '600', marginBottom: '6px', color: 'var(--heading)' }}>{genre.name}</p>
+                <p style={{ fontSize: '0.88em', color: 'var(--text-secondary)', lineHeight: '1.7', margin: 0 }}>{genre.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: '40px' }}>
+            <h2 style={{ fontSize: '1.4rem', marginBottom: '16px' }}>About the Libreya Library</h2>
+            <p style={{ lineHeight: '1.9', color: 'var(--text-secondary)', marginBottom: '16px' }}>
+              All books on Libreya are sourced from Project Gutenberg, the world's oldest digital library founded in
+              1971, and Standard Ebooks, which produces carefully typeset modern editions of public domain texts.
+              Every work is in the public domain — legally free to read, share, and redistribute. We do not offer
+              books that are still under copyright, and we do not offer abridged or condensed versions. Every book
+              is the complete, unaltered original text.
+            </p>
+            <p style={{ lineHeight: '1.9', color: 'var(--text-secondary)', marginBottom: 0 }}>
+              Our curation focuses on works of lasting literary significance — books that have shaped culture, defined
+              genres, or stood the test of time as enduring works of art. The library currently spans nine genres and
+              includes fiction, drama, poetry, philosophy, adventure, mystery, science fiction, romance, and history.
+              New titles are added regularly. If there is a classic you would like to see added, contact us at
+              hello@libreya.app.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
       </main>
 
       <style>{`
