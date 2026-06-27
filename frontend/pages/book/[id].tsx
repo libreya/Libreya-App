@@ -284,12 +284,6 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
         <Head>
           <title>Loading - Libreya</title>
         </Head>
-        <header>
-          <h1>Loading...</h1>
-          <Link href="/browse" style={{ color: 'white' }}>
-            Back to Browse
-          </Link>
-        </header>
         <main className="container">
           <p>Loading book details...</p>
         </main>
@@ -314,65 +308,6 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
           )}
         </Head>
 
-        {/* Top Navigation Menu */}
-        <nav style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '12px 20px',
-          backgroundColor: '#5a1f2b',
-          borderBottom: '2px solid #c6a75e',
-          position: 'sticky',
-          top: 0,
-          zIndex: 101
-        }}>
-          <Link href="/" style={{ color: 'white', fontWeight: '600', textDecoration: 'none' }}>
-            📚 Home
-          </Link>
-          <button
-            onClick={handleToggleFavorite}
-            style={{
-              backgroundColor: 'transparent',
-              color: 'white',
-              border: 'none',
-              fontSize: '1em',
-              fontWeight: '600',
-              cursor: 'pointer',
-              padding: '6px 12px'
-            }}
-            title={isFavorite ? 'Added to favorites' : 'Add to favorites'}
-          >
-            {isFavorite ? '❤️ Favorites' : '🤍 Favorites'}
-          </button>
-          <button
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({
-                  title: displayBook.title,
-                  text: `Reading ${displayBook.title} by ${displayBook.author} on Libreya`,
-                  url: window.location.href
-                });
-              } else {
-                alert('Share this book: ' + window.location.href);
-              }
-            }}
-            style={{
-              backgroundColor: 'transparent',
-              color: 'white',
-              border: 'none',
-              fontSize: '1em',
-              fontWeight: '600',
-              cursor: 'pointer',
-              padding: '6px 12px'
-            }}
-          >
-            📤 Share
-          </button>
-          <Link href="/profile" style={{ color: 'white', fontWeight: '600', textDecoration: 'none' }}>
-            👤 Profile
-          </Link>
-        </nav>
-
         {/* Chapter Reading Header */}
         <header className="reader-header" style={{
           display: 'flex',
@@ -380,8 +315,8 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
           alignItems: 'center',
           padding: '15px 20px',
           position: 'sticky',
-          top: 45,
-          zIndex: 100,
+          top: 60,
+          zIndex: 99,
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
           <button
@@ -459,7 +394,7 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
             position: 'fixed',
             left: 0,
             right: 0,
-            top: '80px',
+            top: '120px',
             bottom: 0,
             backgroundColor: 'rgba(0,0,0,0.5)',
             zIndex: 99
@@ -629,26 +564,7 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
             }
           }
 
-          nav {
-            gap: 15px;
-          }
-
-          nav a,
-          nav button {
-            font-size: 0.95em;
-            white-space: nowrap;
-          }
-
           @media (max-width: 768px) {
-            nav {
-              gap: 8px;
-              padding: 10px 15px !important;
-            }
-            nav a, nav button {
-              font-size: 0.8em;
-              padding: 4px 8px !important;
-            }
-
             /* Reader header: 2-row layout on mobile
                Row 1: [← Back]  [📖 Chapters]  [A− % A+]
                Row 2: [Chapter title — full width]          */
@@ -656,7 +572,7 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
               flex-wrap: wrap;
               padding: 10px 12px !important;
               gap: 8px;
-              top: 44px !important;
+              top: 60px !important;
             }
             .reader-back-btn {
               order: 0;
@@ -704,17 +620,6 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
           }
 
           @media (max-width: 480px) {
-            nav {
-              gap: 4px;
-              padding: 8px 10px !important;
-              overflow-x: auto;
-            }
-            nav a, nav button {
-              font-size: 0.72em;
-              padding: 4px 6px !important;
-              flex-shrink: 0;
-            }
-
             .reader-header {
               padding: 8px 10px !important;
             }
@@ -766,13 +671,6 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
           />
         )}
       </Head>
-
-      <header>
-        <h1 style={{ color: 'white' }}>{displayBook.title}</h1>
-        <Link href="/browse" style={{ color: 'white' }}>
-          Back to Browse
-        </Link>
-      </header>
 
       <main className="container" style={{ maxWidth: '900px' }}>
         <div className="book-layout" style={{ display: 'flex', gap: '40px', marginBottom: '40px', flexWrap: 'wrap' }}>
