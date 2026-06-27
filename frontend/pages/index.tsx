@@ -100,48 +100,59 @@ export default function Home({ initialFeaturedBooks }: HomeProps) {
 
       {/* ── HERO ── */}
       <div style={{
+        position: 'relative',
+        overflow: 'hidden',
         backgroundColor: 'rgba(90,31,43,1)',
-        backgroundImage: 'linear-gradient(rgba(20,6,11,0.62), rgba(20,6,11,0.62)), url(https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1200)',
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        padding: '72px 24px 80px',
         textAlign: 'center',
       }}>
         <img
-          src="https://customer-assets.emergentagent.com/job_b554f1a4-c35c-4e60-a285-bdc61c896871/artifacts/0ouwazt9_Libreya%20Logo.png"
-          alt="Libreya"
+          src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1200"
+          alt=""
+          aria-hidden="true"
           fetchPriority="high"
-          loading="eager"
-          width={100}
-          height={100}
-          style={{ borderRadius: '50%', objectFit: 'cover', marginBottom: '24px', backgroundColor: '#fff' }}
+          style={{
+            position: 'absolute', inset: 0, width: '100%', height: '100%',
+            objectFit: 'cover', objectPosition: 'center',
+          }}
         />
-        <h1 style={{
-          fontSize: 'clamp(2rem, 5vw, 3.25rem)', color: '#fff',
-          lineHeight: '1.2', marginBottom: '20px',
-        }}>
-          Classic Literature,<br />Reimagined
-        </h1>
-        <p style={{
-          fontSize: '1.1em', color: 'rgba(255,255,255,0.85)',
-          maxWidth: '540px', margin: '0 auto 36px', lineHeight: '1.8',
-        }}>
-          Discover over 300 timeless classics from the world's greatest authors.
-          Every book is beautifully formatted and completely free to read.
-        </p>
-        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <Link href="/browse">
-            <button style={{ backgroundColor: '#c6a75e', color: '#2b2b2b' }}>
-              Explore Library
-            </button>
-          </Link>
-          {!user && (
-            <Link href="/auth">
-              <button style={{ backgroundColor: 'transparent', color: '#fff', border: '2px solid rgba(255,255,255,0.5)' }}>
-                Create Account
+        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(20,6,11,0.62)' }} />
+        <div style={{ position: 'relative', zIndex: 1, padding: '72px 24px 80px' }}>
+          <img
+            src="https://customer-assets.emergentagent.com/job_b554f1a4-c35c-4e60-a285-bdc61c896871/artifacts/0ouwazt9_Libreya%20Logo.png"
+            alt="Libreya"
+            fetchPriority="high"
+            loading="eager"
+            width={100}
+            height={100}
+            style={{ borderRadius: '50%', objectFit: 'cover', marginBottom: '24px', backgroundColor: '#fff' }}
+          />
+          <h1 style={{
+            fontSize: 'clamp(2rem, 5vw, 3.25rem)', color: '#fff',
+            lineHeight: '1.2', marginBottom: '20px',
+          }}>
+            Classic Literature,<br />Reimagined
+          </h1>
+          <p style={{
+            fontSize: '1.1em', color: 'rgba(255,255,255,0.85)',
+            maxWidth: '540px', margin: '0 auto 36px', lineHeight: '1.8',
+          }}>
+            Discover over 300 timeless classics from the world's greatest authors.
+            Every book is beautifully formatted and completely free to read.
+          </p>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/browse">
+              <button style={{ backgroundColor: '#c6a75e', color: '#2b2b2b' }}>
+                Explore Library
               </button>
             </Link>
-          )}
+            {!user && (
+              <Link href="/auth">
+                <button style={{ backgroundColor: 'transparent', color: '#fff', border: '2px solid rgba(255,255,255,0.5)' }}>
+                  Create Account
+                </button>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 

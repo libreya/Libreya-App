@@ -203,6 +203,34 @@ export function Layout({ children }: { children: React.ReactNode }) {
         )}
       </nav>
 
+      {/* ── Genre subnav ── */}
+      {!pathname.startsWith('/book/') && (
+        <div className="genre-subnav" style={{
+          backgroundColor: 'var(--surface)',
+          borderBottom: '1px solid var(--border)',
+        }}>
+          <div className="genre-subnav-inner">
+            {[
+              { label: 'Fiction',      path: '/browse?category=Fiction' },
+              { label: 'Adventure',    path: '/browse?category=Adventure' },
+              { label: 'Mystery',      path: '/browse?category=Mystery' },
+              { label: 'Romance',      path: '/browse?category=Romance' },
+              { label: 'Sci-Fi',       path: '/browse?category=Science+Fiction' },
+              { label: 'Philosophy',   path: '/browse?category=Philosophy' },
+              { label: 'Drama',        path: '/browse?category=Drama' },
+              { label: 'Poetry',       path: '/browse?category=Poetry' },
+              { label: 'History',      path: '/browse?category=History' },
+            ].map(({ label, path }) => (
+              <Link key={path} href={path} style={{ textDecoration: 'none', flexShrink: 0 }}>
+                <span className="genre-subnav-link">
+                  {label}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ── Page content ── */}
       <div style={{ flex: 1 }}>
         {children}
@@ -288,6 +316,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
         .nav-link:hover {
           background-color: rgba(198,167,94,0.1) !important;
           color: var(--heading) !important;
+        }
+        .genre-subnav-inner {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 20px;
+          display: flex;
+          overflow-x: auto;
+          height: 38px;
+          align-items: center;
+          gap: 2px;
+          scrollbar-width: none;
+        }
+        .genre-subnav-inner::-webkit-scrollbar {
+          display: none;
+        }
+        .genre-subnav-link {
+          display: block;
+          padding: 4px 11px;
+          border-radius: 6px;
+          font-size: 0.8125rem;
+          color: var(--text);
+          white-space: nowrap;
+          transition: background-color 0.15s, color 0.15s;
+        }
+        .genre-subnav-link:hover {
+          background-color: rgba(198,167,94,0.1);
+          color: var(--heading);
         }
         @media (max-width: 768px) {
           .layout-desktop-nav { display: none; }
