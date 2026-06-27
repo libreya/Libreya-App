@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useAppStore } from '../lib/store-web';
 import { Book } from '../lib/store-web';
 import { api } from '../lib/api';
@@ -10,15 +11,16 @@ import AdBanner from '../components/AdBanner';
 interface BrowseProps {
   initialBooks: Book[];
   initialCategories: string[];
+  initialCategory: string | null;
 }
 
-export default function Browse({ initialBooks, initialCategories }: BrowseProps) {
+export default function Browse({ initialBooks, initialCategories, initialCategory }: BrowseProps) {
+  const router = useRouter();
   const storeBooks = useAppStore((s) => s.books);
-  // Use store books once they load; fall back to SSR books on first render
   const books = storeBooks.length > 0 ? storeBooks : initialBooks;
   const fetchBooks = useAppStore((s) => s.fetchBooks);
   const [categories, setCategories] = useState<string[]>(initialCategories);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory);
   const [searchTerm, setSearchTerm] = useState('');
   const [hasInput, setHasInput] = useState(false);
   const [isLoading, setIsLoading] = useState(initialBooks.length === 0);
@@ -32,7 +34,7 @@ export default function Browse({ initialBooks, initialCategories }: BrowseProps)
     const loadInitialData = async () => {
       try {
         const [, catsData] = await Promise.all([
-          fetchBooks(),
+          fetchBooks({ category: initialCategory ?? undefined }),
           categories.length === 0 ? api.get('/books/categories/list') : Promise.resolve(null),
         ]);
         if (Array.isArray(catsData)) setCategories(catsData);
@@ -42,6 +44,16 @@ export default function Browse({ initialBooks, initialCategories }: BrowseProps)
     };
     loadInitialData();
   }, []);
+
+  // Sync category filter when navigating between genre links (client-side routing)
+  useEffect(() => {
+    if (!router.isReady) return;
+    const cat = typeof router.query.category === 'string' ? router.query.category : null;
+    if (cat === selectedCategory) return;
+    setSelectedCategory(cat);
+    setIsLoading(true);
+    fetchBooks({ category: cat ?? undefined }).finally(() => setIsLoading(false));
+  }, [router.isReady, router.query.category]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -486,7 +498,10 @@ export default function Browse({ initialBooks, initialCategories }: BrowseProps)
   );
 }
 
-export async function getServerSideProps() {
+export async function getServerSideProps(context: { query: Record<string, string | string[] | undefined> }) {
+  const rawCat = context.query.category;
+  const initialCategory = typeof rawCat === 'string' ? rawCat : null;
+
   try {
     const { createClient } = require('@supabase/supabase-js');
     const supabaseServer = createClient(
@@ -494,12 +509,18 @@ export async function getServerSideProps() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
+    let booksQuery = supabaseServer
+      .from('books')
+      .select('id, title, author, category, cover_image, is_featured, read_count, description')
+      .order('read_count', { ascending: false })
+      .limit(50);
+
+    if (initialCategory) {
+      booksQuery = booksQuery.eq('category', initialCategory);
+    }
+
     const [booksResult, catsResult] = await Promise.all([
-      supabaseServer
-        .from('books')
-        .select('id, title, author, category, cover_image, is_featured, read_count, description')
-        .order('read_count', { ascending: false })
-        .limit(50),
+      booksQuery,
       supabaseServer
         .from('books')
         .select('category')
@@ -512,8 +533,8 @@ export async function getServerSideProps() {
       ),
     ].sort();
 
-    return { props: { initialBooks: booksResult.data || [], initialCategories: uniqueCategories } };
+    return { props: { initialBooks: booksResult.data || [], initialCategories: uniqueCategories, initialCategory } };
   } catch {
-    return { props: { initialBooks: [], initialCategories: [] } };
+    return { props: { initialBooks: [], initialCategories: [], initialCategory } };
   }
 }
