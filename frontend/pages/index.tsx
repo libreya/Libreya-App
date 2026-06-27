@@ -12,6 +12,9 @@ const websiteSchema = {
   name: 'Libreya',
   url: 'https://libreya.app',
   description: 'Free classic literature reading platform with over 300 public domain books.',
+  author: { '@type': 'Organization', name: 'Libreya', url: 'https://libreya.app' },
+  datePublished: '2024-01-15',
+  dateModified: '2026-06-27',
   potentialAction: {
     '@type': 'SearchAction',
     target: 'https://libreya.app/browse?q={search_term_string}',
@@ -28,6 +31,7 @@ const organizationSchema = {
   description:
     'Libreya is a free online reading platform dedicated to making classic literature accessible to everyone, with over 300 public domain books from Project Gutenberg and Standard Ebooks.',
   sameAs: ['https://libreya.app'],
+  foundingDate: '2024',
   contactPoint: {
     '@type': 'ContactPoint',
     email: 'hello@libreya.app',
@@ -68,6 +72,8 @@ export default function Home({ initialFeaturedBooks }: HomeProps) {
           content="Read over 300 classic books for free on Libreya. Works by Jane Austen, Dostoevsky, Dickens, Shakespeare, and more — beautifully formatted, no account required."
         />
         <meta name="keywords" content="free classic books, read online, public domain literature, Project Gutenberg, classic novels, free ebooks" />
+        <meta name="author" content="Libreya Editorial Team" />
+        <meta property="article:modified_time" content="2026-06-27T00:00:00+00:00" />
         <link rel="canonical" href="https://libreya.app/" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Libreya – Free Classic Books Online | 300+ Titles" />

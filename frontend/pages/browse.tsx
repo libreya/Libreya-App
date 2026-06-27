@@ -92,6 +92,9 @@ export default function Browse({ initialBooks }: BrowseProps) {
           name="description"
           content="Browse over 300 classic books on Libreya. Search by title, author, or genre — Fiction, Mystery, Adventure, Romance, Science Fiction, Philosophy, and more. Free to read."
         />
+        <meta name="author" content="Libreya Editorial Team" />
+        <meta property="article:published_time" content="2024-01-15T00:00:00+00:00" />
+        <meta property="article:modified_time" content="2026-06-27T00:00:00+00:00" />
         <link rel="canonical" href="https://libreya.app/browse" />
         <meta property="og:type" content="website" />
         <meta property="og:title" content="Browse Classic Books – Free Online Library | Libreya" />
@@ -99,6 +102,20 @@ export default function Browse({ initialBooks }: BrowseProps) {
         <meta property="og:url" content="https://libreya.app/browse" />
         <meta property="og:image" content="https://libreya.app/icon.png" />
         <meta name="twitter:card" content="summary" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'CollectionPage',
+            name: 'Browse Classic Books – Free Online Library | Libreya',
+            description: 'Browse over 300 classic books on Libreya — Fiction, Mystery, Adventure, Romance, Science Fiction, Philosophy, and more.',
+            url: 'https://libreya.app/browse',
+            author: { '@type': 'Organization', name: 'Libreya', url: 'https://libreya.app' },
+            publisher: { '@type': 'Organization', name: 'Libreya', url: 'https://libreya.app' },
+            datePublished: '2024-01-15',
+            dateModified: '2026-06-27',
+          }) }}
+        />
       </Head>
 
       {/* Hero */}

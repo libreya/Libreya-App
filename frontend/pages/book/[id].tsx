@@ -300,6 +300,7 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
         <Head>
           <title>Reading {displayBook.title} - Libreya</title>
           <meta name="description" content={metaDescription} />
+          <meta name="rating" content="general" />
           {bookSchema && (
             <script
               type="application/ld+json"
@@ -652,6 +653,8 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
       <Head>
         <title>{displayBook.title} by {displayBook.author} – Free Classic Literature | Libreya</title>
         <meta name="description" content={metaDescription} />
+        <meta name="rating" content="general" />
+        <meta name="author" content="Libreya Editorial Team" />
         <link rel="canonical" href={canonicalUrl} />
         <meta property="og:type" content="book" />
         <meta property="og:title" content={`${displayBook.title} by ${displayBook.author} – Libreya`} />
