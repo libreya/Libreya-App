@@ -1,4 +1,9 @@
 User-agent: *
 Allow: /
 
+Disallow: /profile
+Disallow: /auth
+Disallow: /favorites
+Disallow: /admin
+
 Sitemap: https://libreya.app/sitemap.xml

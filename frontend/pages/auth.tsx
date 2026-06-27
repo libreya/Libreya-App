@@ -115,6 +115,7 @@ export default function Auth() {
       <Head>
         <title>Sign In – Create a Free Account | Libreya</title>
         <meta name="description" content="Sign in or create a free Libreya account to save your reading progress, build a favorites list, and sync across devices." />
+        <meta name="robots" content="noindex, nofollow" />
         <link rel="canonical" href="https://libreya.app/auth" />
         <meta property="og:title" content="Sign In – Create a Free Account | Libreya" />
         <meta property="og:description" content="Create a free Libreya account to save reading progress and favorites." />

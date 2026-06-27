@@ -2,12 +2,19 @@ import React, { useEffect, useRef, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAppStore } from '../lib/store-web';
+import { Book } from '../lib/store-web';
 import { api } from '../lib/api';
 import { BrowseGridSkeleton } from '../components/Skeleton';
 import AdBanner from '../components/AdBanner';
 
-export default function Browse() {
-  const books = useAppStore((s) => s.books);
+interface BrowseProps {
+  initialBooks: Book[];
+}
+
+export default function Browse({ initialBooks }: BrowseProps) {
+  const storeBooks = useAppStore((s) => s.books);
+  // Use store books once they load; fall back to SSR books on first render
+  const books = storeBooks.length > 0 ? storeBooks : initialBooks;
   const fetchBooks = useAppStore((s) => s.fetchBooks);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -384,5 +391,21 @@ export default function Browse() {
 }
 
 export async function getServerSideProps() {
-  return { props: {} };
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    const supabaseServer = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    const { data } = await supabaseServer
+      .from('books')
+      .select('id, title, author, category, cover_image, is_featured, read_count, description')
+      .order('read_count', { ascending: false })
+      .limit(50);
+
+    return { props: { initialBooks: data || [] } };
+  } catch {
+    return { props: { initialBooks: [] } };
+  }
 }
