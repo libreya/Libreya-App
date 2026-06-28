@@ -318,6 +318,7 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
           position: 'sticky',
           top: 60,
           zIndex: 99,
+          backgroundColor: 'rgba(90,31,43,1)',
           boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
         }}>
           <button
@@ -326,7 +327,7 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
             style={{
               backgroundColor: 'transparent',
               color: 'white',
-              border: '2px solid white',
+              border: '2px solid rgba(255,255,255,0.5)',
               padding: '8px 12px',
               minWidth: 'auto',
               fontWeight: '600',
@@ -346,7 +347,7 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
               style={{
                 backgroundColor: 'transparent',
                 color: 'white',
-                border: '2px solid white',
+                border: '2px solid rgba(255,255,255,0.5)',
                 padding: '6px 10px',
                 minWidth: 'auto',
                 fontWeight: '600',
@@ -355,7 +356,7 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
             >
               A−
             </button>
-            <span style={{ color: 'white', fontSize: '0.85em', minWidth: '45px', textAlign: 'center' }}>
+            <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.85em', minWidth: '45px', textAlign: 'center' }}>
               {Math.round(fontSize * 100)}%
             </span>
             <button
@@ -364,7 +365,7 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
               style={{
                 backgroundColor: 'transparent',
                 color: 'white',
-                border: '2px solid white',
+                border: '2px solid rgba(255,255,255,0.5)',
                 padding: '6px 10px',
                 minWidth: 'auto',
                 fontWeight: '600',
@@ -374,6 +375,24 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
               A+
             </button>
           </div>
+          {/* Favorite toggle */}
+          <button
+            onClick={handleToggleFavorite}
+            title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+            style={{
+              backgroundColor: isFavorite ? '#c6a75e' : 'transparent',
+              color: isFavorite ? '#2b2b2b' : 'white',
+              border: '2px solid rgba(255,255,255,0.5)',
+              padding: '6px 10px',
+              minWidth: 'auto',
+              fontWeight: '600',
+              fontSize: '1.1em',
+              marginLeft: '10px',
+              flexShrink: 0,
+            }}
+          >
+            {isFavorite ? '♥' : '♡'}
+          </button>
           <button
             className="reader-back-btn"
             onClick={() => setIsReading(false)}
@@ -383,7 +402,7 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
               padding: '8px 16px',
               minWidth: 'auto',
               fontWeight: '600',
-              marginLeft: '15px'
+              marginLeft: '10px'
             }}
           >
             ← Back
@@ -567,8 +586,8 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
 
           @media (max-width: 768px) {
             /* Reader header: 2-row layout on mobile
-               Row 1: [← Back]  [📖 Chapters]  [A− % A+]
-               Row 2: [Chapter title — full width]          */
+               Row 1: [← Back]  [📖 Chapters]  [A− % A+]  [♥]
+               Row 2: [Chapter title — full width]              */
             .reader-header {
               flex-wrap: wrap;
               padding: 10px 12px !important;
