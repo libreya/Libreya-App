@@ -214,15 +214,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
         }}>
           <div className="genre-subnav-inner">
             {[
-              { label: 'Fiction',      path: '/browse?category=Fiction' },
-              { label: 'Adventure',    path: '/browse?category=Adventure' },
-              { label: 'Mystery',      path: '/browse?category=Mystery' },
-              { label: 'Romance',      path: '/browse?category=Romance' },
-              { label: 'Sci-Fi',       path: '/browse?category=Science+Fiction' },
-              { label: 'Philosophy',   path: '/browse?category=Philosophy' },
-              { label: 'Drama',        path: '/browse?category=Drama' },
-              { label: 'Poetry',       path: '/browse?category=Poetry' },
-              { label: 'History',      path: '/browse?category=History' },
+              { label: 'Adventure',             path: '/browse?category=Adventure' },
+              { label: 'Biography',             path: '/browse?category=Biography' },
+              { label: "Children's Literature", path: '/browse?category=Children%27s+Literature' },
+              { label: 'Fiction',               path: '/browse?category=Fiction' },
+              { label: 'History',               path: '/browse?category=History' },
+              { label: 'Horror',                path: '/browse?category=Horror' },
+              { label: 'Mystery',               path: '/browse?category=Mystery' },
+              { label: 'Poetry',                path: '/browse?category=Poetry' },
+              { label: 'Romance',               path: '/browse?category=Romance' },
             ].map(({ label, path }) => (
               <Link key={path} href={path} style={{ textDecoration: 'none', flexShrink: 0 }}>
                 <span className="genre-subnav-link">
@@ -323,9 +323,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           color: var(--heading) !important;
         }
         .genre-subnav-inner {
-          max-width: 1200px;
-          margin: 0 auto;
-          padding: 0 20px;
           display: flex;
           justify-content: center;
           overflow-x: auto;
