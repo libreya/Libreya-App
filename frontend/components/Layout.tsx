@@ -327,10 +327,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
           margin: 0 auto;
           padding: 0 20px;
           display: flex;
+          justify-content: center;
           overflow-x: auto;
-          height: 38px;
+          height: 32px;
           align-items: center;
-          gap: 2px;
+          gap: 0;
           scrollbar-width: none;
         }
         .genre-subnav-inner::-webkit-scrollbar {
@@ -338,15 +339,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         }
         .genre-subnav-link {
           display: block;
-          padding: 4px 11px;
-          border-radius: 6px;
+          padding: 2px 14px;
           font-size: 0.8125rem;
-          color: var(--text);
+          color: var(--text-secondary);
           white-space: nowrap;
-          transition: background-color 0.15s, color 0.15s;
+          transition: color 0.15s;
         }
         .genre-subnav-link:hover {
-          background-color: rgba(198,167,94,0.1);
           color: var(--heading);
         }
         @media (max-width: 768px) {
