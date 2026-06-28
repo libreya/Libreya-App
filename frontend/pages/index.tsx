@@ -293,15 +293,15 @@ export default function Home({ initialFeaturedBooks }: HomeProps) {
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
           {[
-            { name: 'Fiction',        path: '/browse?category=Fiction',        desc: 'Novels by Austen, Tolstoy, Dickens, Dostoevsky — the cornerstones of the literary tradition.' },
-            { name: 'Mystery',        path: '/browse?category=Mystery',        desc: 'Detective fiction by Conan Doyle and Poe — the genre at its most inventive.' },
-            { name: 'Adventure',      path: '/browse?category=Adventure',      desc: 'Stevenson, Verne, and London — tales of exploration, survival, and discovery.' },
-            { name: 'Science Fiction', path: '/browse?category=Science+Fiction', desc: 'H.G. Wells and Jules Verne — the visionary works that founded the genre.' },
-            { name: 'Romance',        path: '/browse?category=Romance',        desc: 'Austen and the Brontës — love stories that are also sharp portraits of society.' },
-            { name: 'Philosophy',     path: '/browse?category=Philosophy',     desc: 'Plato, Marcus Aurelius, Kant — primary texts on how to live and what to think.' },
-            { name: 'Drama',          path: '/browse?category=Drama',          desc: 'Shakespeare, Ibsen, Chekhov — the plays that shaped Western theatrical tradition.' },
-            { name: 'Poetry',         path: '/browse?category=Poetry',         desc: 'Homer to Whitman — epic verse, lyric collections, and the Romantic odes.' },
-            { name: 'History',        path: '/browse?category=History',        desc: 'Thucydides to Gibbon — history written by those who witnessed it.' },
+            { name: 'Adventure',             path: '/browse?category=Adventure',                    desc: 'Stevenson, Verne, and London — tales of exploration, survival, and discovery.' },
+            { name: 'Biography',             path: '/browse?category=Biography',                    desc: 'Lives of great figures — scientists, rulers, artists — told in their own words and by those who knew them.' },
+            { name: "Children's Literature", path: '/browse?category=Children%27s+Literature',      desc: 'Carroll, Barrie, Baum — beloved classics that have enchanted young readers for generations.' },
+            { name: 'Fiction',               path: '/browse?category=Fiction',                      desc: 'Novels by Austen, Tolstoy, Dickens, Dostoevsky — the cornerstones of the literary tradition.' },
+            { name: 'History',               path: '/browse?category=History',                      desc: 'Thucydides to Gibbon — history written by those who witnessed it.' },
+            { name: 'Horror',                path: '/browse?category=Horror',                       desc: 'Poe, Stoker, Shelley — the stories that defined fear and the uncanny in literature.' },
+            { name: 'Mystery',               path: '/browse?category=Mystery',                      desc: 'Detective fiction by Conan Doyle and Poe — the genre at its most inventive.' },
+            { name: 'Poetry',                path: '/browse?category=Poetry',                       desc: 'Homer to Whitman — epic verse, lyric collections, and the Romantic odes.' },
+            { name: 'Romance',               path: '/browse?category=Romance',                      desc: 'Austen and the Brontës — love stories that are also sharp portraits of society.' },
           ].map(g => (
             <Link key={g.name} href={g.path} style={{ textDecoration: 'none' }}>
               <div className="genre-home-card" style={{
