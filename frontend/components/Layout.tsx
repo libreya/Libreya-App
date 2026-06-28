@@ -60,9 +60,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
 
-      {/* ── Sticky top nav ── */}
-      <nav style={{
-        position: 'sticky', top: 0, zIndex: 100,
+      {/* ── Site header — sticky so <header> satisfies crawlers ── */}
+      <header style={{ position: 'sticky', top: 0, zIndex: 100 }}>
+
+      {/* Main nav bar */}
+      <div style={{
         backgroundColor: 'var(--bg)',
         borderBottom: '1px solid var(--border)',
         boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
@@ -202,11 +204,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
             )}
           </div>
         )}
-      </nav>
+      </div>{/* end main nav bar */}
 
-      {/* ── Genre subnav ── */}
+      {/* Genre subnav — inside <header> so crawlers count it as header nav */}
       {!pathname.startsWith('/book/') && (
-        <div className="genre-subnav" style={{
+        <nav aria-label="Browse by genre" className="genre-subnav" style={{
           backgroundColor: 'var(--surface)',
           borderBottom: '1px solid var(--border)',
         }}>
@@ -229,8 +231,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </Link>
             ))}
           </div>
-        </div>
+        </nav>
       )}
+
+      </header>{/* end site header */}
 
       {/* ── Page content ── */}
       <div style={{ flex: 1 }}>
