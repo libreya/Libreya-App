@@ -106,7 +106,7 @@ export default function Browse({ initialBooks, initialCategories, initialCategor
           content="Browse over 300 classic books on Libreya. Search by title, author, or genre — Fiction, Mystery, Adventure, Romance, Science Fiction, Philosophy, and more. Free to read."
         />
         <meta name="author" content="Libreya Editorial Team" />
-        <meta property="article:published_time" content="2024-01-15T00:00:00+00:00" />
+        <meta property="article:published_time" content="2025-11-15T00:00:00+00:00" />
         <meta property="article:modified_time" content="2026-06-27T00:00:00+00:00" />
         <link rel="canonical" href="https://libreya.app/browse" />
         <meta property="og:type" content="website" />
@@ -125,7 +125,7 @@ export default function Browse({ initialBooks, initialCategories, initialCategor
             url: 'https://libreya.app/browse',
             author: { '@type': 'Organization', name: 'Libreya', url: 'https://libreya.app' },
             publisher: { '@type': 'Organization', name: 'Libreya', url: 'https://libreya.app' },
-            datePublished: '2024-01-15',
+            datePublished: '2025-11-15',
             dateModified: '2026-06-27',
           }) }}
         />

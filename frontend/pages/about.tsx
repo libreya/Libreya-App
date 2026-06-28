@@ -28,7 +28,7 @@ export default function About() {
           content="Learn about Libreya's mission to make classic literature freely accessible. Discover how we source, curate, and present over 300 timeless books from Project Gutenberg and Standard Ebooks."
         />
         <meta name="author" content="Libreya Editorial Team" />
-        <meta property="article:published_time" content="2024-01-15T00:00:00+00:00" />
+        <meta property="article:published_time" content="2025-11-15T00:00:00+00:00" />
         <meta property="article:modified_time" content="2026-06-28T00:00:00+00:00" />
         <link rel="canonical" href="https://libreya.app/about" />
         <meta property="og:type" content="website" />

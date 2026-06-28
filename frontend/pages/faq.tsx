@@ -105,7 +105,7 @@ export default function FAQ() {
           content="Answers to common questions about Libreya — how it works, where the books come from, how to save progress, reading themes, account features, privacy, and more."
         />
         <meta name="author" content="Libreya Editorial Team" />
-        <meta property="article:published_time" content="2024-01-15T00:00:00+00:00" />
+        <meta property="article:published_time" content="2025-11-15T00:00:00+00:00" />
         <meta property="article:modified_time" content="2026-06-28T00:00:00+00:00" />
         <link rel="canonical" href="https://libreya.app/faq" />
         <meta property="og:type" content="website" />
