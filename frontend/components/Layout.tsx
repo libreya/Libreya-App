@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { useAppStore } from '../lib/store-web';
 
@@ -73,12 +74,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         }}>
           {/* Logo */}
           <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <img
+            <Image
               src="https://customer-assets.emergentagent.com/job_b554f1a4-c35c-4e60-a285-bdc61c896871/artifacts/0ouwazt9_Libreya%20Logo.png"
               alt="Libreya"
               width={32}
               height={32}
-              fetchPriority="high"
+              priority
               style={{ borderRadius: '50%', objectFit: 'cover' }}
             />
             <span style={{ fontSize: '1.375rem', fontWeight: '700', color: 'var(--heading)', fontFamily: 'inherit' }}>
