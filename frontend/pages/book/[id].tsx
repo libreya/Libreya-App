@@ -655,6 +655,8 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
         <meta name="description" content={metaDescription} />
         <meta name="rating" content="general" />
         <meta name="author" content="Libreya Editorial Team" />
+        <meta property="article:published_time" content="2024-01-15T00:00:00+00:00" />
+        <meta property="article:modified_time" content="2026-06-28T00:00:00+00:00" />
         <link rel="canonical" href={canonicalUrl} />
         <meta property="og:type" content="book" />
         <meta property="og:title" content={`${displayBook.title} by ${displayBook.author} – Libreya`} />
