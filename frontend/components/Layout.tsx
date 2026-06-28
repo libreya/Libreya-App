@@ -296,7 +296,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           flexWrap: 'wrap', gap: '12px',
         }}>
           <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', marginBottom: 0 }}>
-            &copy; {new Date().getFullYear()} Libreya. All rights reserved.
+            &copy; 2026 Libreya. All rights reserved.
           </p>
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
             <a href="https://instagram.com/libreya.app" target="_blank" rel="noopener noreferrer" aria-label="Instagram" style={{ color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>
