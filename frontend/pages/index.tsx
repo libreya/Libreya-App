@@ -479,7 +479,7 @@ export default function Home({ initialFeaturedBooks }: HomeProps) {
   );
 }
 
-export async function getServerSideProps() {
+export async function getStaticProps() {
   try {
     const { createClient } = require('@supabase/supabase-js');
     const supabaseServer = createClient(
@@ -494,8 +494,8 @@ export async function getServerSideProps() {
       .order('read_count', { ascending: false })
       .limit(10);
 
-    return { props: { initialFeaturedBooks: data || [] } };
+    return { props: { initialFeaturedBooks: data || [] }, revalidate: 3600 };
   } catch {
-    return { props: { initialFeaturedBooks: [] } };
+    return { props: { initialFeaturedBooks: [] }, revalidate: 60 };
   }
 }
