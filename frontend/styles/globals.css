@@ -118,49 +118,6 @@ button:disabled {
   padding: 20px;
 }
 
-/* Header Styles */
-header {
-  background: linear-gradient(135deg, #5a1f2b 0%, #7a2f3b 100%);
-  color: white;
-  padding: 30px 20px;
-  text-align: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-bottom: 3px solid #c6a75e;
-}
-
-header h1 {
-  font-size: 2.5em;
-  font-weight: 700;
-  margin-bottom: 15px;
-  letter-spacing: -0.5px;
-}
-
-header p {
-  font-size: 1.1em;
-  opacity: 0.95;
-  font-style: italic;
-}
-
-header nav {
-  display: flex;
-  gap: 30px;
-  justify-content: center;
-  margin-top: 20px;
-  flex-wrap: wrap;
-}
-
-header nav a {
-  color: white;
-  font-size: 1em;
-  padding: 8px 16px;
-  border-radius: 4px;
-  transition: all 0.3s ease;
-}
-
-header nav a:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  text-decoration: none;
-}
 
 /* Footer */
 footer {
@@ -344,10 +301,6 @@ input:focus {
     gap: 15px;
   }
 
-  header h1 {
-    font-size: 2em;
-  }
-
   h1 {
     font-size: 2em;
   }
@@ -361,29 +314,6 @@ input:focus {
 @media (max-width: 768px) {
   html, body {
     font-size: 15px;
-  }
-
-  header {
-    padding: 20px 15px;
-  }
-
-  header h1 {
-    font-size: 1.8em;
-    margin-bottom: 10px;
-  }
-
-  header p {
-    font-size: 0.95em;
-  }
-
-  header nav {
-    gap: 10px;
-    margin-top: 15px;
-  }
-
-  header nav a {
-    padding: 6px 12px;
-    font-size: 0.9em;
   }
 
   h1 {
@@ -454,29 +384,6 @@ input:focus {
 @media (max-width: 480px) {
   html, body {
     font-size: 14px;
-  }
-
-  header {
-    padding: 15px 10px;
-  }
-
-  header h1 {
-    font-size: 1.5em;
-    margin-bottom: 8px;
-  }
-
-  header p {
-    font-size: 0.9em;
-  }
-
-  header nav {
-    gap: 8px;
-    margin-top: 12px;
-  }
-
-  header nav a {
-    padding: 5px 10px;
-    font-size: 0.8em;
   }
 
   h1 {
@@ -554,10 +461,6 @@ input:focus {
 }
 
 @media (max-width: 360px) {
-  header h1 {
-    font-size: 1.3em;
-  }
-
   h1 {
     font-size: 1.3em;
   }
