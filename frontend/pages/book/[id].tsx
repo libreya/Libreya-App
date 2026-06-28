@@ -115,7 +115,7 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
     setGutendexSummary(null);
     setSummaryLoading(true);
 
-    fetch(`/api/gutendex?id=${gutenbergId}`, { signal: controller.signal })
+    fetch(`https://gutendex.com/books/${encodeURIComponent(gutenbergId)}`, { signal: controller.signal })
       .then(r => r.json())
       .then(async data => {
         const summary: string | undefined = data.summaries?.[0];
