@@ -26,12 +26,12 @@ const faqs = [
   {
     question: 'How many books does Libreya have?',
     answer:
-      'Libreya currently offers over 300 classic books spanning nine genres: Fiction, Adventure, Mystery, Romance, Science Fiction, Philosophy, Drama, Poetry, and History. We regularly add new titles. If there is a specific classic you would like to see, you can suggest it by contacting us.',
+      'Libreya currently offers over 300 classic books spanning nine genres: Adventure, Biography, Children\'s Literature, Fiction, History, Horror, Mystery, Poetry, and Romance. We regularly add new titles. If there is a specific classic you would like to see, you can suggest it by contacting us.',
   },
   {
     question: 'What genres are available?',
     answer:
-      'Our library spans nine genres: Fiction (novels and novellas from the Western and world literary canon), Adventure (exploration and survival stories), Mystery (foundational detective and crime fiction), Romance (classic love stories and courtship narratives), Science Fiction (early visionary works by H.G. Wells, Jules Verne, and others), Philosophy (essential works of Western and Eastern thought), Drama (plays by Shakespeare, Ibsen, Chekhov, and others), Poetry (verse collections from major poets), and History (historical accounts and chronicles).',
+      'Our library spans nine genres: Adventure (exploration and survival stories), Biography (lives of great historical figures), Children\'s Literature (beloved classics by Carroll, Barrie, Baum, and others), Fiction (novels and novellas from the Western and world literary canon), History (historical accounts and chronicles), Horror (stories of fear and the uncanny by Poe, Stoker, and Shelley), Mystery (foundational detective and crime fiction), Poetry (verse collections from major poets), and Romance (classic love stories and courtship narratives).',
   },
   {
     question: 'How do I save my reading progress?',

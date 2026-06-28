@@ -348,8 +348,8 @@ export default function Home({ initialFeaturedBooks }: HomeProps) {
             subscription. No account required. No barrier of any kind between you and the books.
           </p>
           <p style={{ lineHeight: '1.9', color: 'var(--text-secondary)', marginBottom: '28px' }}>
-            Our library spans nine genres: fiction, adventure, mystery, science fiction, romance, philosophy, drama,
-            poetry, and history. Whether you are reading the classics for the first time or returning to books you
+            Our library spans nine genres: adventure, biography, children's literature, fiction, history, horror,
+            mystery, poetry, and romance. Whether you are reading the classics for the first time or returning to books you
             love, the Libreya library will have something worth your time. Start with a book you have always meant to
             read, or let the browse page surface something unexpected.
           </p>

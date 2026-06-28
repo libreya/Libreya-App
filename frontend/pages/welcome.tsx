@@ -3,15 +3,15 @@ import Head from 'next/head';
 import Link from 'next/link';
 
 const GENRES = [
-  { name: 'Fiction', icon: '📚', description: 'Novels and novellas from the Western and world literary canon — from Tolstoy to Austen.' },
   { name: 'Adventure', icon: '⛵', description: 'Tales of exploration and survival — Treasure Island, Moby-Dick, The Count of Monte Cristo.' },
-  { name: 'Mystery', icon: '🔍', description: 'Foundational detective fiction — Sherlock Holmes, Agatha Christie-era classics and beyond.' },
-  { name: 'Science Fiction', icon: '🚀', description: 'Early visionary works by H.G. Wells, Jules Verne, and the writers who invented the genre.' },
-  { name: 'Romance', icon: '💌', description: 'Classic love stories and courtship narratives from Jane Austen to the Brontë sisters.' },
-  { name: 'Philosophy', icon: '🏛', description: 'Essential works of Western and Eastern thought that shaped the way humanity understands itself.' },
-  { name: 'Drama', icon: '🎭', description: 'Plays by Shakespeare, Ibsen, Chekhov, and the other great theatrical voices of literary history.' },
-  { name: 'Poetry', icon: '🖊', description: 'Verse collections from the most celebrated poets — Homer, Dante, Keats, Whitman, and more.' },
+  { name: 'Biography', icon: '✍️', description: 'Lives of great figures — scientists, rulers, artists — told by those who witnessed them.' },
+  { name: "Children's Literature", icon: '🐇', description: 'Beloved classics by Carroll, Barrie, Baum, and others that enchant readers of all ages.' },
+  { name: 'Fiction', icon: '📚', description: 'Novels and novellas from the Western and world literary canon — from Tolstoy to Austen.' },
   { name: 'History', icon: '🏺', description: 'Historical chronicles and first-hand accounts that document the sweep of human civilization.' },
+  { name: 'Horror', icon: '🕯️', description: 'Stories of fear and the uncanny — Poe, Stoker, Shelley, and the founders of the genre.' },
+  { name: 'Mystery', icon: '🔍', description: 'Foundational detective fiction — Sherlock Holmes, Agatha Christie-era classics and beyond.' },
+  { name: 'Poetry', icon: '🖊', description: 'Verse collections from the most celebrated poets — Homer, Dante, Keats, Whitman, and more.' },
+  { name: 'Romance', icon: '💌', description: 'Classic love stories and courtship narratives from Jane Austen to the Brontë sisters.' },
 ];
 
 const HOW_IT_WORKS = [

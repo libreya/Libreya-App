@@ -134,15 +134,15 @@ export default function About() {
             as enduring works of art. Our selection spans:
           </p>
           <ul style={{ marginLeft: '24px', marginTop: '12px', lineHeight: '1.9' }}>
-            <li><strong>Fiction:</strong> Novels, novellas, and short story collections from the Western and world literary canon</li>
             <li><strong>Adventure:</strong> Tales of exploration, survival, and discovery that defined the adventure genre</li>
-            <li><strong>Mystery:</strong> The foundational detective and crime fiction that launched an entire genre</li>
-            <li><strong>Romance:</strong> Classic stories of love, courtship, and society from multiple literary traditions</li>
-            <li><strong>Science Fiction:</strong> Early visionary works that imagined technology, space, and the future</li>
-            <li><strong>Philosophy:</strong> Essential works of thought that shaped Western and Eastern intellectual history</li>
-            <li><strong>Drama:</strong> Plays from Shakespeare, Ibsen, Chekhov, and other major theatrical voices</li>
-            <li><strong>Poetry:</strong> Verse collections from the most celebrated poets in literary history</li>
+            <li><strong>Biography:</strong> Lives of great figures told by those who knew them or in their own words</li>
+            <li><strong>Children's Literature:</strong> Beloved classics by Carroll, Barrie, Baum, and others that endure across generations</li>
+            <li><strong>Fiction:</strong> Novels, novellas, and short story collections from the Western and world literary canon</li>
             <li><strong>History:</strong> Historical accounts and chronicles that document the human past</li>
+            <li><strong>Horror:</strong> Stories of fear and the uncanny by Poe, Stoker, Shelley, and their successors</li>
+            <li><strong>Mystery:</strong> The foundational detective and crime fiction that launched an entire genre</li>
+            <li><strong>Poetry:</strong> Verse collections from the most celebrated poets in literary history</li>
+            <li><strong>Romance:</strong> Classic stories of love, courtship, and society from multiple literary traditions</li>
           </ul>
           <p style={{ marginTop: '16px' }}>
             Each book is reviewed for text quality before being added to the library. We correct common

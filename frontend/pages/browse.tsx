@@ -103,7 +103,7 @@ export default function Browse({ initialBooks, initialCategories, initialCategor
         <title>Browse Classic Books – Free Online Library | Libreya</title>
         <meta
           name="description"
-          content="Browse over 300 classic books on Libreya. Search by title, author, or genre — Fiction, Mystery, Adventure, Romance, Science Fiction, Philosophy, and more. Free to read."
+          content="Browse over 300 classic books on Libreya. Search by title, author, or genre — Fiction, Mystery, Adventure, Romance, Horror, Biography, and more. Free to read."
         />
         <meta name="author" content="Libreya Editorial Team" />
         <meta property="article:published_time" content="2025-11-15T00:00:00+00:00" />
@@ -121,7 +121,7 @@ export default function Browse({ initialBooks, initialCategories, initialCategor
             '@context': 'https://schema.org',
             '@type': 'CollectionPage',
             name: 'Browse Classic Books – Free Online Library | Libreya',
-            description: 'Browse over 300 classic books on Libreya — Fiction, Mystery, Adventure, Romance, Science Fiction, Philosophy, and more.',
+            description: 'Browse over 300 classic books on Libreya — Fiction, Mystery, Adventure, Romance, Horror, Biography, Children\'s Literature, and more.',
             url: 'https://libreya.app/browse',
             author: { '@type': 'Organization', name: 'Libreya', url: 'https://libreya.app' },
             publisher: { '@type': 'Organization', name: 'Libreya', url: 'https://libreya.app' },
@@ -412,15 +412,15 @@ export default function Browse({ initialBooks, initialCategories, initialCategor
           <h2 style={{ fontSize: '1.4rem', marginBottom: '20px' }}>Explore by Genre</h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
             {[
-              { name: 'Fiction', desc: 'Novels and novellas that shaped how we understand human nature — Austen, Tolstoy, Dickens, Dostoevsky, and more.' },
               { name: 'Adventure', desc: 'Tales of exploration, survival, and discovery by Stevenson, Verne, London, and the writers who defined the genre.' },
-              { name: 'Mystery', desc: 'The foundational detective fiction of Conan Doyle, Poe, and others — the genre at its freshest and most inventive.' },
-              { name: 'Science Fiction', desc: 'Early visionary works by H.G. Wells and Jules Verne that laid the foundation for the entire genre.' },
-              { name: 'Romance', desc: 'Classic love stories from Austen, the Brontës, and others — sharp social portraits as much as love stories.' },
-              { name: 'Philosophy', desc: 'Primary texts from Plato, Marcus Aurelius, Hume, Kant, and others — essential thinking on how to live.' },
-              { name: 'Drama', desc: 'Plays by Shakespeare, Ibsen, Chekhov, and the great theatrical voices of the literary tradition.' },
-              { name: 'Poetry', desc: 'Verse from Homer to Whitman — epic poetry, lyric collections, and the works that defined literary traditions.' },
+              { name: 'Biography', desc: 'Lives of great figures — scientists, rulers, artists — told in their own words and by those who knew them.' },
+              { name: "Children's Literature", desc: 'Carroll, Barrie, Baum — beloved classics that have enchanted young readers for generations.' },
+              { name: 'Fiction', desc: 'Novels and novellas that shaped how we understand human nature — Austen, Tolstoy, Dickens, Dostoevsky, and more.' },
               { name: 'History', desc: 'Historical chronicles from Thucydides to Gibbon — events recorded by the people who witnessed them.' },
+              { name: 'Horror', desc: 'Poe, Stoker, Shelley — the stories that defined fear and the uncanny in literature.' },
+              { name: 'Mystery', desc: 'The foundational detective fiction of Conan Doyle, Poe, and others — the genre at its freshest and most inventive.' },
+              { name: 'Poetry', desc: 'Verse from Homer to Whitman — epic poetry, lyric collections, and the works that defined literary traditions.' },
+              { name: 'Romance', desc: 'Classic love stories from Austen, the Brontës, and others — sharp social portraits as much as love stories.' },
             ].map(genre => (
               <Link key={genre.name} href={`/browse?category=${encodeURIComponent(genre.name)}`} style={{ textDecoration: 'none' }}>
                 <div className="genre-card" style={{
@@ -451,7 +451,7 @@ export default function Browse({ initialBooks, initialCategories, initialCategor
             <p style={{ lineHeight: '1.9', color: 'var(--text-secondary)', marginBottom: 0 }}>
               Our curation focuses on works of lasting literary significance — books that have shaped culture, defined
               genres, or stood the test of time as enduring works of art. The library currently spans nine genres and
-              includes fiction, drama, poetry, philosophy, adventure, mystery, science fiction, romance, and history.
+              includes fiction, adventure, mystery, romance, horror, biography, children's literature, poetry, and history.
               New titles are added regularly. If there is a classic you would like to see added, contact us at
               hello@libreya.app.
             </p>

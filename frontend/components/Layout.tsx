@@ -27,12 +27,12 @@ const FOOTER_LINKS = {
     { label: 'FAQ',              path: '/faq' },
   ],
   Genres: [
-    { label: 'Fiction',          path: '/browse?category=Fiction' },
-    { label: 'Mystery',          path: '/browse?category=Mystery' },
-    { label: 'Adventure',        path: '/browse?category=Adventure' },
-    { label: 'Science Fiction',  path: '/browse?category=Science+Fiction' },
-    { label: 'Philosophy',       path: '/browse?category=Philosophy' },
-    { label: 'Drama',            path: '/browse?category=Drama' },
+    { label: 'Adventure',             path: '/browse?category=Adventure' },
+    { label: 'Biography',             path: '/browse?category=Biography' },
+    { label: "Children's Literature", path: '/browse?category=Children%27s+Literature' },
+    { label: 'Fiction',               path: '/browse?category=Fiction' },
+    { label: 'Horror',                path: '/browse?category=Horror' },
+    { label: 'Mystery',               path: '/browse?category=Mystery' },
   ],
   Legal: [
     { label: 'Privacy Policy',   path: '/legal/privacy' },
