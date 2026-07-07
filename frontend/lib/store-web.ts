@@ -102,7 +102,7 @@ const storage = {
 
 export const useAppStore = create<AppState>((set, get) => ({
   user: null,
-  isLoading: false,
+  isLoading: true,
   theme: 'light',
   books: [],
   featuredBooks: [],

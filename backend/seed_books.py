@@ -374,17 +374,171 @@ async def fetch_gutenberg_text(gutenberg_id: int) -> str:
                     text = response.text
                     # Clean the text
                     cleaned = clean_gutenberg_text(text)
-                    # Convert to simple HTML
-                    paragraphs = cleaned.split('\n\n')
+                    # Strip "[Illustration: ...]" / "[Illustration]" transcriber notes.
+                    # Non-greedy + DOTALL so a blank line inside the brackets doesn't
+                    # leave a dangling "[Illustration:" fragment after paragraph splitting.
+                    # Some editions render ornamental chapter-heading art as an illustration
+                    # whose caption contains the chapter title itself - rescue that line
+                    # instead of dropping the whole block.
+                    def _replace_illustration(match):
+                        inner = match.group(1)
+                        heading_match = re.search(
+                            r'^\s*(CHAPTER|BOOK|PART|ACT|SCENE|PREFACE|INTRODUCTION|FOREWORD|LETTER|VOLUME)\b.*$', inner,
+                            flags=re.IGNORECASE | re.MULTILINE
+                        )
+                        return f"\n\n{heading_match.group(0).strip()}\n\n" if heading_match else ""
+
+                    cleaned = re.sub(
+                        r'\[\s*illustration\s*:?(.*?)\]', _replace_illustration, cleaned,
+                        flags=re.IGNORECASE | re.DOTALL
+                    )
+                    # Real headings are short titles. Some paragraphs merely OPEN with
+                    # a heading keyword before continuing into ordinary prose in the
+                    # same paragraph (e.g. Moby-Dick's Cetology chapter: "BOOK I.
+                    # (Folio), CHAPTER III. (Fin-Back).--Under this head I reckon a
+                    # monster which..."). Capping the length keeps those from being
+                    # mistaken for a real section break. Exempt from the cap:
+                    # paragraphs with no lowercase letters at all - some editions
+                    # (e.g. Dickens') print the chapter number and its full
+                    # descriptive title as one all-caps paragraph, which can run well
+                    # past the cap despite being a genuine heading, not narrative prose.
+                    MAX_HEADING_LENGTH = 100
+
+                    def _is_all_caps_text(p):
+                        return not re.search(r'[a-z]', p)
+
+                    # Numbered/lettered markers conventionally continue into a
+                    # subtitle on the same heading (e.g. Dickens' "CHAPTER I.\nTREATS
+                    # OF THE PLACE WHERE OLIVER TWIST WAS BORN...", squished across
+                    # lines with no blank line between the marker and its title) - so
+                    # these are allowed to span multiple lines as one heading.
+                    NUMBERED_HEADING_PATTERN = r'^(CHAPTER|Chapter|BOOK|Book|PART|Part|ACT|Act|SCENE|Scene|LETTER|Letter|VOLUME|Volume)'
+                    # Unlike numbered markers, these always name a complete section
+                    # by themselves - they never legitimately continue into a second
+                    # line as a subtitle. Without this distinction, a squished TOC
+                    # pair like "INTRODUCTION.\nPOPE'S PREFACE TO THE ILIAD OF HOMER"
+                    # (two independent entries with no blank line between them) would
+                    # get read as one heading swallowing the second entry.
+                    STANDALONE_HEADING_PATTERN = r'^(PREFACE|Preface|INTRODUCTION|Introduction|FOREWORD|Foreword)'
+                    # Capped at 3 digits - no real book has thousands of chapters, and
+                    # a longer run of digits is more likely a year (e.g. a "1899"
+                    # publication date on the title page) than a chapter number.
+                    BARE_NUMBER_PATTERN = r'^(?:[IVXLCDM]{1,8}|\d{1,3})\.?$'
+
+                    def _is_heading_candidate(p):
+                        if re.match(STANDALONE_HEADING_PATTERN, p):
+                            return '\n' not in p and len(p) <= MAX_HEADING_LENGTH
+                        if re.match(NUMBERED_HEADING_PATTERN, p):
+                            return len(p) <= MAX_HEADING_LENGTH or _is_all_caps_text(p)
+                        return bool(re.match(BARE_NUMBER_PATTERN, p, re.IGNORECASE))
+
+                    # A squished TOC block rarely has every single line matching a
+                    # heading keyword - some entries are section dividers or appendix
+                    # labels that don't fit the list (e.g. "THE ODYSSEY" or
+                    # "FOOTNOTES:" mixed in among a run of "BOOK I."..."BOOK XXIV.").
+                    # Real prose essentially never has most of its physical
+                    # line-wraps independently start with a heading keyword, so a
+                    # high match ratio is still a safe signal without requiring
+                    # every line to match.
+                    SQUISHED_TOC_MATCH_RATIO = 0.7
+
+                    # Some editions squish an entire "CONTENTS" listing into one
+                    # paragraph with no blank lines between entries (e.g.
+                    # "CHAPTER I. Title\nCHAPTER II. Title\n..."). That block still
+                    # starts with a heading keyword, so it would otherwise pass the
+                    # single-candidate check below. Detect it directly: 2+ internal
+                    # lines where most lines independently look like a heading is
+                    # never real prose.
+                    def _is_squished_toc_block(p):
+                        lines = [line.strip() for line in p.split('\n') if line.strip()]
+                        if len(lines) < 2:
+                            return False
+                        match_count = sum(1 for line in lines if _is_heading_candidate(line))
+                        return (match_count / len(lines)) >= SQUISHED_TOC_MATCH_RATIO
+
+                    # A real chapter break can legitimately be a short stack of nested
+                    # headings (e.g. "BOOK ONE: 1805" immediately followed by "CHAPTER
+                    # I", with no body text between them; Les Misérables goes a level
+                    # deeper still, with "VOLUME I" -> "BOOK FIRST" -> "CHAPTER I"
+                    # stacked with nothing but blank lines between them). A real
+                    # table-of-contents listing (when its entries are separate
+                    # blank-line-delimited paragraphs rather than one squished block)
+                    # is a much longer run.
+                    MAX_HEADING_RUN_LENGTH = 3
+
+                    def _heading_run_length(paragraphs, index):
+                        # The run only extends into a neighbor that shares the same
+                        # indentation status - this stops a long, indented TOC listing
+                        # from "leaking" into an adjacent real (non-indented) heading
+                        # with nothing but blank lines between them.
+                        indented = paragraphs[index]['indented']
+                        start = index
+                        while (
+                            start > 0
+                            and paragraphs[start - 1]['indented'] == indented
+                            and _is_heading_candidate(paragraphs[start - 1]['text'])
+                        ):
+                            start -= 1
+                        end = index
+                        while (
+                            end < len(paragraphs) - 1
+                            and paragraphs[end + 1]['indented'] == indented
+                            and _is_heading_candidate(paragraphs[end + 1]['text'])
+                        ):
+                            end += 1
+                        return end - start + 1
+
+                    # Escape HTML special characters so stray "<"/"&"/">" in the source
+                    # text (OCR artifacts, "Tom & Jerry", etc.) can't break the markup.
+                    def _escape_html(text):
+                        return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+                    # Gutenberg's plain-text convention for italics: "_emphasized text_".
+                    # Applied after escaping so the inserted <em> tags aren't re-escaped.
+                    def _convert_italics(p):
+                        return re.sub(r'_([^_\n]+)_', r'<em>\1</em>', p)
+
+                    # Convert to simple HTML. Track whether each paragraph's raw
+                    # (pre-strip) text started with a space/tab - used by
+                    # _heading_run_length() to keep a long indented TOC listing from
+                    # leaking into an adjacent real (non-indented) heading.
+                    paragraphs = [
+                        {'text': raw.strip(), 'indented': bool(re.match(r'^[ \t]', raw))}
+                        for raw in cleaned.split('\n\n') if raw.strip()
+                    ]
                     html_content = ""
-                    for p in paragraphs:
-                        p = p.strip()
-                        if p:
-                            # Check if it's a chapter heading
-                            if re.match(r'^(CHAPTER|Chapter|BOOK|Book|PART|Part|ACT|Act|SCENE|Scene)', p):
-                                html_content += f"<h2>{p}</h2>\n"
+                    for i, info in enumerate(paragraphs):
+                        p = info['text']
+                        # Three outcomes, not two: a real heading (<h2>), an ordinary
+                        # paragraph (<p>, unchanged), or a recognized table-of-contents
+                        # entry - dropped entirely rather than kept as a <p>. A demoted
+                        # TOC entry has no reading value on its own, and keeping it as
+                        # inert text is actively wrong when the TOC sits between two
+                        # real headings rather than before all of them: the reader's
+                        # chapter-splitter groups everything between consecutive <h2>s
+                        # into one chapter, so a kept-but-demoted TOC block right after a
+                        # real heading (e.g. a Preface followed by "Contents" before
+                        # "Volume I") visibly leaks into that preceding chapter.
+                        is_real_heading = False
+                        is_toc_entry = False
+                        if _is_squished_toc_block(p):
+                            is_toc_entry = True
+                        elif _is_heading_candidate(p):
+                            # A genuine chapter break (or a short nested stack like
+                            # BOOK+CHAPTER) is a short run of heading-candidates; a real
+                            # table-of-contents listing (its entries as separate
+                            # paragraphs rather than one squished block) is a much
+                            # longer run.
+                            if _heading_run_length(paragraphs, i) <= MAX_HEADING_RUN_LENGTH:
+                                is_real_heading = True
                             else:
-                                html_content += f"<p>{p}</p>\n"
+                                is_toc_entry = True
+                        p = _convert_italics(_escape_html(p))
+
+                        if is_real_heading:
+                            html_content += f"<h2>{p}</h2>\n"
+                        elif not is_toc_entry:
+                            html_content += f"<p>{p}</p>\n"
                     return html_content
             except Exception as e:
                 print(f"Error fetching from {url}: {e}")
