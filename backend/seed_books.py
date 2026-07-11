@@ -430,7 +430,30 @@ async def fetch_gutenberg_text(gutenberg_id: int) -> str:
                             return '\n' not in p and len(p) <= MAX_HEADING_LENGTH
                         if re.match(NUMBERED_HEADING_PATTERN, p):
                             return len(p) <= MAX_HEADING_LENGTH or _is_all_caps_text(p)
-                        return bool(re.match(BARE_NUMBER_PATTERN, p, re.IGNORECASE))
+                        # Bare numerals (no CHAPTER/BOOK/etc keyword) can also have a
+                        # subtitle squished onto the very next line with no blank line
+                        # between them (e.g. Treasure Island: "I\nThe Old Sea-dog at
+                        # the Admiral Benbow"). Only the FIRST line needs to be just
+                        # the numeral - testing the whole multi-line string would
+                        # never match, and a prefix match against the whole string
+                        # would be unsafe, since many ordinary sentences start with
+                        # the word "I".
+                        first_line = p.split('\n', 1)[0]
+                        return bool(re.match(BARE_NUMBER_PATTERN, first_line, re.IGNORECASE))
+
+                    # A page-numbered table of contents (e.g. "I.  THE OLD SEA-DOG
+                    # . . . .  11") has no reliable heading keyword to match on, so
+                    # it needs its own signal: most editions right-align a page
+                    # number after a run of dot leaders. Real narrative prose never
+                    # ends most of its lines this way.
+                    TOC_PAGE_NUMBER_PATTERN = r'(?:\.\s*){2,}\d+\s*$'
+
+                    def _looks_like_toc_page_listing(p):
+                        lines = [line.strip() for line in p.split('\n') if line.strip()]
+                        if not lines:
+                            return False
+                        match_count = sum(1 for line in lines if re.search(TOC_PAGE_NUMBER_PATTERN, line))
+                        return (match_count / len(lines)) >= 0.5
 
                     # A squished TOC block rarely has every single line matching a
                     # heading keyword - some entries are section dividers or appendix
@@ -451,10 +474,92 @@ async def fetch_gutenberg_text(gutenberg_id: int) -> str:
                     # never real prose.
                     def _is_squished_toc_block(p):
                         lines = [line.strip() for line in p.split('\n') if line.strip()]
-                        if len(lines) < 2:
+                        # A real squished TOC always lists many entries - requiring at
+                        # least 4 lines avoids misfiring on a legitimate short (2-3
+                        # line) heading whose own text coincidentally matches a heading
+                        # keyword on more than one line (e.g. The Time Machine's real
+                        # "I.\nIntroduction": "I." matches the bare-numeral pattern and
+                        # "Introduction" independently matches STANDALONE_HEADING_PATTERN,
+                        # giving a 2-line block a 100% match ratio despite being one
+                        # genuine heading, not a table of contents).
+                        if len(lines) < 4:
                             return False
                         match_count = sum(1 for line in lines if _is_heading_candidate(line))
                         return (match_count / len(lines)) >= SQUISHED_TOC_MATCH_RATIO
+
+                    # Some TOCs combine the chapter marker and its title on one line
+                    # (e.g. "CHAPTER 44 THE JOURNEY ENDED"), while the real heading
+                    # later is just the bare marker alone ("CHAPTER 1", with its title
+                    # as a separate paragraph next).
+                    def _is_bare_numbered_marker(p):
+                        if '\n' in p:
+                            return False
+                        match = re.match(NUMBERED_HEADING_PATTERN, p)
+                        if not match:
+                            return False
+                        rest = p[match.end():].strip()
+                        return bool(re.match(r'^[\dIVXLCDM]{0,8}[.:]?$', rest, re.IGNORECASE))
+
+                    # Extracts just "CHAPTER 44" from "CHAPTER 44 THE JOURNEY ENDED",
+                    # or None if no immediate number follows the keyword.
+                    def _extract_numbered_marker_prefix(p):
+                        match = re.match(NUMBERED_HEADING_PATTERN, p)
+                        if not match:
+                            return None
+                        rest = p[match.end():]
+                        num_match = re.match(r'^\s*[\dIVXLCDM]{1,8}\.?', rest, re.IGNORECASE)
+                        if not num_match:
+                            return None
+                        return re.sub(r'\s+', ' ', match.group(0) + num_match.group(0)).strip()
+
+                    # Finds runs of consecutive, same-indentation, non-bare NUMBERED
+                    # entries longer than MAX_HEADING_RUN_LENGTH (i.e. already-confirmed
+                    # TOC listings by the normal rule) and extracts each entry's bare
+                    # marker prefix. Used to rescue a bare marker directly adjacent to
+                    # such a TOC with no indentation difference to lean on (e.g. Journey
+                    # to the Centre of the Earth's real "CHAPTER 1", sitting flush
+                    # against the TOC's flush-left "CHAPTER 44 THE JOURNEY ENDED").
+                    #
+                    # Only prefixes occurring exactly once GLOBALLY are trusted: some
+                    # books (War and Peace, Les Misérables) restart chapter numbering
+                    # per Book/Volume, so "CHAPTER I" can legitimately recur many times
+                    # - even across more than one confirmed run, when the TOC is
+                    # fragmented by an occasional untitled chapter - and treating it as
+                    # a unique identifier there would wrongly rescue an unrelated
+                    # occurrence sharing the same bare text.
+                    def _find_numbered_toc_marker_prefixes(paragraphs):
+                        all_prefixes = []
+                        i = 0
+                        while i < len(paragraphs):
+                            info = paragraphs[i]
+                            is_non_bare_numbered = (
+                                '\n' not in info['text']
+                                and re.match(NUMBERED_HEADING_PATTERN, info['text'])
+                                and not _is_bare_numbered_marker(info['text'])
+                            )
+                            if not is_non_bare_numbered:
+                                i += 1
+                                continue
+                            indented = info['indented']
+                            j = i
+                            while (
+                                j < len(paragraphs)
+                                and paragraphs[j]['indented'] == indented
+                                and '\n' not in paragraphs[j]['text']
+                                and re.match(NUMBERED_HEADING_PATTERN, paragraphs[j]['text'])
+                                and not _is_bare_numbered_marker(paragraphs[j]['text'])
+                            ):
+                                j += 1
+                            if j - i > MAX_HEADING_RUN_LENGTH:
+                                for k in range(i, j):
+                                    prefix = _extract_numbered_marker_prefix(paragraphs[k]['text'])
+                                    if prefix:
+                                        all_prefixes.append(prefix)
+                            i = j
+                        counts = {}
+                        for p in all_prefixes:
+                            counts[p] = counts.get(p, 0) + 1
+                        return {p for p, count in counts.items() if count == 1}
 
                     # A real chapter break can legitimately be a short stack of nested
                     # headings (e.g. "BOOK ONE: 1805" immediately followed by "CHAPTER
@@ -488,6 +593,61 @@ async def fetch_gutenberg_text(gutenberg_id: int) -> str:
                             end += 1
                         return end - start + 1
 
+                    # Some books title chapters with just a short descriptive name and
+                    # no numbering or keyword at all (e.g. Dr. Jekyll and Mr. Hyde:
+                    # "STORY OF THE DOOR", "SEARCH FOR MR. HYDE"). There's no anchor to
+                    # match on directly, so this is only trusted when found as part of
+                    # a confirmed run (see _find_bare_title_toc_entries below) - never
+                    # as a standalone per-paragraph signal, which is far too easily
+                    # triggered by dedications, signatures, or a single shouted word.
+                    MAX_BARE_TITLE_LENGTH = 60
+
+                    def _is_bare_title_candidate(p):
+                        if '\n' in p:
+                            return False
+                        if len(p) > MAX_BARE_TITLE_LENGTH:
+                            return False
+                        if not re.search(r'[A-Za-z]', p):
+                            return False
+                        # Don't double-count paragraphs the keyword-based system already
+                        # recognizes - those already have their own correct run-length +
+                        # indentation handling. Without this exclusion, a short
+                        # non-keyword paragraph like "NOTE." or "FOOTNOTES:" sitting
+                        # between a keyword-based TOC's tail and a real heading can act
+                        # as a bridge, letting a confirmed run "leak" into real headings
+                        # the keyword-based system already isolates.
+                        if re.match(STANDALONE_HEADING_PATTERN, p) or re.match(NUMBERED_HEADING_PATTERN, p):
+                            return False
+                        return _is_all_caps_text(p)
+
+                    # Guards against treating a couple of incidental short all-caps
+                    # lines (a dedication, a signature) as a table of contents - a real
+                    # one lists many entries in a row.
+                    MIN_BARE_TITLE_TOC_RUN = 5
+
+                    def _find_bare_title_toc_entries(paragraphs):
+                        indices = set()
+                        titles = set()
+                        i = 0
+                        while i < len(paragraphs):
+                            if not _is_bare_title_candidate(paragraphs[i]['text']):
+                                i += 1
+                                continue
+                            indented = paragraphs[i]['indented']
+                            j = i
+                            while (
+                                j < len(paragraphs)
+                                and paragraphs[j]['indented'] == indented
+                                and _is_bare_title_candidate(paragraphs[j]['text'])
+                            ):
+                                j += 1
+                            if j - i >= MIN_BARE_TITLE_TOC_RUN:
+                                for k in range(i, j):
+                                    indices.add(k)
+                                    titles.add(paragraphs[k]['text'])
+                            i = j
+                        return indices, titles
+
                     # Escape HTML special characters so stray "<"/"&"/">" in the source
                     # text (OCR artifacts, "Tom & Jerry", etc.) can't break the markup.
                     def _escape_html(text):
@@ -506,6 +666,8 @@ async def fetch_gutenberg_text(gutenberg_id: int) -> str:
                         {'text': raw.strip(), 'indented': bool(re.match(r'^[ \t]', raw))}
                         for raw in cleaned.split('\n\n') if raw.strip()
                     ]
+                    bare_title_toc_indices, bare_title_toc_titles = _find_bare_title_toc_entries(paragraphs)
+                    numbered_toc_prefixes = _find_numbered_toc_marker_prefixes(paragraphs)
                     html_content = ""
                     for i, info in enumerate(paragraphs):
                         p = info['text']
@@ -521,18 +683,49 @@ async def fetch_gutenberg_text(gutenberg_id: int) -> str:
                         # "Volume I") visibly leaks into that preceding chapter.
                         is_real_heading = False
                         is_toc_entry = False
-                        if _is_squished_toc_block(p):
+                        if i in bare_title_toc_indices:
+                            is_toc_entry = True
+                        elif _is_squished_toc_block(p) or _looks_like_toc_page_listing(p):
                             is_toc_entry = True
                         elif _is_heading_candidate(p):
-                            # A genuine chapter break (or a short nested stack like
-                            # BOOK+CHAPTER) is a short run of heading-candidates; a real
-                            # table-of-contents listing (its entries as separate
-                            # paragraphs rather than one squished block) is a much
-                            # longer run.
-                            if _heading_run_length(paragraphs, i) <= MAX_HEADING_RUN_LENGTH:
+                            # A page-numbered TOC has no heading keyword of its own to
+                            # match on, so its "PART ONE" / "CHAPTER I" entries can end
+                            # up isolated once the page-numbered listing lines around
+                            # them are excluded. If a heading candidate sits directly
+                            # next to a page-numbered listing, treat it as part of that
+                            # same TOC too.
+                            prev_is_toc_listing = i > 0 and _looks_like_toc_page_listing(paragraphs[i - 1]['text'])
+                            next_is_toc_listing = (
+                                i < len(paragraphs) - 1
+                                and _looks_like_toc_page_listing(paragraphs[i + 1]['text'])
+                            )
+                            if prev_is_toc_listing or next_is_toc_listing:
+                                is_toc_entry = True
+                            elif _heading_run_length(paragraphs, i) <= MAX_HEADING_RUN_LENGTH:
+                                # A genuine chapter break (or a short nested stack like
+                                # BOOK+CHAPTER) is a short run of heading-candidates; a
+                                # real table-of-contents listing (its entries as separate
+                                # paragraphs rather than one squished block) is a much
+                                # longer run.
+                                is_real_heading = True
+                            elif _is_bare_numbered_marker(p) and p in numbered_toc_prefixes:
+                                # Overflow case: a bare marker directly adjacent to a
+                                # confirmed long "number + title" TOC run with no
+                                # indentation difference to lean on (e.g. Journey to the
+                                # Centre of the Earth's real "CHAPTER 1" sitting flush
+                                # against the TOC's flush-left "CHAPTER 44 THE JOURNEY
+                                # ENDED"). Rescued because its exact bare text matches a
+                                # prefix extracted from that confirmed run.
                                 is_real_heading = True
                             else:
                                 is_toc_entry = True
+                        elif p in bare_title_toc_titles:
+                            # Exact match against a confirmed bare-title TOC entry found
+                            # elsewhere in the document - the narrow, evidence-based
+                            # signal that lets a keyword-less chapter title (e.g. "STORY
+                            # OF THE DOOR") be recognized as real without treating every
+                            # bare all-caps line as a candidate.
+                            is_real_heading = True
                         p = _convert_italics(_escape_html(p))
 
                         if is_real_heading:

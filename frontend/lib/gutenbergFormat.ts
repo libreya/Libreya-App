@@ -56,7 +56,28 @@ function isHeadingCandidate(p: string): boolean {
   if (NUMBERED_HEADING_RE.test(p)) {
     return p.length <= MAX_HEADING_LENGTH || isAllCapsText(p);
   }
-  return BARE_NUMBER_HEADING_RE.test(p);
+  // Bare numerals (no CHAPTER/BOOK/etc keyword) can also have a subtitle
+  // squished onto the very next line with no blank line between them (e.g.
+  // Treasure Island: "I\nThe Old Sea-dog at the Admiral Benbow"). Only the
+  // FIRST line needs to be just the numeral - testing the whole multi-line
+  // string would never match (a real subtitle isn't itself just a numeral),
+  // and a prefix match against the whole string would be unsafe, since many
+  // ordinary sentences start with the word "I".
+  const firstLine = p.split('\n', 1)[0];
+  return BARE_NUMBER_HEADING_RE.test(firstLine);
+}
+
+// A page-numbered table of contents (e.g. "I.  THE OLD SEA-DOG . . . .  11")
+// has no reliable heading keyword to match on, so it needs its own signal:
+// most editions right-align a page number after a run of dot leaders. Real
+// narrative prose never ends most of its lines this way.
+const TOC_PAGE_NUMBER_RE = /(?:\.\s*){2,}\d+\s*$/;
+
+function looksLikeTocPageListing(p: string): boolean {
+  const lines = p.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
+  if (lines.length === 0) return false;
+  const matchCount = lines.filter((l) => TOC_PAGE_NUMBER_RE.test(l)).length;
+  return matchCount / lines.length >= 0.5;
 }
 
 // A squished TOC block rarely has every single line matching a heading keyword -
@@ -85,6 +106,158 @@ interface ParagraphInfo {
   text: string;
   // True if the raw (pre-trim) paragraph started with a space/tab.
   isIndented: boolean;
+}
+
+// Some books title chapters with just a short descriptive name and no
+// numbering or keyword at all (e.g. Dr. Jekyll and Mr. Hyde: "STORY OF THE
+// DOOR", "SEARCH FOR MR. HYDE"). There's no anchor to match on directly, so
+// this is only trusted when found as part of a confirmed run (see
+// findBareTitleTocEntries below) - never as a standalone per-paragraph
+// signal, which is far too easily triggered by dedications, signatures, or a
+// single shouted word in dialogue.
+const MAX_BARE_TITLE_LENGTH = 60;
+
+function isBareTitleCandidate(p: string): boolean {
+  if (p.includes('\n')) return false;
+  if (p.length > MAX_BARE_TITLE_LENGTH) return false;
+  if (!/[A-Za-z]/.test(p)) return false;
+  // Don't double-count paragraphs the keyword-based system already
+  // recognizes - those already have their own correct run-length +
+  // indentation handling. Without this exclusion, a short non-keyword
+  // paragraph like "NOTE." or "FOOTNOTES:" sitting between a keyword-based
+  // TOC's tail and a real heading can act as a bridge, letting a confirmed
+  // run "leak" into real headings the keyword-based system already isolates.
+  if (STANDALONE_HEADING_RE.test(p) || NUMBERED_HEADING_RE.test(p)) return false;
+  return isAllCapsText(p);
+}
+
+// Guards against treating a couple of incidental short all-caps lines (a
+// dedication, a signature) as a table of contents - a real one lists many
+// entries in a row.
+const MIN_BARE_TITLE_TOC_RUN = 5;
+
+/**
+ * Scan for run(s) of consecutive bare-title-candidate paragraphs (sharing
+ * indentation) at least MIN_BARE_TITLE_TOC_RUN long. Returns the paragraph
+ * indices that make up those runs (to drop, since they're the TOC itself)
+ * and the exact text of each entry (so a later, real occurrence of the same
+ * title elsewhere in the document can be promoted to <h2> by exact match -
+ * a much narrower and safer signal than treating every bare all-caps line
+ * as a heading candidate on its own).
+ */
+function findBareTitleTocEntries(paragraphs: ParagraphInfo[]): { indices: Set<number>; titles: Set<string> } {
+  const indices = new Set<number>();
+  const titles = new Set<string>();
+
+  let i = 0;
+  while (i < paragraphs.length) {
+    if (!isBareTitleCandidate(paragraphs[i].text)) {
+      i++;
+      continue;
+    }
+
+    const indented = paragraphs[i].isIndented;
+    let j = i;
+    while (
+      j < paragraphs.length &&
+      paragraphs[j].isIndented === indented &&
+      isBareTitleCandidate(paragraphs[j].text)
+    ) {
+      j++;
+    }
+
+    if (j - i >= MIN_BARE_TITLE_TOC_RUN) {
+      for (let k = i; k < j; k++) {
+        indices.add(k);
+        titles.add(paragraphs[k].text);
+      }
+    }
+
+    i = j;
+  }
+
+  return { indices, titles };
+}
+
+// Some TOCs combine the chapter marker and its title on one line (e.g. "CHAPTER
+// 44 THE JOURNEY ENDED"), while the real heading later is just the bare marker
+// alone ("CHAPTER 1", with its title as a separate paragraph next).
+function isBareNumberedMarker(p: string): boolean {
+  if (p.includes('\n')) return false;
+  const match = p.match(NUMBERED_HEADING_RE);
+  if (!match) return false;
+  const rest = p.slice(match[0].length).trim();
+  return /^[\dIVXLCDM]{0,8}[.:]?$/i.test(rest);
+}
+
+/** Extracts just "CHAPTER 44" from "CHAPTER 44 THE JOURNEY ENDED", or null if no immediate number follows the keyword. */
+function extractNumberedMarkerPrefix(p: string): string | null {
+  const match = p.match(NUMBERED_HEADING_RE);
+  if (!match) return null;
+  const rest = p.slice(match[0].length);
+  const numMatch = rest.match(/^\s*[\dIVXLCDM]{1,8}\.?/i);
+  if (!numMatch) return null;
+  return (match[0] + numMatch[0]).replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Finds runs of consecutive, same-indentation, non-bare NUMBERED entries
+ * longer than MAX_HEADING_RUN_LENGTH (i.e. already-confirmed TOC listings by
+ * the normal rule) and extracts each entry's bare marker prefix ("CHAPTER 44"
+ * from "CHAPTER 44 THE JOURNEY ENDED"). Used to rescue a bare marker that's
+ * directly adjacent to such a TOC with no indentation difference to lean on
+ * (e.g. Journey to the Centre of the Earth's real "CHAPTER 1", sitting flush
+ * against the TOC's flush-left "CHAPTER 44 THE JOURNEY ENDED").
+ *
+ * Only prefixes that occur exactly once GLOBALLY are trusted: some books
+ * (War and Peace, Les Misérables) restart chapter numbering per Book/Volume,
+ * so "CHAPTER I" can legitimately recur many times - even across more than
+ * one confirmed run, when the TOC is fragmented by an occasional untitled
+ * chapter - and treating it as a unique identifier there would wrongly
+ * rescue an unrelated occurrence sharing the same bare text.
+ */
+function findNumberedTocMarkerPrefixes(paragraphs: ParagraphInfo[]): Set<string> {
+  const allPrefixes: string[] = [];
+
+  let i = 0;
+  while (i < paragraphs.length) {
+    const info = paragraphs[i];
+    const isNonBareNumbered =
+      !info.text.includes('\n') && NUMBERED_HEADING_RE.test(info.text) && !isBareNumberedMarker(info.text);
+    if (!isNonBareNumbered) {
+      i++;
+      continue;
+    }
+
+    const indented = info.isIndented;
+    let j = i;
+    while (
+      j < paragraphs.length &&
+      paragraphs[j].isIndented === indented &&
+      !paragraphs[j].text.includes('\n') &&
+      NUMBERED_HEADING_RE.test(paragraphs[j].text) &&
+      !isBareNumberedMarker(paragraphs[j].text)
+    ) {
+      j++;
+    }
+
+    if (j - i > MAX_HEADING_RUN_LENGTH) {
+      for (let k = i; k < j; k++) {
+        const prefix = extractNumberedMarkerPrefix(paragraphs[k].text);
+        if (prefix) allPrefixes.push(prefix);
+      }
+    }
+
+    i = j;
+  }
+
+  const counts = new Map<string, number>();
+  allPrefixes.forEach((p) => counts.set(p, (counts.get(p) || 0) + 1));
+  const prefixes = new Set<string>();
+  counts.forEach((count, p) => {
+    if (count === 1) prefixes.add(p);
+  });
+  return prefixes;
 }
 
 // A real chapter break can legitimately be a short stack of nested headings
@@ -198,6 +371,8 @@ export function textToSupabaseHtml(cleanedText: string): string {
     .map((raw) => ({ text: raw.trim(), isIndented: /^[ \t]/.test(raw) }))
     .filter((info) => info.text.length > 0);
 
+  const bareTitleToc = findBareTitleTocEntries(paragraphs);
+  const numberedTocPrefixes = findNumberedTocMarkerPrefixes(paragraphs);
   const parts: string[] = [];
 
   for (let i = 0; i < paragraphs.length; i++) {
@@ -217,18 +392,44 @@ export function textToSupabaseHtml(cleanedText: string): string {
     let isRealHeading = false;
     let isTocEntry = false;
 
-    if (isSquishedTocBlock(p)) {
+    if (bareTitleToc.indices.has(i)) {
+      isTocEntry = true;
+    } else if (isSquishedTocBlock(p) || looksLikeTocPageListing(p)) {
       isTocEntry = true;
     } else if (isHeadingCandidate(p)) {
-      // A genuine chapter break (or a short nested stack like BOOK+CHAPTER) is
-      // a short run of heading-candidates; a real table-of-contents listing
-      // (its entries as separate paragraphs rather than one squished block)
-      // is a much longer run. See headingRunLength() for how it's bounded.
-      if (headingRunLength(paragraphs, i) <= MAX_HEADING_RUN_LENGTH) {
+      // A page-numbered TOC has no heading keyword of its own to match on, so
+      // its "PART ONE" / "CHAPTER I" entries can end up isolated - not part of
+      // any detectable run - once the page-numbered listing lines around them
+      // are excluded. If a heading candidate sits directly next to a
+      // page-numbered listing, treat it as part of that same TOC too.
+      const prevIsTocListing = i > 0 && looksLikeTocPageListing(paragraphs[i - 1].text);
+      const nextIsTocListing = i < paragraphs.length - 1 && looksLikeTocPageListing(paragraphs[i + 1].text);
+
+      if (prevIsTocListing || nextIsTocListing) {
+        isTocEntry = true;
+      } else if (headingRunLength(paragraphs, i) <= MAX_HEADING_RUN_LENGTH) {
+        // A genuine chapter break (or a short nested stack like BOOK+CHAPTER)
+        // is a short run of heading-candidates; a real table-of-contents
+        // listing (its entries as separate paragraphs rather than one
+        // squished block) is a much longer run. See headingRunLength().
+        isRealHeading = true;
+      } else if (isBareNumberedMarker(p) && numberedTocPrefixes.has(p)) {
+        // Overflow case: a bare marker directly adjacent to a confirmed long
+        // "number + title" TOC run with no indentation difference to lean on
+        // (e.g. Journey to the Centre of the Earth's real "CHAPTER 1" sitting
+        // flush against the TOC's flush-left "CHAPTER 44 THE JOURNEY ENDED").
+        // Rescued because its exact bare text matches a prefix extracted from
+        // that confirmed run - see findNumberedTocMarkerPrefixes().
         isRealHeading = true;
       } else {
         isTocEntry = true;
       }
+    } else if (bareTitleToc.titles.has(p)) {
+      // Exact match against a confirmed bare-title TOC entry found elsewhere
+      // in the document - the narrow, evidence-based signal that lets a
+      // keyword-less chapter title (e.g. "STORY OF THE DOOR") be recognized
+      // as real without treating every bare all-caps line as a candidate.
+      isRealHeading = true;
     }
 
     if (isRealHeading) {
