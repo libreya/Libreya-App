@@ -141,6 +141,66 @@ function normalizeNumberedTitle(p: string): string {
 }
 
 /**
+ * Same idea as normalizeNumberedTitle, but case-insensitive - for matching a
+ * Title Case "Contents" listing entry (e.g. "On the River Iss") against its
+ * later, real ALL-CAPS heading occurrence ("ON THE RIVER ISS"). Also strips
+ * a wrapping curly/straight quote pair, since some entries are themselves a
+ * quoted line (e.g. "Follow the Rope!").
+ */
+function normalizeFreeTitle(p: string): string {
+  return p
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^["“'‘]+/, '')
+    .replace(/["”'’!?.:;,]+$/, '')
+    .toLowerCase();
+}
+
+// Some editions list chapter titles in Title Case (not ALL CAPS) under a
+// literal "Contents" header, with no CHAPTER keyword or numbering at all
+// (e.g. The Warlord of Mars: "Contents\n\n On the River Iss\n Under the
+// Mountains\n..." all squished into one paragraph), while the real heading
+// later in the body is the same title rendered in ALL CAPS ("ON THE RIVER
+// ISS"). Neither isBareTitleCandidate (requires ALL CAPS) nor the
+// numbered/keyword-based detectors catch this shape.
+const CONTENTS_HEADER_RE = /^(contents|table of contents)$/i;
+
+function isContentsHeader(p: string): boolean {
+  return !p.includes('\n') && CONTENTS_HEADER_RE.test(p.trim());
+}
+
+/**
+ * Anchored on a literal "Contents" header paragraph - a far more specific
+ * and reliable signal than trying to recognize a bare Title Case listing on
+ * its own, which would be indistinguishable from an ordinary short
+ * paragraph. Only consumes the single squished block immediately following
+ * the header (not a run of further paragraphs), so the real first chapter
+ * heading right after the listing - itself also a short single-line
+ * paragraph - is never mistakenly swallowed into the TOC.
+ */
+function findFreeTitleTocEntries(paragraphs: ParagraphInfo[]): { indices: Set<number>; titles: Set<string> } {
+  const indices = new Set<number>();
+  const titles = new Set<string>();
+
+  for (let i = 0; i < paragraphs.length - 1; i++) {
+    if (!isContentsHeader(paragraphs[i].text)) continue;
+
+    const lines = paragraphs[i + 1].text
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+    if (lines.length < 2) continue;
+    if (!lines.every((l) => l.length <= MAX_BARE_TITLE_LENGTH && /[A-Za-z]/.test(l))) continue;
+
+    indices.add(i);
+    indices.add(i + 1);
+    lines.forEach((l) => titles.add(normalizeFreeTitle(l)));
+  }
+
+  return { indices, titles };
+}
+
+/**
  * Harvests exact entries out of confirmed isSquishedNumberedTitleTocBlock
  * paragraphs, so a later real occurrence of the same title can be promoted to
  * <h2> by exact match (mirroring findBareTitleTocEntries' cross-reference
@@ -445,6 +505,7 @@ export function textToSupabaseHtml(cleanedText: string): string {
   const bareTitleToc = findBareTitleTocEntries(paragraphs);
   const numberedTocPrefixes = findNumberedTocMarkerPrefixes(paragraphs);
   const numberedTitleTocEntries = findNumberedTitleTocEntries(paragraphs);
+  const freeTitleToc = findFreeTitleTocEntries(paragraphs);
   const parts: string[] = [];
 
   for (let i = 0; i < paragraphs.length; i++) {
@@ -464,7 +525,7 @@ export function textToSupabaseHtml(cleanedText: string): string {
     let isRealHeading = false;
     let isTocEntry = false;
 
-    if (bareTitleToc.indices.has(i)) {
+    if (bareTitleToc.indices.has(i) || freeTitleToc.indices.has(i)) {
       isTocEntry = true;
     } else if (isSquishedTocBlock(p) || looksLikeTocPageListing(p) || isSquishedNumberedTitleTocBlock(p)) {
       isTocEntry = true;
@@ -506,6 +567,11 @@ export function textToSupabaseHtml(cleanedText: string): string {
       // Same idea, but for a "numeral. Title" heading (e.g. "I. David and I
       // Set Forth Upon a Journey") cross-referenced against a confirmed
       // squished numbered-title TOC listing - see findNumberedTitleTocEntries().
+      isRealHeading = true;
+    } else if (!p.includes('\n') && p.length <= MAX_BARE_TITLE_LENGTH && freeTitleToc.titles.has(normalizeFreeTitle(p))) {
+      // Same idea, but case-insensitive - for a bare Title Case "Contents"
+      // entry (e.g. "On the River Iss") matching its later, real ALL-CAPS
+      // heading occurrence ("ON THE RIVER ISS") - see findFreeTitleTocEntries().
       isRealHeading = true;
     }
 
