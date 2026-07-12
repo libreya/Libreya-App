@@ -21,6 +21,18 @@ const STANDALONE_HEADING_RE = /^(PREFACE|Preface|INTRODUCTION|Introduction|FOREW
 // has thousands of chapters, and a longer run of digits is more likely a year
 // (e.g. a "1899" publication date on the title page) than a chapter number.
 const BARE_NUMBER_HEADING_RE = /^(?:[IVXLCDM]{1,8}|\d{1,3})\.?$/i;
+// Some editions number chapters with a bare numeral AND its title squished onto
+// the very same line (e.g. "I. David and I Set Forth Upon a Journey", vs. the
+// numeral-then-title-on-next-line pattern BARE_NUMBER_HEADING_RE/NUMBERED_HEADING_RE
+// already cover). Deliberately NOT folded into isHeadingCandidate: a single-letter
+// roman numeral ("I", "M", "V"...) followed by ". Capitalized word" collides with
+// ordinary abbreviations - "M." for Monsieur recurs constantly in Les Misérables
+// ("M. Madeleine rose.") - so trusting this pattern on an isolated paragraph would
+// wrongly promote narrative sentences to headings. Only ever used to (a) spot a
+// squished TOC block via a match-ratio across many lines, same as
+// isSquishedTocBlock, and (b) harvest each entry's exact text there for
+// cross-reference against a later real occurrence - never as a standalone signal.
+const BARE_NUMBERED_TITLE_RE = /^(?:[IVXLCDM]{1,8}|\d{1,3})[.:]\s+\S/i;
 const START_MARKER_RE = /\*\*\*\s*START OF (?:THE|THIS) PROJECT GUTENBERG EBOOK.*?\*\*\*/is;
 const END_MARKER_RE = /\*\*\*\s*END OF (?:THE|THIS) PROJECT GUTENBERG EBOOK.*/is;
 // Transcriber notes like "[Illustration: a knight on horseback]" or bare "[Illustration]".
@@ -100,6 +112,65 @@ function isSquishedTocBlock(p: string): boolean {
   if (lines.length < 2) return false;
   const matchCount = lines.filter(isHeadingCandidate).length;
   return matchCount / lines.length >= SQUISHED_TOC_MATCH_RATIO;
+}
+
+/**
+ * Same idea as isSquishedTocBlock, but for a "numeral. Title" listing (e.g. The
+ * Little White Bird's CONTENTS: "I. David and I Set Forth Upon a Journey" /
+ * "II. The Little Nursery Governess" / ... with no blank lines between entries,
+ * so the whole listing is one paragraph). Kept separate from isSquishedTocBlock/
+ * isHeadingCandidate on purpose - see BARE_NUMBERED_TITLE_RE's comment on why
+ * that pattern is only ever safe to trust across a ratio of many lines, never
+ * on a single isolated paragraph.
+ */
+function isSquishedNumberedTitleTocBlock(p: string): boolean {
+  const lines = p.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
+  if (lines.length < 4) return false;
+  const matchCount = lines.filter((l) => BARE_NUMBERED_TITLE_RE.test(l)).length;
+  return matchCount / lines.length >= SQUISHED_TOC_MATCH_RATIO;
+}
+
+/** Collapse a (possibly wrapped, multi-line) entry down to a comparable key. */
+function normalizeNumberedTitle(p: string): string {
+  return p
+    .replace(/\n/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/[.:;,]+$/, '')
+    .toLowerCase();
+}
+
+/**
+ * Harvests exact entries out of confirmed isSquishedNumberedTitleTocBlock
+ * paragraphs, so a later real occurrence of the same title can be promoted to
+ * <h2> by exact match (mirroring findBareTitleTocEntries' cross-reference
+ * approach). A TOC entry can itself wrap onto a continuation line with deeper
+ * indentation and no marker of its own (e.g. "III. Her Marriage, Her Clothes,
+ * Her Appetite, and an\n    Inventory of Her Furniture.") - lines that don't
+ * start a new "numeral. " marker are joined onto the entry they continue
+ * rather than treated as their own line.
+ */
+function findNumberedTitleTocEntries(paragraphs: ParagraphInfo[]): Set<string> {
+  const entries = new Set<string>();
+
+  for (const info of paragraphs) {
+    const p = info.text;
+    if (!isSquishedNumberedTitleTocBlock(p)) continue;
+
+    const lines = p.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
+    let current: string | null = null;
+    for (const line of lines) {
+      if (BARE_NUMBERED_TITLE_RE.test(line)) {
+        if (current !== null) entries.add(normalizeNumberedTitle(current));
+        current = line;
+      } else if (current !== null) {
+        current += ` ${line}`;
+      }
+    }
+    if (current !== null) entries.add(normalizeNumberedTitle(current));
+  }
+
+  return entries;
 }
 
 interface ParagraphInfo {
@@ -373,6 +444,7 @@ export function textToSupabaseHtml(cleanedText: string): string {
 
   const bareTitleToc = findBareTitleTocEntries(paragraphs);
   const numberedTocPrefixes = findNumberedTocMarkerPrefixes(paragraphs);
+  const numberedTitleTocEntries = findNumberedTitleTocEntries(paragraphs);
   const parts: string[] = [];
 
   for (let i = 0; i < paragraphs.length; i++) {
@@ -394,7 +466,7 @@ export function textToSupabaseHtml(cleanedText: string): string {
 
     if (bareTitleToc.indices.has(i)) {
       isTocEntry = true;
-    } else if (isSquishedTocBlock(p) || looksLikeTocPageListing(p)) {
+    } else if (isSquishedTocBlock(p) || looksLikeTocPageListing(p) || isSquishedNumberedTitleTocBlock(p)) {
       isTocEntry = true;
     } else if (isHeadingCandidate(p)) {
       // A page-numbered TOC has no heading keyword of its own to match on, so
@@ -429,6 +501,11 @@ export function textToSupabaseHtml(cleanedText: string): string {
       // in the document - the narrow, evidence-based signal that lets a
       // keyword-less chapter title (e.g. "STORY OF THE DOOR") be recognized
       // as real without treating every bare all-caps line as a candidate.
+      isRealHeading = true;
+    } else if (numberedTitleTocEntries.has(normalizeNumberedTitle(p))) {
+      // Same idea, but for a "numeral. Title" heading (e.g. "I. David and I
+      // Set Forth Upon a Journey") cross-referenced against a confirmed
+      // squished numbered-title TOC listing - see findNumberedTitleTocEntries().
       isRealHeading = true;
     }
 

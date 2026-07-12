@@ -3,7 +3,6 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useAppStore } from '../../lib/store-web';
-import { supabase } from '../../lib/supabase';
 import AdBanner from '../../components/AdBanner';
 import { AUTHOR_BIOS } from '../../lib/authorBios';
 
@@ -94,8 +93,6 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
   const [fontSize, setFontSize] = useState(1.15);
   const [chaptersLoaded, setChaptersLoaded] = useState(false);
   const [lastSavedChapter, setLastSavedChapter] = useState<number | null>(null);
-  const [gutendexSummary, setGutendexSummary] = useState<string | null>(null);
-  const [summaryLoading, setSummaryLoading] = useState(false);
 
   useEffect(() => {
     if (id && typeof id === 'string') {
@@ -107,25 +104,7 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
   useEffect(() => {
     if (!currentBook) return;
     if (currentBook.description) return;
-
-    const gutenbergId = currentBook.source_url?.split('/').pop();
-    if (!gutenbergId) return;
-
     const controller = new AbortController();
-    setGutendexSummary(null);
-    setSummaryLoading(true);
-
-    fetch(`https://gutendex.com/books/${encodeURIComponent(gutenbergId)}`, { signal: controller.signal })
-      .then(r => r.json())
-      .then(async data => {
-        const summary: string | undefined = data.summaries?.[0];
-        if (!summary) return;
-        setGutendexSummary(summary);
-        await supabase.from('books').update({ description: summary }).eq('id', currentBook.id);
-      })
-      .catch(err => { if (err.name !== 'AbortError') console.error(err); })
-      .finally(() => setSummaryLoading(false));
-
     return () => controller.abort();
   }, [currentBook?.id]);
 
@@ -254,7 +233,7 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
   // Use server-fetched data for meta/schema; fall back as content loads
   const displayBook = currentBook || initialBook;
 
-  const description = gutendexSummary || currentBook?.description || initialBook?.description || '';
+  const description = currentBook?.description || initialBook?.description || '';
   const metaDescription = description
     ? description.substring(0, 155)
     : `Read ${displayBook?.title || ''} by ${displayBook?.author || ''} for free on Libreya. Classic literature, beautifully formatted with chapter navigation and multiple reading themes.`;
@@ -753,24 +732,9 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
 
             <div style={{ marginBottom: '25px' }}>
               <h4 style={{ marginBottom: '12px' }}>About This Book</h4>
-              {summaryLoading ? (
-                <div aria-label="Loading summary">
-                  {[100, 90, 95, 70].map((w, i) => (
-                    <div key={i} style={{
-                      height: '14px',
-                      width: `${w}%`,
-                      borderRadius: '6px',
-                      backgroundColor: 'var(--border)',
-                      marginBottom: '10px',
-                      animation: 'skeletonPulse 1.4s ease-in-out infinite'
-                    }} />
-                  ))}
-                </div>
-              ) : (gutendexSummary || currentBook?.description || initialBook?.description) ? (
-                <p style={{ color: 'var(--text-secondary)', lineHeight: '1.8' }}>
-                  {gutendexSummary || currentBook?.description || initialBook?.description}
-                </p>
-              ) : null}
+              <p style={{ color: 'var(--text-secondary)', lineHeight: '1.8' }}>
+                {currentBook?.description || initialBook?.description}
+              </p>
             </div>
 
             <div className="book-actions" style={{
@@ -1064,12 +1028,12 @@ export async function getServerSideProps(context: { params: { id: string } }) {
 
     const { data: relatedBooks } = book.category
       ? await supabaseServer
-          .from('books')
-          .select('id, title, author, cover_image, category')
-          .eq('category', book.category)
-          .neq('id', bookId)
-          .order('read_count', { ascending: false })
-          .limit(4)
+        .from('books')
+        .select('id, title, author, cover_image, category')
+        .eq('category', book.category)
+        .neq('id', bookId)
+        .order('read_count', { ascending: false })
+        .limit(4)
       : { data: [] };
 
     return {
