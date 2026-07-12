@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
@@ -43,6 +43,30 @@ const GENRE_CONTEXT: Record<string, { heading: string; body: string }> = {
     heading: 'About Classic Historical Writing',
     body: `Classical historical writing is both a source of information and a form of literature in its own right, and the best historical texts deserve to be read as both. The great historians of antiquity — Thucydides, Herodotus, Livy, Tacitus — were also artists, shaping their accounts of wars, cities, and empires with conscious craft and a clear point of view. Reading these texts is to experience history not as a dry catalogue of dates and events but as a narrative shaped by interpretation, rhetoric, and the perspective of the person recording it. Later historical works — from Gibbon's monumental Decline and Fall of the Roman Empire to the first-hand accounts of explorers, soldiers, and statesmen — occupy the fertile territory between literature and scholarship, offering information that is inseparable from the particular mind that observed and recorded it. Classic historical texts are invaluable as primary sources: they reveal not only what happened, but how people at the time understood what was happening around them.`,
   },
+  "Non-Fiction": {
+    heading: 'About Classic Non-Fiction',
+    body: `Non-fiction in the public domain spans an extraordinary range: natural history, travel writing, scientific treatises, memoirs, and works of social observation written by people who were often present at pivotal moments of discovery or change. Unlike a novel, non-fiction asks to be read as a direct record of how someone actually understood the world in front of them — Darwin describing what he saw aboard the Beagle, or a 19th-century naturalist cataloguing a landscape that has since vanished. These texts matter today not only for their factual content, much of which has been superseded by later scholarship, but for what they reveal about the intellectual habits of their era: what counted as evidence, what questions felt urgent, and how careful observation was communicated to a general reader. Reading classic non-fiction is an exercise in encountering ideas at the moment of their formation, before they hardened into textbook summary, and in seeing how the writers of the past reasoned their way toward conclusions we now take for granted.`,
+  },
+  Drama: {
+    heading: 'About Classic Drama',
+    body: `Drama is literature built for performance, and reading a play in the public domain means engaging with dialogue and stage direction crafted to be spoken aloud and witnessed rather than read silently in isolation. The classical tradition — Sophocles, Euripides, and the Greek tragedians — established templates of fate, guilt, and moral consequence that later playwrights returned to again and again. Shakespeare's plays, along with those of contemporaries like Marlowe and Jonson, pushed the English language itself to new expressive limits while dramatizing ambition, jealousy, love, and power with a psychological precision that modern theater still measures itself against. Ibsen and other 19th-century dramatists later turned the form toward the domestic and the social, using the stage to interrogate marriage, class, and hypocrisy in ways that scandalized and then reshaped their audiences. Reading these plays closely — attending to what is said, what is withheld, and what stage directions imply — reveals a form of storytelling built around tension, timing, and the friction between characters that no other genre replicates in quite the same way.`,
+  },
+  Philosophy: {
+    heading: 'About Classic Philosophy',
+    body: `Philosophical texts in the public domain represent some of the most sustained and rigorous thinking humanity has produced about the nature of knowledge, ethics, existence, and society. From Plato's dialogues, which dramatize argument itself as a form of discovery, through the systematic works of Aristotle, Descartes, Locke, and Kant, to the 19th-century thought of Mill, Nietzsche, and their contemporaries, these works built the intellectual scaffolding that later disciplines — psychology, political science, economics — grew out of. Reading philosophy in its original form, rather than through summary, matters because the argument's structure is often the point: how a thinker moves from premise to conclusion, where they anticipate objections, and where the reasoning strains are as instructive as the conclusions reached. These texts were also, in their own time, frequently controversial or even dangerous to their authors, written in direct response to the political and religious pressures of their era. Approaching them today means encountering not settled doctrine but live argument, addressed to readers willing to think carefully alongside the author.`,
+  },
+  "Science Fiction": {
+    heading: 'About Classic Science Fiction',
+    body: `The earliest science fiction, much of it now in the public domain, was written at the moment when industrialization, evolutionary theory, and the first stirrings of modern physics were reshaping how people imagined the future. Jules Verne grounded his voyages to the moon and under the sea in the engineering optimism of his age, while H.G. Wells used the form to ask darker questions — about class, empire, and the fragility of civilization — through stories of invasion, time travel, and biological transformation. Mary Shelley's Frankenstein is frequently credited as the genre's true origin point, fusing Gothic horror with an early meditation on scientific responsibility. What distinguishes this founding generation of science fiction from its later, more technologically fluent descendants is how directly it channels the anxieties and ambitions of its own historical moment: fear of unchecked scientific power, wonder at newly discovered scales of geological and cosmic time, and speculation about what industrial society might become. Reading these works today means encountering the future as it looked from the vantage point of the past.`,
+  },
+  Classics: {
+    heading: 'About the Classics',
+    body: `"Classic" is a designation earned rather than assigned — works that have been read, argued over, and returned to by successive generations long after the circumstances that produced them have passed. The category spans an enormous range: the epics and tragedies of the ancient world, the foundational prose and verse of national literary traditions, and works that defined entire genres for everyone who followed. What unites them is not subject matter or style but durability: each generation of readers has found something in these texts worth preserving and passing on, whether that is psychological insight, formal innovation, moral seriousness, or simply prose and verse crafted with unusual precision. Reading a classic is also an act of joining a long conversation — encountering a text that has been read by centuries of prior readers, quoted, adapted, and woven into the wider fabric of literary and cultural reference. These works reward that kind of attention precisely because so much has already been built upon them.`,
+  },
+  Essays: {
+    heading: 'About Classic Essays',
+    body: `The essay is one of literature's most flexible forms — capacious enough to hold personal reflection, argument, observation, and digression within a single short piece of prose. Montaigne, who essentially invented the form in the 16th century, used it to think on the page, following a subject wherever curiosity led rather than toward a predetermined conclusion. Later essayists — Francis Bacon's terse aphoristic style, the Victorian periodical essayists writing for a mass reading public, and the great American essayists of the 19th century — each adapted the form to their own purposes, whether persuasion, self-examination, or simply the pleasure of well-made sentences on an interesting subject. Reading classic essays offers something distinct from reading a novel or treatise: direct access to a mind reasoning in real time, without the scaffolding of plot or systematic argument to carry the reader along. It is a genre built on the strength of the individual sentence and the quality of the thinking behind it, which is why the best essays remain readable long after the specific occasions that prompted them have been forgotten.`,
+  },
 };
 
 interface Chapter {
@@ -61,6 +85,7 @@ interface InitialBook {
   description?: string;
   source_url?: string;
   read_count?: number;
+  content_body?: string;
 }
 
 interface RelatedBook {
@@ -234,9 +259,18 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
   const displayBook = currentBook || initialBook;
 
   const description = currentBook?.description || initialBook?.description || '';
+  const fallbackDescription = `Read ${displayBook?.title || ''} by ${displayBook?.author || ''} for free on Libreya. Classic literature, beautifully formatted with chapter navigation and multiple reading themes.`;
   const metaDescription = description
     ? description.substring(0, 155)
-    : `Read ${displayBook?.title || ''} by ${displayBook?.author || ''} for free on Libreya. Classic literature, beautifully formatted with chapter navigation and multiple reading themes.`;
+    : fallbackDescription;
+  const previewContentBody = currentBook?.content_body || initialBook?.content_body || '';
+
+  const wordCount = useMemo(() => {
+    if (!previewContentBody) return 0;
+    const text = previewContentBody.replace(/<[^>]+>/g, ' ').trim();
+    return text ? text.split(/\s+/).length : 0;
+  }, [previewContentBody]);
+  const readingMinutes = wordCount ? Math.max(1, Math.round(wordCount / 200)) : 0;
 
   const canonicalUrl = displayBook ? `https://libreya.app/book/${displayBook.id}` : 'https://libreya.app';
   const ogImage = displayBook?.cover_image || 'https://libreya.app/icon.png';
@@ -733,7 +767,7 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
             <div style={{ marginBottom: '25px' }}>
               <h4 style={{ marginBottom: '12px' }}>About This Book</h4>
               <p style={{ color: 'var(--text-secondary)', lineHeight: '1.8' }}>
-                {currentBook?.description || initialBook?.description}
+                {currentBook?.description || initialBook?.description || fallbackDescription}
               </p>
             </div>
 
@@ -798,10 +832,10 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
           borderTop: '3px solid #c6a75e'
         }}>
           <h3 style={{ marginBottom: '20px' }}>Preview</h3>
-          {currentBook?.content_body ? (
+          {previewContentBody ? (
             <div
               className="book-preview-content"
-              dangerouslySetInnerHTML={{ __html: currentBook.content_body.substring(0, 800) }}
+              dangerouslySetInnerHTML={{ __html: previewContentBody.substring(0, 800) }}
               style={{
                 lineHeight: '1.8',
                 color: 'var(--text-secondary)',
@@ -817,12 +851,10 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
             />
           ) : (
             <p style={{ color: 'var(--text-secondary)' }}>
-              {currentBook
-                ? 'No preview available. Start reading to see the full content.'
-                : 'Loading preview...'}
+              No preview available. Start reading to see the full content.
             </p>
           )}
-          {currentBook?.content_body && currentBook.content_body.length > 800 && (
+          {previewContentBody && previewContentBody.length > 800 && (
             <div style={{
               textAlign: 'center',
               paddingTop: '20px',
@@ -845,10 +877,16 @@ export default function BookPage({ initialBook, relatedBooks }: BookPageProps) {
         }}>
           <h3 style={{ marginBottom: '12px' }}>About This Edition</h3>
           <p style={{ color: 'var(--text-secondary)', lineHeight: '1.8', marginBottom: '14px' }}>
-            This edition of <em>{displayBook.title}</em> is sourced from Project Gutenberg, the world's oldest digital
-            library of public domain literature, founded in 1971 by Michael Hart. Project Gutenberg houses over 70,000
-            freely available e-books whose copyrights have expired in the United States, and every text has been
-            verified to be free of copyright restrictions.
+            This edition of <em>{displayBook.title}</em> by {displayBook.author}
+            {displayBook.category ? <> is catalogued on Libreya under {displayBook.category}</> : null}
+            {wordCount > 0 ? (
+              <> and runs approximately {wordCount.toLocaleString()} words — about {readingMinutes} minute{readingMinutes === 1 ? '' : 's'} of reading at an average pace</>
+            ) : null}. It is sourced from Project Gutenberg, the world's oldest digital library of public domain
+            literature, founded in 1971 by Michael Hart, and every text on Libreya has been verified to be free of
+            copyright restrictions in the United States.
+            {displayBook.source_url ? (
+              <> You can view the original Project Gutenberg edition <a href={displayBook.source_url} target="_blank" rel="noopener noreferrer nofollow">here</a>.</>
+            ) : null}
           </p>
           <p style={{ color: 'var(--text-secondary)', lineHeight: '1.8', marginBottom: 0 }}>
             On Libreya, the text has been carefully formatted for comfortable reading on any screen — with consistent
@@ -1018,7 +1056,7 @@ export async function getServerSideProps(context: { params: { id: string } }) {
 
     const { data: book } = await supabaseServer
       .from('books')
-      .select('id, title, author, category, cover_image, description, source_url, read_count')
+      .select('id, title, author, category, cover_image, description, source_url, read_count, content_body')
       .eq('id', bookId)
       .single();
 
