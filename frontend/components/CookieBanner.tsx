@@ -1,24 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-
-const STORAGE_KEY = 'libreya_cookie_consent';
+import { COOKIE_CONSENT_KEY } from '../lib/adConsent';
 
 export function CookieBanner() {
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem(STORAGE_KEY)) {
+    if (localStorage.getItem(COOKIE_CONSENT_KEY)) {
       setHidden(true);
     }
   }, []);
 
   const accept = () => {
-    localStorage.setItem(STORAGE_KEY, 'accepted');
+    localStorage.setItem(COOKIE_CONSENT_KEY, 'accepted');
     setHidden(true);
   };
 
   const dismiss = () => {
-    localStorage.setItem(STORAGE_KEY, 'dismissed');
+    localStorage.setItem(COOKIE_CONSENT_KEY, 'dismissed');
     setHidden(true);
   };
 

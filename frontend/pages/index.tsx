@@ -365,7 +365,7 @@ export default function Home({ initialFeaturedBooks }: HomeProps) {
       </div>
 
       {/* ── AD ── */}
-      <div className="container" style={{ paddingTop: '40px', paddingBottom: '0' }}>
+      <div className="container" style={{ paddingTop: '64px', paddingBottom: '0' }}>
         <AdBanner slot="9986559126" format="horizontal" />
       </div>
 
