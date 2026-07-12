@@ -50,6 +50,7 @@ export default function GutenbergImportPage() {
   const [coverImage, setCoverImage] = useState('');
   const [sourceUrl, setSourceUrl] = useState('');
   const [html, setHtml] = useState('');
+  const [description, setDescription] = useState('');
 
   const [checking, setChecking] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -75,6 +76,7 @@ export default function GutenbergImportPage() {
     setResult(null);
     setSaveMessage(null);
     setAlternateTitle(null);
+    setDescription('');
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -101,6 +103,16 @@ export default function GutenbergImportPage() {
       fetch(`/api/gutenberg-alternate-title?id=${encodeURIComponent(id)}`, { headers: authHeaders })
         .then((r) => r.json())
         .then((altData) => setAlternateTitle(altData.alternateTitle || null))
+        .catch(() => {});
+
+      // Best-effort - Gutendex doesn't have a summary for every book.
+      fetch(`/api/gutendex?id=${encodeURIComponent(id)}`, { headers: authHeaders })
+        .then((r) => r.json())
+        .then((gutendexData) => {
+          const summaries: string[] = gutendexData.summaries || [];
+          const summary = summaries.find((s) => s && s.trim());
+          if (summary) setDescription(summary.trim());
+        })
         .catch(() => {});
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Fetch failed');
@@ -188,6 +200,7 @@ export default function GutenbergImportPage() {
           category,
           content_body: html,
           cover_image: coverImage || null,
+          description: description.trim() || null,
         })
         .eq('id', existing.id);
       setSaving(false);
@@ -196,7 +209,7 @@ export default function GutenbergImportPage() {
         setSaveMessage(`Update failed: ${updateError.message}`);
         return;
       }
-      setSaveMessage(`Updated existing book id ${existing.id} (title, author, category, content_body, cover_image).`);
+      setSaveMessage(`Updated existing book id ${existing.id} (title, author, category, content_body, cover_image, description).`);
       return;
     }
 
@@ -217,6 +230,7 @@ export default function GutenbergImportPage() {
         category,
         cover_image: coverImage || null,
         source_url: sourceUrl.trim() || null,
+        description: description.trim() || null,
         is_featured: false,
         read_count: 0,
       })
@@ -415,6 +429,16 @@ export default function GutenbergImportPage() {
               <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1' }}>
                 Source URL
                 <input value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} style={{ padding: '8px' }} />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: '4px', gridColumn: '1 / -1' }}>
+                Description (from Gutendex — editable)
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                  style={{ padding: '8px' }}
+                  placeholder="No Gutendex summary found — write one manually before saving."
+                />
               </label>
             </div>
 
