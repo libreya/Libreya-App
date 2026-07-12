@@ -33,6 +33,17 @@ const BARE_NUMBER_HEADING_RE = /^(?:[IVXLCDM]{1,8}|\d{1,3})\.?$/i;
 // isSquishedTocBlock, and (b) harvest each entry's exact text there for
 // cross-reference against a later real occurrence - never as a standalone signal.
 const BARE_NUMBERED_TITLE_RE = /^(?:[IVXLCDM]{1,8}|\d{1,3})[.:]\s+\S/i;
+// Bible editions (e.g. Douay-Rheims) title each book "THE BOOK OF GENESIS" / "THE
+// FIRST BOOK OF SAMUEL, OTHERWISE CALLED THE FIRST BOOK OF KINGS" - never matches
+// NUMBERED_HEADING_RE since the keyword "BOOK" isn't the first word ("THE" is).
+// Case-sensitive on purpose: inline annotations elsewhere in the text incidentally
+// start with the same words in sentence case ("The book of the law. . .That is,
+// Deuteronomy."), and only the genuine headings are fully uppercase.
+const BIBLE_BOOK_HEADING_RE = /^THE (?:(?:FIRST|SECOND|THIRD|FOURTH)\s+)?BOOK OF\b/;
+// ...and each chapter within a book as "Genesis Chapter 1" / "1 Kings Chapter 1" -
+// the book name (or alias) and "Chapter" appear together on one line with nothing
+// else, unlike NUMBERED_HEADING_RE's keyword-first layout.
+const BIBLE_CHAPTER_HEADING_RE = /^(?:[1-4]\s+)?[A-Z][a-z]+ Chapter \d+$/;
 const START_MARKER_RE = /\*\*\*\s*START OF (?:THE|THIS) PROJECT GUTENBERG EBOOK.*?\*\*\*/is;
 const END_MARKER_RE = /\*\*\*\s*END OF (?:THE|THIS) PROJECT GUTENBERG EBOOK.*/is;
 // Transcriber notes like "[Illustration: a knight on horseback]" or bare "[Illustration]".
@@ -65,8 +76,14 @@ function isHeadingCandidate(p: string): boolean {
     // genuinely standalone, single-line occurrence counts.
     return !p.includes('\n') && p.length <= MAX_HEADING_LENGTH;
   }
+  if (BIBLE_BOOK_HEADING_RE.test(p)) {
+    return p.length <= MAX_HEADING_LENGTH || isAllCapsText(p);
+  }
   if (NUMBERED_HEADING_RE.test(p)) {
     return p.length <= MAX_HEADING_LENGTH || isAllCapsText(p);
+  }
+  if (BIBLE_CHAPTER_HEADING_RE.test(p)) {
+    return true;
   }
   // Bare numerals (no CHAPTER/BOOK/etc keyword) can also have a subtitle
   // squished onto the very next line with no blank line between them (e.g.
@@ -178,9 +195,15 @@ function isContentsHeader(p: string): boolean {
  * heading right after the listing - itself also a short single-line
  * paragraph - is never mistakenly swallowed into the TOC.
  */
-function findFreeTitleTocEntries(paragraphs: ParagraphInfo[]): { indices: Set<number>; titles: Set<string> } {
+function findFreeTitleTocEntries(paragraphs: ParagraphInfo[]): { indices: Set<number>; titles: Set<string>; lastIndex: number } {
   const indices = new Set<number>();
   const titles = new Set<string>();
+  // Highest paragraph index consumed by any Contents block found. A table of
+  // contents describes what follows it, never what precedes it - e.g. a
+  // book's half-title page ("The Odyssey", repeated verbatim from an entry
+  // further down the same Contents listing) sits well before the Contents
+  // block itself, and would otherwise wrongly cross-match that entry.
+  let lastIndex = -1;
 
   for (let i = 0; i < paragraphs.length - 1; i++) {
     if (!isContentsHeader(paragraphs[i].text)) continue;
@@ -195,9 +218,10 @@ function findFreeTitleTocEntries(paragraphs: ParagraphInfo[]): { indices: Set<nu
     indices.add(i);
     indices.add(i + 1);
     lines.forEach((l) => titles.add(normalizeFreeTitle(l)));
+    lastIndex = Math.max(lastIndex, i + 1);
   }
 
-  return { indices, titles };
+  return { indices, titles, lastIndex };
 }
 
 /**
@@ -258,7 +282,7 @@ function isBareTitleCandidate(p: string): boolean {
   // paragraph like "NOTE." or "FOOTNOTES:" sitting between a keyword-based
   // TOC's tail and a real heading can act as a bridge, letting a confirmed
   // run "leak" into real headings the keyword-based system already isolates.
-  if (STANDALONE_HEADING_RE.test(p) || NUMBERED_HEADING_RE.test(p)) return false;
+  if (STANDALONE_HEADING_RE.test(p) || NUMBERED_HEADING_RE.test(p) || BIBLE_BOOK_HEADING_RE.test(p)) return false;
   return isAllCapsText(p);
 }
 
@@ -568,7 +592,12 @@ export function textToSupabaseHtml(cleanedText: string): string {
       // Set Forth Upon a Journey") cross-referenced against a confirmed
       // squished numbered-title TOC listing - see findNumberedTitleTocEntries().
       isRealHeading = true;
-    } else if (!p.includes('\n') && p.length <= MAX_BARE_TITLE_LENGTH && freeTitleToc.titles.has(normalizeFreeTitle(p))) {
+    } else if (
+      i > freeTitleToc.lastIndex &&
+      !p.includes('\n') &&
+      p.length <= MAX_BARE_TITLE_LENGTH &&
+      freeTitleToc.titles.has(normalizeFreeTitle(p))
+    ) {
       // Same idea, but case-insensitive - for a bare Title Case "Contents"
       // entry (e.g. "On the River Iss") matching its later, real ALL-CAPS
       // heading occurrence ("ON THE RIVER ISS") - see findFreeTitleTocEntries().
